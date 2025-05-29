@@ -7,12 +7,13 @@ const deselectAllButton = document.getElementById('deselectAll');
 const messageModal = document.getElementById('messageModal');
 const messageModalContent = document.getElementById('messageModalContent');
 const messageText = document.getElementById('messageText');
-
+const messageTextarea = document.getElementById('message'); // Get the textarea element
 const newContactNameInput = document.getElementById('newContactName');  // Novo
 const newContactPhoneInput = document.getElementById('newContactPhone');  // Novo
 const addContactBtn = document.getElementById('addContactBtn');  // Novo
 
 const CONTACTS_STORAGE_KEY = 'whatsapp_sender_contacts'; // Chave para armazenar no localStorage
+const MESSAGE_STORAGE_KEY = 'whatsapp_sender_message';   // Key to store the message
 
 // Função para fechar a janela flutuante
 document.querySelector('.close').addEventListener('click', function () {
@@ -43,9 +44,28 @@ function loadContactsFromLocalStorage() {
     return [];
 }
 
+// Function to save message to localStorage
+function saveMessageToLocalStorage(message) {
+    localStorage.setItem(MESSAGE_STORAGE_KEY, message);
+}
+
+// Function to load message from localStorage
+function loadMessageFromLocalStorage() {
+    return localStorage.getItem(MESSAGE_STORAGE_KEY) || ""; // Return empty string if not found
+}
+
+
 // Carrega os contatos do localStorage ao carregar a página
 contacts = loadContactsFromLocalStorage();
 renderContactList(contacts); // Renderiza a lista inicial
+
+// Load the message from localStorage and set the textarea value
+messageTextarea.value = loadMessageFromLocalStorage();
+
+// Save message when it changes
+messageTextarea.addEventListener('input', () => {
+    saveMessageToLocalStorage(messageTextarea.value);
+});
 
 vcfFile.addEventListener('change', async (event) => {
     const file = event.target.files[0];
