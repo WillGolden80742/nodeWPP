@@ -148,7 +148,7 @@ function renderContactList(contactList) {
 
         const isChecked = selectedContacts.has(labelText) ? selectedContacts.get(labelText) : false; //Verifica o map
         checkbox.checked = isChecked;  //seta o valor do checkbox
-        
+
         // Salva o texto do label no objeto do contato
         contact.labelText = labelText;
 
@@ -213,7 +213,25 @@ form.addEventListener('submit', function (event) {
     const testModeCheckbox = document.getElementById('testMode');
     const testMode = testModeCheckbox.checked;
 
-    const messageContent = document.getElementById('message').value; // Obtém o conteúdo da mensagem
+    let messageContent = document.getElementById('message').value; // Obtém o conteúdo da mensagem
+
+    // Função para obter a saudação com base na hora do dia
+    function getGreeting() {
+        const now = new Date();
+        const hour = now.getHours();
+
+        if (hour >= 6 && hour < 12) {
+            return "Bom dia";
+        } else if (hour >= 12 && hour < 18) {
+            return "Boa tarde";
+        } else {
+            return "Boa noite";
+        }
+    }
+
+    // Substitui [greeting] (case-insensitive) pela saudação apropriada
+    messageContent = messageContent.replace(/\[greeting]/gi, getGreeting());
+
 
     // Enviar dados para o servidor (exemplo com fetch)
     fetch('/upload', {
