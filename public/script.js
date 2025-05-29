@@ -8,6 +8,8 @@ const messageModal = document.getElementById('messageModal');
 const messageModalContent = document.getElementById('messageModalContent');
 const messageText = document.getElementById('messageText');
 
+const CONTACTS_STORAGE_KEY = 'whatsapp_sender_contacts'; // Chave para armazenar no localStorage
+
 // Função para fechar a janela flutuante
 document.querySelector('.close').addEventListener('click', function () {
     messageModal.style.display = "none";
@@ -20,9 +22,26 @@ window.onclick = function (event) {
     }
 }
 
-
 let contacts = []; // Armazena todos os contatos extraídos do VCF
 let selectedContacts = new Map(); // Armazena o estado dos checkboxes (true/false)
+
+// Função para salvar os contatos no localStorage
+function saveContactsToLocalStorage(contacts) {
+    localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(contacts));
+}
+
+// Função para carregar os contatos do localStorage
+function loadContactsFromLocalStorage() {
+    const storedContacts = localStorage.getItem(CONTACTS_STORAGE_KEY);
+    if (storedContacts) {
+        return JSON.parse(storedContacts);
+    }
+    return [];
+}
+
+// Carrega os contatos do localStorage ao carregar a página
+contacts = loadContactsFromLocalStorage();
+renderContactList(contacts); // Renderiza a lista inicial
 
 vcfFile.addEventListener('change', async (event) => {
     const file = event.target.files[0];
@@ -32,6 +51,7 @@ vcfFile.addEventListener('change', async (event) => {
     reader.onload = async (e) => {
         const vcfContent = e.target.result;
         contacts = parseVcfContent(vcfContent); // Preenche o array de contatos
+        saveContactsToLocalStorage(contacts); // Salva os contatos no localStorage
         renderContactList(contacts); // Renderiza a lista inicial
     };
     reader.readAsText(file);
@@ -81,7 +101,6 @@ function renderContactList(contactList) {
 
     contactList.forEach((contact, index) => {
         const contactId = `contact-${index}`; // ID único para cada contato
-        //const isChecked = selectedContacts.has(contactId) ? selectedContacts.get(contactId) : false; // Verifica se o contato já está no Map
 
         const label = document.createElement('label');
         label.innerHTML = `
