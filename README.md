@@ -15,7 +15,7 @@ This project is a simple web application built with Node.js, Express, and whatsa
 ## Features
 
 *   **Import Contacts from VCF with a single click.
-*   **Personalized Messages:** Create dynamic messages using the `[name]` placeholder for the contact's name and `[greeting]` for a time-based greeting (e.g., "Good morning"):**  Upload a VCF file to import multiple contacts at once.
+*   **Personalized Messages:** Create dynamic messages using the `[name]` placeholder for the contact's name and `[greeting]` for a time-based greeting (e.g., "Good morning")  Upload a VCF file to import multiple contacts at once.
 *   **Add Contacts Individually:**  Add new contacts directly through a simple form in multiple languages. The application supports greetings in English, Spanish, French, German, Japanese, Chinese, Portuguese, Russian, Arabic, Italian, Korean, Hindi, Turkish, Dutch, Swedish, Polish, Danish, Norwegian, Finnish and Indonesian.
 *   **Multi-Language Support:** The `[greeting]` placeholder, providing name and phone number.
 *   **Search Contacts:** Quickly find specific contacts by filtering the list by name or phone number.
