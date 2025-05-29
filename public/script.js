@@ -116,15 +116,34 @@ function renderContactList(contactList) {
         const contactId = `contact-${index}`; // ID único para cada contato
 
         const label = document.createElement('label');
-        label.innerHTML = `
-            <input type="checkbox" id="${contactId}" data-index="${index}">
-            ${contact.fullName} (${contact.phoneNumber})
-            <button type="button" class="btn btn-sm deleteContactBtn" data-index="${index}"><i class="mdi mdi-delete"></i></button>
-        `;
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = contactId;
+        checkbox.dataset.index = index;
+
+        const contactText = document.createTextNode(` ${contact.fullName} (${contact.phoneNumber})`);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.classList.add('btn', 'btn-sm', 'deleteContactBtn');
+        deleteButton.dataset.index = index;
+
+        const deleteIcon = document.createElement('i');
+        deleteIcon.classList.add('mdi', 'mdi-delete');
+
+        deleteButton.appendChild(deleteIcon); // Adiciona o ícone ao botão
+        deleteButton.addEventListener('click', function() {  //Move o EventListener pra cá para não ficar no loop posterior.
+            const indexToDelete = parseInt(this.dataset.index);
+            deleteContact(indexToDelete);
+        });
+
+        label.appendChild(checkbox);
+        label.appendChild(contactText);
+        label.appendChild(deleteButton);
 
         contactListDiv.appendChild(label);
 
-        const checkbox = label.querySelector('input[type="checkbox"]');
         const labelText = label.textContent.trim(); // Pega o texto do label
 
         const isChecked = selectedContacts.has(labelText) ? selectedContacts.get(labelText) : false; //Verifica o map
@@ -135,15 +154,6 @@ function renderContactList(contactList) {
             // Atualiza o Map com o estado do checkbox
             selectedContacts.set(labelText, event.target.checked);
 
-        });
-    });
-
-    // Adiciona listeners de evento para os botões de exclusão
-    const deleteButtons = document.querySelectorAll('.deleteContactBtn');
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const indexToDelete = parseInt(this.dataset.index);
-            deleteContact(indexToDelete);
         });
     });
 }
@@ -234,7 +244,7 @@ form.addEventListener('submit', function (event) {
 
                 const contactLabel = document.createElement('div');
                 contactLabel.style.fontWeight = 'bold';
-                contactLabel.textContent = 'Contato:';
+                contactLabel.textContent = 'Contato: ';
 
                 const contactValue = document.createElement('div');
                 contactValue.textContent = contactName;
@@ -249,7 +259,7 @@ form.addEventListener('submit', function (event) {
 
                 const statusLabel = document.createElement('div');
                 statusLabel.style.fontWeight = 'bold';
-                statusLabel.textContent = 'Status:';
+                statusLabel.textContent = 'Status: ';
 
                 const statusImage = document.createElement('img');
                 statusImage.alt = status === 'success' ? 'Sucesso' : 'Erro';
@@ -265,7 +275,7 @@ form.addEventListener('submit', function (event) {
 
                 const messageLabel = document.createElement('div');
                 messageLabel.style.fontWeight = 'bold';
-                messageLabel.textContent = 'Mensagem Enviada:';
+                messageLabel.textContent = 'Mensagem Enviada: ';
 
                 const messageValue = document.createElement('div');
                 messageValue.classList.add('formattedMessage');
