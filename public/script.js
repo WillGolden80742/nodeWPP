@@ -224,7 +224,7 @@ form.addEventListener('submit', function (event) {
         body: JSON.stringify({
             contacts: contactsToSend, // Envia apenas os contatos selecionados
             message: messageContent, // Envia o conteúdo da mensagem
-            testMode: testMode 
+            testMode: testMode
         })
     })
         .then(response => response.json()) // Espera uma resposta JSON
@@ -283,6 +283,10 @@ form.addEventListener('submit', function (event) {
                 const messageValue = document.createElement('div');
                 messageValue.classList.add('formattedMessage');
                 messageValue.textContent = message;
+
+                if(testMode){
+                   messageValue.textContent = "[TESTE] " + messageValue.textContent;
+                }
 
                 messageDiv.appendChild(messageLabel);
                 messageDiv.appendChild(messageValue);
