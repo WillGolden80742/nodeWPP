@@ -67,7 +67,7 @@ app.post('/upload', async (req, res) => {
             const cleanedNumber = contact.phoneNumber;
             const chatId = `${cleanedNumber}@c.us`;
             const personalizedMessage = messageTemplate.replace(/\[name\]/gi, fullName);
-            
+
             try {
                 // await client.sendMessage(chatId, personalizedMessage);
                 console.log(`Mensagem enviada para ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);

@@ -8,6 +8,10 @@ const messageModal = document.getElementById('messageModal');
 const messageModalContent = document.getElementById('messageModalContent');
 const messageText = document.getElementById('messageText');
 
+const newContactNameInput = document.getElementById('newContactName');  // Novo
+const newContactPhoneInput = document.getElementById('newContactPhone');  // Novo
+const addContactBtn = document.getElementById('addContactBtn');  // Novo
+
 const CONTACTS_STORAGE_KEY = 'whatsapp_sender_contacts'; // Chave para armazenar no localStorage
 
 // Função para fechar a janela flutuante
@@ -269,4 +273,34 @@ form.addEventListener('submit', function (event) {
             messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
             messageModal.style.display = "block";
         });
+});
+
+// Adicionar contato individualmente
+addContactBtn.addEventListener('click', () => {
+    const name = newContactNameInput.value.trim();
+    let phone = newContactPhoneInput.value.trim();
+
+    // Remove espaços e caracteres não numéricos do número de telefone
+    phone = phone.replace(/\D/g, '');
+
+    if (name && phone) {
+        const isDuplicate = contacts.some(existingContact => existingContact.phoneNumber === phone);
+        if (!isDuplicate) {
+            const newContact = {
+                fullName: name,
+                phoneNumber: phone
+            };
+            contacts.push(newContact);
+            saveContactsToLocalStorage(contacts);
+            renderContactList(contacts);
+        } else {
+            alert('Este número de telefone já está na lista.');
+        }
+
+        // Limpa os campos do formulário
+        newContactNameInput.value = '';
+        newContactPhoneInput.value = '';
+    } else {
+        alert('Por favor, preencha o nome e o número de telefone.');
+    }
 });

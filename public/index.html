@@ -22,12 +22,29 @@
             <div class="mb-3">
                 <label for="vcfFile" class="form-label"><i class="mdi mdi-file-document"></i> Selecione o arquivo
                     VCF:</label>
-                <input type="file" class="form-control" id="vcfFile" name="vcfFile" accept=".vcf" required>
+                <input type="file" class="form-control" id="vcfFile" name="vcfFile" accept=".vcf">
             </div>
 
             <div class="mb-3">
                 <label for="search" class="form-label"><i class="mdi mdi-magnify"></i> Pesquisar Contato:</label>
                 <input type="text" class="form-control" id="search" placeholder="Digite para pesquisar">
+            </div>
+
+            <!-- Formulário para adicionar contato individual -->
+            <div class="mb-3">
+                <label class="form-label"><i class="mdi mdi-account-plus"></i> Adicionar Contato Individual:</label>
+                <div class="row g-2">
+                    <div class="col-md">
+                        <input type="text" class="form-control" id="newContactName" placeholder="Nome">
+                    </div>
+                    <div class="col-md">
+                        <input type="tel" class="form-control" id="newContactPhone" placeholder="Telefone">
+                    </div>
+                    <div class="col-md-auto">
+                        <button type="button" class="btn btn-success" id="addContactBtn"><i
+                                class="mdi mdi-plus"></i> Adicionar</button>
+                    </div>
+                </div>
             </div>
 
             <div class="mb-3">
