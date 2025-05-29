@@ -148,6 +148,9 @@ function renderContactList(contactList) {
 
         const isChecked = selectedContacts.has(labelText) ? selectedContacts.get(labelText) : false; //Verifica o map
         checkbox.checked = isChecked;  //seta o valor do checkbox
+        
+        // Salva o texto do label no objeto do contato
+        contact.labelText = labelText;
 
         // Adiciona um ouvinte de evento para cada checkbox
         checkbox.addEventListener('change', (event) => {
@@ -201,13 +204,9 @@ form.addEventListener('submit', function (event) {
     event.preventDefault(); // Evita o envio padrão do formulário
 
     const contactsToSend = [];
-    contacts.forEach((contact, index) => {
-        const contactId = `contact-${index}`;
-        const label = document.querySelector(`#${contactId}`).parentElement; // Seleciona o label pai
-        const labelText = label.textContent.trim();
-
-        if (selectedContacts.get(labelText)) {
-            contactsToSend.push(contact); // Adiciona o contato ao array se estiver selecionado
+    contacts.forEach((contact) => {
+       if (selectedContacts.get(contact.labelText)) {
+            contactsToSend.push(contact);
         }
     });
 
