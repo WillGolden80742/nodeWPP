@@ -1,0 +1,99 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh; /* Garante que o rodapé fique no fundo da tela */
+}
+
+.container {
+    width: 90%;
+    max-width: 768px; /* Ajusta para telas menores em landscape */
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    margin-bottom: 60px; /* Espaço para o rodapé */
+}
+
+h1 {
+    color: #007bff;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input[type="file"],
+textarea {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+button[type="submit"] {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button[type="submit"]:hover {
+    background-color: #218838;
+}
+
+footer {
+    background-color: #343a40;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Adiciona responsividade para telas landscape em dispositivos móveis */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+    .container {
+        width: 95%; /* Aumenta a largura para preencher mais a tela */
+        margin-top: 10px; /* Reduz a margem superior */
+        margin-bottom: 50px; /* Ajusta o espaço para o rodapé */
+        padding: 10px;   /* Reduz o padding */
+    }
+    h1 {
+        font-size: 1.5rem; /* Reduz o tamanho da fonte do título */
+        margin-bottom: 10px; /* Reduz a margem inferior do título */
+    }
+    label {
+        font-size: 0.9rem; /* Reduz o tamanho da fonte das labels */
+    }
+    input[type="file"],
+    textarea {
+        padding: 6px; /* Reduz o padding dos inputs */
+        margin-bottom: 10px; /* Reduz a margem inferior dos inputs */
+    }
+
+    button[type="submit"] {
+         padding: 8px 16px; /* Reduz o padding do botão */
+         font-size: 0.9rem;
+    }
+}
