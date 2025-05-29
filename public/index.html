@@ -12,74 +12,118 @@
     <!-- Estilo customizado -->
     <link rel="stylesheet" href="style.css">
     <style>
-       #contactList {
-           max-height: 300px;
-           overflow-y: auto;
-           border: 1px solid #ced4da;
-           border-radius: 4px;
-           padding: 5px;
-           margin-bottom: 10px;
-       }
+        #contactList {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
 
-       #contactList label {
-           display: block;
-           margin-bottom: 2px;
-       }
+        #contactList label {
+            display: block;
+            margin-bottom: 2px;
+        }
 
-       /* Estilos para a janela flutuante */
-       #messageModal {
-           display: none;
-           position: fixed;
-           top: 0;
-           left: 0;
-           width: 100%;
-           height: 100%;
-           background-color: rgba(0, 0, 0, 0.5); /* Fundo semi-transparente */
-           z-index: 1000;
-           overflow: auto;
-       }
+        /* Estilos para a janela flutuante */
+        #messageModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            /* Fundo semi-transparente */
+            z-index: 1000;
+            overflow: auto;
+        }
 
-       #messageModalContent {
-           position: relative;
-           background-color: #fefefe;
-           margin: 15% auto; /* Centraliza verticalmente e horizontalmente */
-           padding: 20px;
-           border: 1px solid #888;
-           width: 80%;
-           max-width: 600px;
-           box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-           animation-name: animatetop;
-           animation-duration: 0.4s
-       }
+        #messageModalContent {
+            position: relative;
+            background-color: #fefefe;
+            margin: 15% auto;
+            /* Centraliza verticalmente e horizontalmente */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+            animation-name: animatetop;
+            animation-duration: 0.4s
+        }
 
-       /* Animação para aparecer a janela */
-       @keyframes animatetop {
-           from {top:-300px; opacity:0}
-           to {top:0; opacity:1}
-       }
+        /* Animação para aparecer a janela */
+        @keyframes animatetop {
+            from {
+                top: -300px;
+                opacity: 0
+            }
 
-       /* Botão de fechar */
-       .close {
-           color: #aaa;
-           float: right;
-           font-size: 28px;
-           font-weight: bold;
-       }
+            to {
+                top: 0;
+                opacity: 1
+            }
+        }
 
-       .close:hover,
-       .close:focus {
-           color: black;
-           text-decoration: none;
-           cursor: pointer;
-       }
+        /* Botão de fechar */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
 
-       /* Estilos para a mensagem dentro da janela */
-       #messageText {
-           overflow-y: auto; /* Adiciona scroll vertical se a mensagem for muito longa */
-           max-height: 400px; /* Define uma altura máxima para a mensagem */
-           white-space: pre-wrap; /* Mantém quebras de linha */
-       }
-   </style>
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Estilos para a mensagem dentro da janela */
+        #messageText {
+            overflow-y: auto;
+            /* Adiciona scroll vertical se a mensagem for muito longa */
+            max-height: 400px;
+            /* Define uma altura máxima para a mensagem */
+            white-space: pre-wrap;
+            /* Mantém quebras de linha */
+        }
+
+        /* Estilos para formatar a mensagem */
+        .formattedMessage {
+            font-family: monospace;
+            /* Fonte monoespaçada para melhor visualização do código */
+            background-color: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            overflow-x: auto;
+            /* Adiciona barra de rolagem horizontal se a mensagem for muito longa */
+            white-space: pre-wrap;
+            /* Mantém quebras de linha e espaços */
+        }
+
+        /* Estilo para imagem formatada */
+        .formattedImage {
+            max-width: 100%;
+            /* Garante que a imagem não ultrapasse a largura do container */
+            height: auto;
+            /* Mantém a proporção da imagem */
+            border: 1px solid #ccc;
+            /* Adiciona uma borda para melhor visualização */
+            border-radius: 5px;
+            /* Arredonda as bordas */
+            margin-top: 5px;
+            /* Adiciona um espaço acima da imagem */
+            display: block;
+            /* Garante que a imagem se comporte como um bloco */
+        }
+    </style>
 </head>
 
 <body>
@@ -88,7 +132,8 @@
         <form action="/upload" method="post" enctype="multipart/form-data">
 
             <div class="mb-3">
-                <label for="vcfFile" class="form-label"><i class="mdi mdi-file-document"></i> Selecione o arquivo VCF:</label>
+                <label for="vcfFile" class="form-label"><i class="mdi mdi-file-document"></i> Selecione o arquivo
+                    VCF:</label>
                 <input type="file" class="form-control" id="vcfFile" name="vcfFile" accept=".vcf" required>
             </div>
 
@@ -100,8 +145,10 @@
             <div class="mb-3">
                 <label class="form-label"><i class="mdi mdi-account-multiple"></i> Contatos:</label>
                 <div>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">Selecionar Todos</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">Desmarcar Todos</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">Selecionar
+                        Todos</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">Desmarcar
+                        Todos</button>
                 </div>
                 <div id="contactList">
                     <!-- A lista de contatos será inserida aqui dinamicamente -->
@@ -110,7 +157,8 @@
 
 
             <div class="mb-3">
-                <label for="message" class="form-label"><i class="mdi mdi-message-text"></i> Mensagem (use [name] para o nome do contato):</label>
+                <label for="message" class="form-label"><i class="mdi mdi-message-text"></i> Mensagem (use [name]
+                    para o nome do contato):</label>
                 <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
             </div>
 
@@ -121,7 +169,7 @@
     </div>
 
     <footer>
-        © 2025 WhatsApp Sender. Todos os direitos reservados.
+        © 2024 WhatsApp Sender. Todos os direitos reservados.
     </footer>
 
     <!-- Janela flutuante (Modal) -->
@@ -144,12 +192,12 @@
         const messageText = document.getElementById('messageText');
 
         // Função para fechar a janela flutuante
-        document.querySelector('.close').addEventListener('click', function() {
+        document.querySelector('.close').addEventListener('click', function () {
             messageModal.style.display = "none";
         });
 
         // Fecha a janela se o usuário clicar fora dela
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             if (event.target == messageModal) {
                 messageModal.style.display = "none";
             }
@@ -173,42 +221,43 @@
         });
 
         function parseVcfContent(vcfContent) {
-           const contacts = [];
-           const vcards = vcfContent.split(/BEGIN:VCARD\r?\n/).filter(Boolean);
+            const contacts = [];
+            const vcards = vcfContent.split(/BEGIN:VCARD\r?\n/).filter(Boolean);
 
-           for (const vcard of vcards) {
-               let fullName = 'Contato';
-               let phoneNumber = null;
+            for (const vcard of vcards) {
+                let fullName = 'Contato';
+                let phoneNumber = null;
 
-               const lines = vcard.split(/\r?\n/);
+                const lines = vcard.split(/\r?\n/);
 
-               for (const line of lines) {
-                   if (line.startsWith('FN:')) {
-                       fullName = line.substring(3).trim();
-                   } else if (line.startsWith('N:') && fullName === 'Contato') {
-                       const nameParts = line.substring(2).split(';');
-                       if (nameParts[1]) {
-                           fullName = nameParts[1].trim();
-                       } else if (nameParts[0]) {
-                           fullName = nameParts[0].trim();
-                       }
-                       fullName = fullName.replace(/\s+/g, ' ').trim();
-                   } else if (line.startsWith('TEL;')) {
-                       const telMatch = line.match(/(\d[\d\s\-\(\)\+]*)$/);
-                       if (telMatch && telMatch[1]) {
-                           phoneNumber = telMatch[1].replace(/\D/g, '');
-                       }
-                   }
-               }
+                for (const line of lines) {
+                    if (line.startsWith('FN:')) {
+                        fullName = line.substring(3).trim();
+                    } else if (line.startsWith('N:') && fullName === 'Contato') {
+                        const nameParts = line.substring(2).split(';');
+                        if (nameParts[1]) {
+                            fullName = nameParts[1].trim();
+                        } else if (nameParts[0]) {
+                            fullName = nameParts[0].trim();
+                        }
+                        fullName = fullName.replace(/\s+/g, ' ').trim();
+                    } else if (line.startsWith('TEL;')) {
+                        const telMatch = line.match(/(\d[\d\s\-\(\)\+]*)$/);
+                        if (telMatch && telMatch[1]) {
+                            phoneNumber = telMatch[1].replace(/\D/g, '');
+                        }
+                    }
+                }
 
-               if (phoneNumber) {
-                   contacts.push({ fullName, phoneNumber });
-               }
-           }
-           return contacts;
-       }
-
-
+                if (phoneNumber) {
+                    contacts.push({
+                        fullName,
+                        phoneNumber
+                    });
+                }
+            }
+            return contacts;
+        }
 
         function renderContactList(contactList) {
             contactListDiv.innerHTML = ''; // Limpa a lista existente
@@ -228,7 +277,8 @@
                 // Adiciona um ouvinte de evento para cada checkbox
                 const checkbox = label.querySelector('input[type="checkbox"]');
                 checkbox.addEventListener('change', (event) => {
-                    selectedContacts.set(contactId, event.target.checked); // Atualiza o Map com o estado do checkbox
+                    // Atualiza o Map com o estado do checkbox
+                    selectedContacts.set(contactId, event.target.checked);
                 });
             });
         }
@@ -260,7 +310,7 @@
 
         // Antes do envio do formulário, atualize o campo de contatos selecionados
         const form = document.querySelector('form');
-        form.addEventListener('submit', function(event) {
+        form.addEventListener('submit', function (event) {
             event.preventDefault(); // Evita o envio padrão do formulário
 
             const contactsToSend = [];
@@ -271,6 +321,8 @@
                 }
             });
 
+            const messageContent = document.getElementById('message').value; // Obtém o conteúdo da mensagem
+
             // Enviar dados para o servidor (exemplo com fetch)
             fetch('/upload', {
                 method: 'POST',
@@ -279,20 +331,52 @@
                 },
                 body: JSON.stringify({
                     contacts: contactsToSend, // Envia apenas os contatos selecionados
-                    message: document.getElementById('message').value
+                    message: messageContent // Envia o conteúdo da mensagem
                 })
             })
-            .then(response => response.text())
-            .then(data => {
-                // Exibe a resposta do servidor na janela flutuante
-                messageText.textContent = data;
-                messageModal.style.display = "block";
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
-                messageModal.style.display = "block";
-            });
+                .then(response => response.json()) // Espera uma resposta JSON
+                .then(data => {
+                    // Limpa o conteúdo anterior
+                    messageText.innerHTML = '';
+
+                    // Itera sobre os resultados e formata a saída
+                    data.results.forEach(result => {
+                        const contactName = result.contact;
+                        const status = result.status;
+                        const message = result.message;
+
+                        // Cria um elemento HTML para cada resultado
+                        const resultElement = document.createElement('div');
+
+                        // Adiciona a imagem com base no status
+                        let statusImage = '';
+                        if (status === 'success') {
+                            statusImage =
+                                '<img src="https://img.icons8.com/color/32/000000/checked-2--v1.png" alt="Sucesso" class="formattedImage">';
+                        } else {
+                            statusImage =
+                                '<img src="https://img.icons8.com/color/32/000000/cancel--v1.png" alt="Erro" class="formattedImage">';
+                        }
+
+                        // Adiciona o nome do contato, a imagem de status e a mensagem formatada
+                        resultElement.innerHTML = `
+                        <strong>${contactName}:</strong> ${statusImage}<br>
+                        Status: ${status}<br>
+                        Mensagem Enviada:<div class="formattedMessage">${message}</div><br><br>
+                    `;
+
+                        // Adiciona o elemento ao container de resultados
+                        messageText.appendChild(resultElement);
+                    });
+
+                    // Exibe a janela flutuante
+                    messageModal.style.display = "block";
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
+                    messageModal.style.display = "block";
+                });
         });
     </script>
 </body>

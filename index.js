@@ -45,11 +45,11 @@ app.get('/', (req, res) => {
 
 app.post('/upload', async (req, res) => {
     if (!whatsappReady) {
-       return res.status(503).send('WhatsApp ainda não está pronto. Tente novamente em alguns segundos.');
+        return res.status(503).send('WhatsApp ainda não está pronto. Tente novamente em alguns segundos.');
     }
 
     const contacts = req.body.contacts; // Pega a lista de contatos selecionados do corpo da requisição
-    const messageTemplate = req.body.message;
+    const messageTemplate = req.body.message; // Pega o conteúdo da mensagem do corpo da requisição
 
     if (!contacts || contacts.length === 0) {
         return res.status(400).send('Nenhum contato selecionado.');
@@ -57,55 +57,48 @@ app.post('/upload', async (req, res) => {
 
     console.log(`Iniciando envio de mensagens para ${contacts.length} contatos...`);
 
-     async function sendMessages() {
-           const results = []; // Array para armazenar os resultados de cada envio
-           let successCount = 0;
-           let errorCount = 0;
+    async function sendMessages() {
+        const results = []; // Array para armazenar os resultados de cada envio
+        let successCount = 0;
+        let errorCount = 0;
 
-           for (const contact of contacts) { // Itera sobre a lista de contatos selecionados
-               const fullName = contact.fullName;
-               const cleanedNumber = contact.phoneNumber;
-               const chatId = `${cleanedNumber}@c.us`;
-               const personalizedMessage = messageTemplate.replace(/\[name\]/g, fullName);
+        for (const contact of contacts) { // Itera sobre a lista de contatos selecionados
+            const fullName = contact.fullName;
+            const cleanedNumber = contact.phoneNumber;
+            const chatId = `${cleanedNumber}@c.us`;
+            const personalizedMessage = messageTemplate.replace(/\[name\]/g, fullName); // Mensagem personalizada
 
-               try {
-                    // await client.sendMessage(chatId, personalizedMessage);
-                   console.log(`Mensagem enviada para ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);
-                   results.push({ contact: fullName, status: 'success', message: 'Mensagem enviada com sucesso!' });
-                   successCount++;
-               } catch (err) {
-                   console.error(`Erro ao enviar mensagem para ${fullName} (${cleanedNumber}): ${err.message}`);
-                   results.push({ contact: fullName, status: 'error', message: err.message });
-                   errorCount++;
-               }
-           }
+            try {
+                // await client.sendMessage(chatId, personalizedMessage);
+                console.log(`Mensagem enviada para ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);
+                results.push({ contact: fullName, status: 'success', message: personalizedMessage }); // Salva a mensagem enviada
+                successCount++;
+            } catch (err) {
+                console.error(`Erro ao enviar mensagem para ${fullName} (${cleanedNumber}): ${err.message}`);
+                results.push({ contact: fullName, status: 'error', message: err.message });
+                errorCount++;
+            }
+        }
 
-           console.log('\nEnvio de mensagens concluído.');
-           // Retorna os resultados e os contadores
-           return { results, successCount, errorCount };
-       }
+        console.log('\nEnvio de mensagens concluído.');
+        // Retorna os resultados e os contadores
+        return { results, successCount, errorCount };
+    }
 
-
-       // Chama a função assíncrona e envia a resposta após a conclusão
-       sendMessages()
-           .then(({ results, successCount, errorCount }) => {
-               // Formata os resultados em HTML
-               let resultsHtml = '<h2>Resultados do Envio:</h2><ul>';
-               results.forEach(result => {
-                   resultsHtml += `<li>${result.contact}: ${result.status === 'success' ? 'Sucesso' : 'Erro'} - ${result.message}</li>`;
-               });
-               resultsHtml += '</ul>';
-               resultsHtml += `<p>Total de Sucessos: ${successCount}</p>`;
-               resultsHtml += `<p>Total de Erros: ${errorCount}</p>`;
-
-               // Envia a resposta HTML para o cliente
-               res.send(`<h1>Envio Concluído!</h1>${resultsHtml}`);
-           })
-           .catch(error => {
-               console.error('Erro durante o envio das mensagens:', error);
-               res.status(500).send('Ocorreu um erro durante o envio das mensagens.');
+    // Chama a função assíncrona e envia a resposta após a conclusão
+    sendMessages()
+        .then(({ results, successCount, errorCount }) => {
+            // Formata os resultados para enviar como JSON
+            res.json({
+                results: results,
+                successCount: successCount,
+                errorCount: errorCount
+            });
+        })
+        .catch(error => {
+            console.error('Erro durante o envio das mensagens:', error);
+            res.status(500).json({ error: 'Ocorreu um erro durante o envio das mensagens.' });
         });
-
 });
 
 app.listen(port, () => {
