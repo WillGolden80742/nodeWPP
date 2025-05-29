@@ -119,6 +119,7 @@ function renderContactList(contactList) {
         label.innerHTML = `
             <input type="checkbox" id="${contactId}" data-index="${index}">
             ${contact.fullName} (${contact.phoneNumber})
+            <button type="button" class="btn btn-sm btn-danger deleteContactBtn" data-index="${index}"><i class="mdi mdi-delete"></i></button>
         `;
 
         contactListDiv.appendChild(label);
@@ -136,7 +137,23 @@ function renderContactList(contactList) {
 
         });
     });
+
+    // Adiciona listeners de evento para os botões de exclusão
+    const deleteButtons = document.querySelectorAll('.deleteContactBtn');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const indexToDelete = parseInt(this.dataset.index);
+            deleteContact(indexToDelete);
+        });
+    });
 }
+
+function deleteContact(indexToDelete) {
+    contacts.splice(indexToDelete, 1); // Remove o contato do array
+    saveContactsToLocalStorage(contacts); // Salva a lista atualizada no localStorage
+    renderContactList(contacts); // Renderiza a lista atualizada
+}
+
 
 searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.toLowerCase();
