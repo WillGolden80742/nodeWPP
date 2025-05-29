@@ -50,9 +50,18 @@ vcfFile.addEventListener('change', async (event) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
         const vcfContent = e.target.result;
-        contacts = parseVcfContent(vcfContent); // Preenche o array de contatos
-        saveContactsToLocalStorage(contacts); // Salva os contatos no localStorage
-        renderContactList(contacts); // Renderiza a lista inicial
+        const newContacts = parseVcfContent(vcfContent); // Extrai os novos contatos
+
+        // Adiciona os novos contatos, evitando duplicatas
+        newContacts.forEach(newContact => {
+            const isDuplicate = contacts.some(existingContact => existingContact.phoneNumber === newContact.phoneNumber);
+            if (!isDuplicate) {
+                contacts.push(newContact);
+            }
+        });
+
+        saveContactsToLocalStorage(contacts); // Salva os contatos atualizados no localStorage
+        renderContactList(contacts); // Renderiza a lista atualizada
     };
     reader.readAsText(file);
 });
