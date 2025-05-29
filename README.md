@@ -8,7 +8,7 @@ This project is a simple web application built with Node.js, Express, and whatsa
 *   **Add Contacts Individually:** Add contacts one by one via a form.
 *   **Search Contacts:** Filter contacts by name or phone number.
 *   **Select All/Deselect All:** Quickly select or deselect all contacts.
-*   **Personalized Messages:** Use `[name]` placeholder in the message to personalize messages.
+*   **Personalized Messages:** Use `[name]` or `[greeting]` placeholder in the message to personalize messages.
 *   **Test Mode:** Simulate message sending without actually sending them.
 *   **Message Status:** Displays the status of each message sent in a modal window.
 *   **Local Storage:** Contacts are saved in the browser's local storage.
