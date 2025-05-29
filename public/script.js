@@ -220,12 +220,136 @@ deselectAllButton.addEventListener('click', () => {
 
 // Antes do envio do formulário, atualize o campo de contatos selecionados
 const form = document.querySelector('form');
+// Function to get greetings based on language and time of day
+function getGreetings(languageCode) {
+    const now = new Date();
+    const hour = now.getHours();
+
+    const greetings = {
+        'en': { // English
+            morning: 'Good morning',
+            afternoon: 'Good afternoon',
+            evening: 'Good evening'
+        },
+        'es': { // Spanish
+            morning: 'Buenos días',
+            afternoon: 'Buenas tardes',
+            evening: 'Buenas noches'
+        },
+        'fr': { // French
+            morning: 'Bonjour',
+            afternoon: 'Bon après-midi',
+            evening: 'Bonsoir'
+        },
+        'de': { // German
+            morning: 'Guten Morgen',
+            afternoon: 'Guten Tag',
+            evening: 'Guten Abend'
+        },
+        'ja': { // Japanese
+            morning: 'おはようございます', // Ohayō gozaimasu
+            afternoon: 'こんにちは', // Konnichiwa
+            evening: 'こんばんは' // Konbanwa
+        },
+        'zh': { // Chinese (Simplified)
+            morning: '早上好', // Zǎoshang hǎo
+            afternoon: '下午好', // Xiàwǔ hǎo
+            evening: '晚上好' // Wǎnshàng hǎo
+        },
+        'pt': { // Portuguese
+            morning: 'Bom dia',
+            afternoon: 'Boa tarde',
+            evening: 'Boa noite'
+        },
+        'ru': { // Russian
+            morning: 'Доброе утро', // Dobroye utro
+            afternoon: 'Добрый день', // Dobryy den'
+            evening: 'Добрый вечер' // Dobryy vecher
+        },
+        'ar': { // Arabic
+            morning: 'صباح الخير', // Sabah al-khair
+            afternoon: 'مساء الخير', // Masa' al-khair
+            evening: 'مساء الخير' // Masa' al-khair (same as afternoon)
+        },
+        'it': { // Italian
+            morning: 'Buongiorno',
+            afternoon: 'Buon pomeriggio',
+            evening: 'Buonasera'
+        },
+        'ko': { // Korean
+            morning: '좋은 아침', // Joeun achim
+            afternoon: '좋은 오후', // Joeun ohu
+            evening: '좋은 저녁' // Joeun jeonyeok
+        },
+        'hi': { // Hindi
+            morning: 'शुभ प्रभात', // Shubh Prabhat
+            afternoon: 'शुभ दोपहर', // Shubh Dopahar
+            evening: 'शुभ संध्या' // Shubh Sandhya
+        },
+        'tr': { // Turkish
+            morning: 'Günaydın',
+            afternoon: 'İyi öğleden sonra',
+            evening: 'İyi akşamlar'
+        },
+        'nl': { // Dutch
+            morning: 'Goedemorgen',
+            afternoon: 'Goedemiddag',
+            evening: 'Goedenavond'
+        },
+        'sv': { // Swedish
+            morning: 'God morgon',
+            afternoon: 'God eftermiddag',
+            evening: 'God kväll'
+        },
+        'pl': { // Polish
+            morning: 'Dzień dobry',
+            afternoon: 'Dzień dobry (afternoon)',
+            evening: 'Dobry wieczór'
+        },
+        'da': { // Danish
+            morning: 'God morgen',
+            afternoon: 'God eftermiddag',
+            evening: 'God aften'
+        },
+        'no': { // Norwegian
+            morning: 'God morgen',
+            afternoon: 'God ettermiddag',
+            evening: 'God kveld'
+        },
+        'fi': { // Finnish
+            morning: 'Hyvää huomenta',
+            afternoon: 'Hyvää iltapäivää',
+            evening: 'Hyvää iltaa'
+        },
+         'id': { // Indonesian
+            morning: 'Selamat pagi',
+            afternoon: 'Selamat siang',
+            evening: 'Selamat malam'
+        }
+    };
+
+    const language = languageCode || 'en'; // Default to English if no language code provided. You'll need a way to detect this from contact or user settings
+
+    let timeOfDay = 'morning';
+    if (hour >= 12 && hour < 18) {
+        timeOfDay = 'afternoon';
+    } else if (hour >= 18) {
+        timeOfDay = 'evening';
+    }
+
+    if (greetings[language] && greetings[language][timeOfDay]) {
+        return greetings[language][timeOfDay];
+    } else {
+        return greetings['en']; // Fallback to English if translation is missing
+    }
+}
+
 form.addEventListener('submit', function (event) {
-    event.preventDefault(); // Evita o envio padrão do formulário
+    event.preventDefault();
 
     const contactsToSend = [];
     contacts.forEach((contact) => {
-       if (selectedContacts.get(contact.labelText)) {
+        if (selectedContacts.get(contact.labelText)) {
             contactsToSend.push(contact);
         }
     });
@@ -233,41 +357,30 @@ form.addEventListener('submit', function (event) {
     const testModeCheckbox = document.getElementById('testMode');
     const testMode = testModeCheckbox.checked;
 
-    let messageContent = document.getElementById('message').value; // Obtém o conteúdo da mensagem
+    let messageContent = document.getElementById('message').value;
 
-    // Função para obter a saudação com base na hora do dia
-    function getGreeting() {
-        const now = new Date();
-        const hour = now.getHours();
+    // **Crucially, you need to determine the languageCode for each contact.**  This is a placeholder.
+    // In a real app, you might store the preferred language for each contact in your `contacts` array,
+    // get it from browser settings, or use a language detection library.
+    // Example:  contact.languageCode.  If you don't have this info, remove the languageCode parameter.
+    const languageCode = 'pt';  // Replace with dynamic language detection.  IMPORTANT!
 
-        if (hour >= 6 && hour < 12) {
-            return "Bom dia";
-        } else if (hour >= 12 && hour < 18) {
-            return "Boa tarde";
-        } else {
-            return "Boa noite";
-        }
-    }
-
-    // Substitui [greeting] (case-insensitive) pela saudação apropriada
-    messageContent = messageContent.replace(/\[greeting]/gi, getGreeting());
+    messageContent = messageContent.replace(/\[greeting]/gi, getGreetings(languageCode));
 
 
-    // Enviar dados para o servidor (exemplo com fetch)
     fetch('/upload', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            contacts: contactsToSend, // Envia apenas os contatos selecionados
-            message: messageContent, // Envia o conteúdo da mensagem
+            contacts: contactsToSend,
+            message: messageContent,
             testMode: testMode
         })
     })
-        .then(response => response.json()) // Espera uma resposta JSON
+        .then(response => response.json())
         .then(data => {
-            // Limpa o conteúdo anterior
             messageText.innerHTML = '';
 
             data.results.forEach(result => {
@@ -275,7 +388,6 @@ form.addEventListener('submit', function (event) {
                 const status = result.status;
                 const message = result.message;
 
-                // Cria elementos HTML usando DOM
                 const resultElement = document.createElement('div');
 
                 const contactDiv = document.createElement('div');
@@ -322,8 +434,8 @@ form.addEventListener('submit', function (event) {
                 messageValue.classList.add('formattedMessage');
                 messageValue.textContent = message;
 
-                if(testMode){
-                   messageValue.textContent = "[TESTE] " + messageValue.textContent;
+                if (testMode) {
+                    messageValue.textContent = "[TESTE] " + messageValue.textContent;
                 }
 
                 messageDiv.appendChild(messageLabel);
@@ -333,11 +445,9 @@ form.addEventListener('submit', function (event) {
                 resultElement.appendChild(statusDiv);
                 resultElement.appendChild(messageDiv);
 
-                // Adiciona o elemento ao container de resultados
                 messageText.appendChild(resultElement);
             });
 
-            // Exibe a janela flutuante
             messageModal.style.display = "block";
         })
         .catch(error => {
