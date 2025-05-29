@@ -71,6 +71,128 @@ footer {
     width: 100%;
 }
 
+#contactList {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 5px;
+    margin-bottom: 10px;
+}
+
+#contactList label {
+    display: block;
+    margin-bottom: 2px;
+}
+
+/* Estilos para a janela flutuante */
+#messageModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Fundo semi-transparente */
+    z-index: 1000;
+    overflow: auto;
+}
+
+#messageModalContent {
+    position: relative;
+    background-color: #fefefe;
+    margin: auto auto;
+    /* Centraliza verticalmente e horizontalmente */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    animation-name: animatetop;
+    animation-duration: 0.4s
+}
+
+
+
+/* Animação para aparecer a janela */
+@keyframes animatetop {
+    from {
+        top: -300px;
+        opacity: 0
+    }
+
+    to {
+        top: 0;
+        opacity: 1
+    }
+}
+
+/* Botão de fechar */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Estilos para a mensagem dentro da janela */
+#messageText {
+    overflow-y: auto;
+    /* Adiciona scroll vertical se a mensagem for muito longa */
+    max-height: 400px;
+    /* Define uma altura máxima para a mensagem */
+    white-space: pre-wrap;
+    /* Mantém quebras de linha */
+}
+
+#messageText > div {
+    border: 1px solid;
+    height: fit-content;
+    border-radius: 10px;
+    margin: 10px;
+    padding: 10px;
+}
+
+/* Estilos para formatar a mensagem */
+.formattedMessage {
+    font-family: monospace;
+    /* Fonte monoespaçada para melhor visualização do código */
+    background-color: #f0f0f0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    overflow-x: auto;
+    /* Adiciona barra de rolagem horizontal se a mensagem for muito longa */
+    white-space: pre-wrap;
+    /* Mantém quebras de linha e espaços */
+}
+
+/* Estilo para imagem formatada */
+.formattedImage {
+    max-width: 100%;
+    /* Garante que a imagem não ultrapasse a largura do container */
+    height: auto;
+    /* Mantém a proporção da imagem */
+    border: 1px solid #ccc;
+    /* Adiciona uma borda para melhor visualização */
+    border-radius: 5px;
+    /* Arredonda as bordas */
+    margin-top: 5px;
+    /* Adiciona um espaço acima da imagem */
+    display: block;
+    /* Garante que a imagem se comporte como um bloco */
+}
+
 /* Adiciona responsividade para telas landscape em dispositivos móveis */
 @media screen and (max-width: 768px) and (orientation: landscape) {
     .container {

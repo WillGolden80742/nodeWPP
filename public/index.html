@@ -11,119 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Estilo customizado -->
     <link rel="stylesheet" href="style.css">
-    <style>
-        #contactList {
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            padding: 5px;
-            margin-bottom: 10px;
-        }
 
-        #contactList label {
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        /* Estilos para a janela flutuante */
-        #messageModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            /* Fundo semi-transparente */
-            z-index: 1000;
-            overflow: auto;
-        }
-
-        #messageModalContent {
-            position: relative;
-            background-color: #fefefe;
-            margin: 15% auto;
-            /* Centraliza verticalmente e horizontalmente */
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 600px;
-            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-            animation-name: animatetop;
-            animation-duration: 0.4s
-        }
-
-        /* Animação para aparecer a janela */
-        @keyframes animatetop {
-            from {
-                top: -300px;
-                opacity: 0
-            }
-
-            to {
-                top: 0;
-                opacity: 1
-            }
-        }
-
-        /* Botão de fechar */
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        /* Estilos para a mensagem dentro da janela */
-        #messageText {
-            overflow-y: auto;
-            /* Adiciona scroll vertical se a mensagem for muito longa */
-            max-height: 400px;
-            /* Define uma altura máxima para a mensagem */
-            white-space: pre-wrap;
-            /* Mantém quebras de linha */
-        }
-
-        /* Estilos para formatar a mensagem */
-        .formattedMessage {
-            font-family: monospace;
-            /* Fonte monoespaçada para melhor visualização do código */
-            background-color: #f0f0f0;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            margin-top: 5px;
-            margin-bottom: 10px;
-            overflow-x: auto;
-            /* Adiciona barra de rolagem horizontal se a mensagem for muito longa */
-            white-space: pre-wrap;
-            /* Mantém quebras de linha e espaços */
-        }
-
-        /* Estilo para imagem formatada */
-        .formattedImage {
-            max-width: 100%;
-            /* Garante que a imagem não ultrapasse a largura do container */
-            height: auto;
-            /* Mantém a proporção da imagem */
-            border: 1px solid #ccc;
-            /* Adiciona uma borda para melhor visualização */
-            border-radius: 5px;
-            /* Arredonda as bordas */
-            margin-top: 5px;
-            /* Adiciona um espaço acima da imagem */
-            display: block;
-            /* Garante que a imagem se comporte como um bloco */
-        }
-    </style>
 </head>
 
 <body>
@@ -264,21 +152,27 @@
 
             contactList.forEach((contact, index) => {
                 const contactId = `contact-${index}`; // ID único para cada contato
-                const isChecked = selectedContacts.has(contactId) ? selectedContacts.get(contactId) : false; // Verifica se o contato já está no Map
+                //const isChecked = selectedContacts.has(contactId) ? selectedContacts.get(contactId) : false; // Verifica se o contato já está no Map
 
                 const label = document.createElement('label');
                 label.innerHTML = `
-                    <input type="checkbox" id="${contactId}" data-index="${index}" ${isChecked ? 'checked' : ''}>
+                    <input type="checkbox" id="${contactId}" data-index="${index}">
                     ${contact.fullName} (${contact.phoneNumber})
                 `;
 
                 contactListDiv.appendChild(label);
 
-                // Adiciona um ouvinte de evento para cada checkbox
                 const checkbox = label.querySelector('input[type="checkbox"]');
+                const labelText = label.textContent.trim(); // Pega o texto do label
+
+                const isChecked = selectedContacts.has(labelText) ? selectedContacts.get(labelText) : false; //Verifica o map
+                checkbox.checked = isChecked;  //seta o valor do checkbox
+
+                // Adiciona um ouvinte de evento para cada checkbox
                 checkbox.addEventListener('change', (event) => {
                     // Atualiza o Map com o estado do checkbox
-                    selectedContacts.set(contactId, event.target.checked);
+                    selectedContacts.set(labelText, event.target.checked);
+
                 });
             });
         }
@@ -295,7 +189,10 @@
         selectAllButton.addEventListener('click', () => {
             contacts.forEach((contact, index) => {
                 const contactId = `contact-${index}`;
-                selectedContacts.set(contactId, true); // Define todos como selecionados no Map
+                const label = document.querySelector(`#${contactId}`).parentElement; // Seleciona o label pai
+                const labelText = label.textContent.trim();
+                selectedContacts.set(labelText, true); // Define todos como selecionados no Map
+
             });
             renderContactList(contacts); // Renderiza a lista com todos selecionados
         });
@@ -303,7 +200,9 @@
         deselectAllButton.addEventListener('click', () => {
             contacts.forEach((contact, index) => {
                 const contactId = `contact-${index}`;
-                selectedContacts.set(contactId, false); // Define todos como não selecionados no Map
+                const label = document.querySelector(`#${contactId}`).parentElement; // Seleciona o label pai
+                const labelText = label.textContent.trim();
+                selectedContacts.set(labelText, false); // Define todos como não selecionados no Map
             });
             renderContactList(contacts); // Renderiza a lista com todos desmarcados
         });
@@ -316,7 +215,10 @@
             const contactsToSend = [];
             contacts.forEach((contact, index) => {
                 const contactId = `contact-${index}`;
-                if (selectedContacts.get(contactId)) {
+                const label = document.querySelector(`#${contactId}`).parentElement; // Seleciona o label pai
+                const labelText = label.textContent.trim();
+
+                if (selectedContacts.get(labelText)) {
                     contactsToSend.push(contact); // Adiciona o contato ao array se estiver selecionado
                 }
             });
