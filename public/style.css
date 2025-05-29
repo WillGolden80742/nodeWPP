@@ -113,8 +113,6 @@ footer {
     animation-duration: 0.4s
 }
 
-
-
 /* Animação para aparecer a janela */
 @keyframes animatetop {
     from {
@@ -150,16 +148,20 @@ footer {
     max-height: 400px;
     /* Define uma altura máxima para a mensagem */
     white-space: pre-wrap;
-    /* Mantém quebras de linha */
 }
 
 #messageText > div {
+    display: flex;
+    flex-direction: column;
     border: 1px solid;
     height: fit-content;
     border-radius: 10px;
     margin: 10px;
     padding: 10px;
+    gap: 0 !important;
+    border: 1px solid #ced4da;
 }
+
 
 /* Estilos para formatar a mensagem */
 .formattedMessage {
@@ -174,16 +176,15 @@ footer {
     overflow-x: auto;
     /* Adiciona barra de rolagem horizontal se a mensagem for muito longa */
     white-space: pre-wrap;
-    /* Mantém quebras de linha e espaços */
 }
 
 /* Estilo para imagem formatada */
 .formattedImage {
-    max-width: 100%;
+    max-width: 32px;
     /* Garante que a imagem não ultrapasse a largura do container */
-    height: auto;
+    height: 32px;
     /* Mantém a proporção da imagem */
-    border: 1px solid #ccc;
+    border: 0px solid #ccc;
     /* Adiciona uma borda para melhor visualização */
     border-radius: 5px;
     /* Arredonda as bordas */
