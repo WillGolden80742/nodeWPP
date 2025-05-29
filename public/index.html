@@ -25,6 +25,60 @@
            display: block;
            margin-bottom: 2px;
        }
+
+       /* Estilos para a janela flutuante */
+       #messageModal {
+           display: none;
+           position: fixed;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%;
+           background-color: rgba(0, 0, 0, 0.5); /* Fundo semi-transparente */
+           z-index: 1000;
+           overflow: auto;
+       }
+
+       #messageModalContent {
+           position: relative;
+           background-color: #fefefe;
+           margin: 15% auto; /* Centraliza verticalmente e horizontalmente */
+           padding: 20px;
+           border: 1px solid #888;
+           width: 80%;
+           max-width: 600px;
+           box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+           animation-name: animatetop;
+           animation-duration: 0.4s
+       }
+
+       /* Animação para aparecer a janela */
+       @keyframes animatetop {
+           from {top:-300px; opacity:0}
+           to {top:0; opacity:1}
+       }
+
+       /* Botão de fechar */
+       .close {
+           color: #aaa;
+           float: right;
+           font-size: 28px;
+           font-weight: bold;
+       }
+
+       .close:hover,
+       .close:focus {
+           color: black;
+           text-decoration: none;
+           cursor: pointer;
+       }
+
+       /* Estilos para a mensagem dentro da janela */
+       #messageText {
+           overflow-y: auto; /* Adiciona scroll vertical se a mensagem for muito longa */
+           max-height: 400px; /* Define uma altura máxima para a mensagem */
+           white-space: pre-wrap; /* Mantém quebras de linha */
+       }
    </style>
 </head>
 
@@ -70,12 +124,37 @@
         © 2024 WhatsApp Sender. Todos os direitos reservados.
     </footer>
 
+    <!-- Janela flutuante (Modal) -->
+    <div id="messageModal">
+        <div id="messageModalContent">
+            <span class="close">×</span>
+            <h2>Resultado do Envio</h2>
+            <div id="messageText"></div>
+        </div>
+    </div>
+
     <script>
         const vcfFile = document.getElementById('vcfFile');
         const contactListDiv = document.getElementById('contactList');
         const searchInput = document.getElementById('search');
         const selectAllButton = document.getElementById('selectAll');
         const deselectAllButton = document.getElementById('deselectAll');
+        const messageModal = document.getElementById('messageModal');
+        const messageModalContent = document.getElementById('messageModalContent');
+        const messageText = document.getElementById('messageText');
+
+        // Função para fechar a janela flutuante
+        document.querySelector('.close').addEventListener('click', function() {
+            messageModal.style.display = "none";
+        });
+
+        // Fecha a janela se o usuário clicar fora dela
+        window.onclick = function(event) {
+            if (event.target == messageModal) {
+                messageModal.style.display = "none";
+            }
+        }
+
 
         let contacts = []; // Armazena todos os contatos extraídos do VCF
         let selectedContacts = new Map(); // Armazena o estado dos checkboxes (true/false)
@@ -205,11 +284,14 @@
             })
             .then(response => response.text())
             .then(data => {
-                alert(data); // Exibe a resposta do servidor
+                // Exibe a resposta do servidor na janela flutuante
+                messageText.textContent = data;
+                messageModal.style.display = "block";
             })
             .catch(error => {
                 console.error('Erro:', error);
-                alert('Ocorreu um erro ao enviar as mensagens.');
+                messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
+                messageModal.style.display = "block";
             });
         });
     </script>

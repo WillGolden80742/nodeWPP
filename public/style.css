@@ -6,18 +6,18 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: 100vh; /* Garante que o rodapé fique no fundo da tela */
+    min-height: 100vh;
 }
 
 .container {
     width: 90%;
-    max-width: 768px; /* Ajusta para telas menores em landscape */
+    max-width: 768px;
     padding: 20px;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     margin-top: 20px;
-    margin-bottom: 60px; /* Espaço para o rodapé */
+    margin-bottom: 60px;
 }
 
 h1 {
@@ -74,26 +74,29 @@ footer {
 /* Adiciona responsividade para telas landscape em dispositivos móveis */
 @media screen and (max-width: 768px) and (orientation: landscape) {
     .container {
-        width: 95%; /* Aumenta a largura para preencher mais a tela */
-        margin-top: 10px; /* Reduz a margem superior */
-        margin-bottom: 50px; /* Ajusta o espaço para o rodapé */
-        padding: 10px;   /* Reduz o padding */
+        width: 95%;
+        margin-top: 10px;
+        margin-bottom: 50px;
+        padding: 10px;
     }
+
     h1 {
-        font-size: 1.5rem; /* Reduz o tamanho da fonte do título */
-        margin-bottom: 10px; /* Reduz a margem inferior do título */
+        font-size: 1.5rem;
+        margin-bottom: 10px;
     }
+
     label {
-        font-size: 0.9rem; /* Reduz o tamanho da fonte das labels */
+        font-size: 0.9rem;
     }
+
     input[type="file"],
     textarea {
-        padding: 6px; /* Reduz o padding dos inputs */
-        margin-bottom: 10px; /* Reduz a margem inferior dos inputs */
+        padding: 6px;
+        margin-bottom: 10px;
     }
 
     button[type="submit"] {
-         padding: 8px 16px; /* Reduz o padding do botão */
-         font-size: 0.9rem;
+        padding: 8px 16px;
+        font-size: 0.9rem;
     }
 }
