@@ -25,12 +25,7 @@
                 <input type="file" class="form-control" id="vcfFile" name="vcfFile" accept=".vcf">
             </div>
 
-            <div class="mb-3">
-                <label for="search" class="form-label"><i class="mdi mdi-magnify"></i> Pesquisar Contato:</label>
-                <input type="text" class="form-control" id="search" placeholder="Digite para pesquisar">
-            </div>
-
-            <!-- Formulário para adicionar contato individual -->
+                        <!-- Formulário para adicionar contato individual -->
             <div class="mb-3">
                 <label class="form-label"><i class="mdi mdi-account-plus"></i> Adicionar Contato Individual:</label>
                 <div class="row g-2">
@@ -45,6 +40,17 @@
                                 class="mdi mdi-plus"></i> Adicionar</button>
                     </div>
                 </div>
+            </div>
+
+
+            <div class="mb-3">
+                <label for="search" class="form-label"><i class="mdi mdi-magnify"></i> Pesquisar Contato:</label>
+                <input type="text" class="form-control" id="search" placeholder="Digite para pesquisar">
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="testMode" name="testMode">
+                <label class="form-check-label" for="testMode"><i class="mdi mdi-test-tube"></i> Modo de Teste (Não envia mensagens reais)</label>
             </div>
 
             <div class="mb-3">
@@ -63,7 +69,7 @@
 
             <div class="mb-3">
                 <label for="message" class="form-label"><i class="mdi mdi-message-text"></i> Mensagem</label>
-                (use <b>[name]</b> para o nome do contato):
+                use <b>[name]</b> para o nome do contato:
                 <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
             </div>
 

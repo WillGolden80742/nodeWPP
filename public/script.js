@@ -211,6 +211,9 @@ form.addEventListener('submit', function (event) {
         }
     });
 
+    const testModeCheckbox = document.getElementById('testMode');
+    const testMode = testModeCheckbox.checked;
+
     const messageContent = document.getElementById('message').value; // Obtém o conteúdo da mensagem
 
     // Enviar dados para o servidor (exemplo com fetch)
@@ -221,7 +224,8 @@ form.addEventListener('submit', function (event) {
         },
         body: JSON.stringify({
             contacts: contactsToSend, // Envia apenas os contatos selecionados
-            message: messageContent // Envia o conteúdo da mensagem
+            message: messageContent, // Envia o conteúdo da mensagem
+            testMode: testMode 
         })
     })
         .then(response => response.json()) // Espera uma resposta JSON

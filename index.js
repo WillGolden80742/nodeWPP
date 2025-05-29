@@ -50,12 +50,14 @@ app.post('/upload', async (req, res) => {
 
     const contacts = req.body.contacts; // Pega a lista de contatos selecionados do corpo da requisição
     const messageTemplate = req.body.message; // Pega o conteúdo da mensagem do corpo da requisição
+    const testMode = req.body.testMode || false; // Pega o estado do modo de teste
 
     if (!contacts || contacts.length === 0) {
         return res.status(400).send('Nenhum contato selecionado.');
     }
 
     console.log(`Iniciando envio de mensagens para ${contacts.length} contatos...`);
+    console.log(`Modo de Teste: ${testMode}`);
 
     async function sendMessages() {
         const results = []; // Array para armazenar os resultados de cada envio
@@ -69,8 +71,11 @@ app.post('/upload', async (req, res) => {
             const personalizedMessage = messageTemplate.replace(/\[name\]/gi, fullName);
 
             try {
-                // await client.sendMessage(chatId, personalizedMessage);
-                console.log(`Mensagem enviada para ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);
+                if (!testMode) {
+                    await client.sendMessage(chatId, personalizedMessage);
+                }
+
+                console.log(`Mensagem ${testMode ? '(TESTE) ' : ''}enviada para ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);
                 results.push({ contact: fullName, status: 'success', message: personalizedMessage }); // Salva a mensagem enviada
                 successCount++;
             } catch (err) {
