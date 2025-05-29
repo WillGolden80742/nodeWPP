@@ -119,7 +119,7 @@ function renderContactList(contactList) {
         label.innerHTML = `
             <input type="checkbox" id="${contactId}" data-index="${index}">
             ${contact.fullName} (${contact.phoneNumber})
-            <button type="button" class="btn btn-sm btn-danger deleteContactBtn" data-index="${index}"><i class="mdi mdi-delete"></i></button>
+            <button type="button" class="btn btn-sm deleteContactBtn" data-index="${index}"><i class="mdi mdi-delete"></i></button>
         `;
 
         contactListDiv.appendChild(label);
