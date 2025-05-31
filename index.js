@@ -9,7 +9,7 @@ const port = 3000;
 
 app.use(fileUpload());
 app.use(express.static('public'));
-app.use(express.json()); // Middleware para analisar o corpo da requisição como JSON
+app.use(express.json({ limit: '1024mb' })); // Increased JSON limit
 
 // Inicializa o cliente WhatsApp
 const client = new Client({
