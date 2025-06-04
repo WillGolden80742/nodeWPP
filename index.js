@@ -4,6 +4,7 @@ const express = require('express');
 const fileUpload = require('express-fileupload');
 const fs = require('fs').promises; // Use promises for fs
 const path = require('path'); // Import the 'path' module
+const zlib = require('zlib');  // Import the zlib module
 const app = express();
 const port = 3000;
 
@@ -13,7 +14,7 @@ app.use(express.json({ limit: '1024mb' })); // Increased JSON limit
 
 // Define the data directory and file path
 const dataDir = path.join(__dirname, 'data');
-const contactsFilePath = path.join(dataDir, 'contacts.json');
+const contactsFilePath = path.join(dataDir, 'contacts.json.gz'); // Store as .json.gz
 
 // Create the data directory if it doesn't exist
 async function ensureDataDirectoryExists() {
@@ -26,30 +27,54 @@ async function ensureDataDirectoryExists() {
     }
 }
 
-// Load contacts from the JSON file
+// Load contacts from the compressed JSON file
 async function loadContactsFromServer() {
     try {
-        const data = await fs.readFile(contactsFilePath, 'utf8');
-        return JSON.parse(data);
+        const compressedData = await fs.readFile(contactsFilePath);  // Read compressed data
+
+        // Decompress the data using gunzip
+        const jsonData = await new Promise((resolve, reject) => {
+            zlib.gunzip(compressedData, (err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data.toString('utf8'));  // Convert Buffer to string
+                }
+            });
+        });
+
+        return JSON.parse(jsonData);
     } catch (error) {
         if (error.code === 'ENOENT') {
             // File doesn't exist, return an empty array
             return [];
         } else {
-            console.error('Error reading contacts file:', error);
+            console.error('Error reading or decompressing contacts file:', error);
             return [];  // Or handle the error more gracefully
         }
     }
 }
 
-// Save contacts to the JSON file
+// Save contacts to the compressed JSON file
 async function saveContactsToServer(contacts) {
     try {
         const jsonData = JSON.stringify(contacts, null, 2); // Pretty-print the JSON
-        await fs.writeFile(contactsFilePath, jsonData, 'utf8');
-        console.log('Contacts saved to server.');
+
+        // Compress the JSON data using gzip
+        const compressedData = await new Promise((resolve, reject) => {
+            zlib.gzip(jsonData, (err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data);
+                }
+            });
+        });
+
+        await fs.writeFile(contactsFilePath, compressedData);  // Write compressed data
+        console.log('Contacts saved to server (compressed).');
     } catch (error) {
-        console.error('Error writing contacts file:', error);
+        console.error('Error compressing or writing contacts file:', error);
     }
 }
 
