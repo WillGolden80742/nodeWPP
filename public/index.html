@@ -20,14 +20,6 @@
         <form action="/upload" method="post" enctype="multipart/form-data">
 
             <div class="mb-3">
-                <label class="form-label"><i class="mdi mdi-file-document"></i> Selecione o tipo de arquivo:</label>
-                <select class="form-select" id="fileType" name="fileType">
-                    <option value="vcf">VCF (.vcf)</option>
-                    <option value="csv">CSV (.csv)</option>
-                </select>
-            </div>
-
-            <div class="mb-3">
                 <label for="fileInput" class="form-label"><i class="mdi mdi-upload"></i> Selecione o
                     arquivo:</label>
                 <input type="file" class="form-control" id="fileInput" name="fileInput" accept=".csv,.vcf">

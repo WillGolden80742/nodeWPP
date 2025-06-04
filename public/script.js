@@ -1,6 +1,5 @@
 // script.js
 const fileInput = document.getElementById('fileInput');
-const fileTypeSelect = document.getElementById('fileType');
 const contactListDiv = document.getElementById('contactList');
 const searchInput = document.getElementById('search');
 const selectAllButton = document.getElementById('selectAll');
@@ -72,20 +71,26 @@ messageTextarea.addEventListener('input', () => {
     saveMessageToLocalStorage(messageTextarea.value);
 });
 
-fileTypeSelect.addEventListener('change', () => {
-    if (fileTypeSelect.value === 'csv') {
-        csvColumnSelectDiv.style.display = 'block';
-    } else {
-        csvColumnSelectDiv.style.display = 'none';
-    }
-});
 
 
 fileInput.addEventListener('change', async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    const fileType = fileTypeSelect.value;
+    const fileName = file.name.toLowerCase();
+    let fileType = null;
+
+    if (fileName.endsWith('.csv')) {
+        fileType = 'csv';
+        csvColumnSelectDiv.style.display = 'block';
+    } else if (fileName.endsWith('.vcf')) {
+        fileType = 'vcf';
+        csvColumnSelectDiv.style.display = 'none';
+
+    } else {
+        alert('Tipo de arquivo não suportado. Por favor, selecione um arquivo .csv ou .vcf.');
+        return;
+    }
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -535,6 +540,7 @@ form.addEventListener('submit', function (event) {
             messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
             messageModal.style.display = "block";
         });
+        testModeCheckbox.checked = true;
 });
 
 // Adicionar contato individualmente
