@@ -17,7 +17,7 @@
 <body>
     <div class="container">
         <h1><i class="mdi mdi-whatsapp"></i> Enviar Mensagens WhatsApp</h1>
-        <form action="/upload" method="post" enctype="multipart/form-data">
+        <form action="/upload" method="post" enctype="multipart/form-data" id="mainForm">
 
             <div class="mb-3">
                 <label for="fileInput" class="form-label"><i class="mdi mdi-upload"></i> Selecione o
@@ -41,6 +41,8 @@
                             </select>
                         </div>
                     </div>
+                    <button type="button" class="btn btn-primary" id="loadContactsBtn"><i
+                            class="mdi mdi-upload"></i> Carregar Contatos</button>
                 </div>
             </div>
 
@@ -53,7 +55,7 @@
                         <input type="text" class="form-control" id="newContactName" placeholder="Nome">
                     </div>
                     <div class="col-md">
-                        <input type="tel" class="form-control" id="newContactPhone" placeholder="Telefone">
+                        <input type="tel" class="form-control" id="newContactPhone" placeholder="Telefone" type="number">
                     </div>
                     <div class="col-md-auto">
                         <button type="button" class="btn btn-success" id="addContactBtn"><i
@@ -98,7 +100,8 @@
             </div>
 
             <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-success"><i class="mdi mdi-send"></i> Enviar Mensagens</button>
+                <button type="submit" class="btn btn-success" id="sendMessageBtn"><i class="mdi mdi-send"></i> Enviar
+                    Mensagens</button>
             </div>
         </form>
     </div>

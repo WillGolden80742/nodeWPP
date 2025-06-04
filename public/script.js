@@ -14,6 +14,9 @@ const addContactBtn = document.getElementById('addContactBtn');
 const csvColumnSelectDiv = document.getElementById('csvColumnSelect');
 const nameColumnSelect = document.getElementById('nameColumn');
 const phoneColumnSelect = document.getElementById('phoneColumn');
+const loadContactsBtn = document.getElementById('loadContactsBtn');
+const sendMessageBtn = document.getElementById('sendMessageBtn');
+const mainForm = document.getElementById('mainForm');
 
 
 const CONTACTS_STORAGE_KEY = 'whatsapp_sender_contacts';
@@ -34,6 +37,9 @@ window.onclick = function (event) {
 let contacts = [];
 let selectedContacts = new Map();
 let csvHeaders = [];  // Store CSV headers
+let fileType = null; // Store the file type (csv or vcf)
+let csvContent = null; // Store the CSV file content
+
 
 // Função para salvar os contatos no localStorage
 function saveContactsToLocalStorage(contacts) {
@@ -71,6 +77,8 @@ messageTextarea.addEventListener('input', () => {
     saveMessageToLocalStorage(messageTextarea.value);
 });
 
+//Disable the 'Enviar Mensagens' Button until Contacts loaded.
+sendMessageBtn.disabled = true;
 
 
 fileInput.addEventListener('change', async (event) => {
@@ -78,7 +86,7 @@ fileInput.addEventListener('change', async (event) => {
     if (!file) return;
 
     const fileName = file.name.toLowerCase();
-    let fileType = null;
+
 
     if (fileName.endsWith('.csv')) {
         fileType = 'csv';
@@ -86,7 +94,6 @@ fileInput.addEventListener('change', async (event) => {
     } else if (fileName.endsWith('.vcf')) {
         fileType = 'vcf';
         csvColumnSelectDiv.style.display = 'none';
-
     } else {
         alert('Tipo de arquivo não suportado. Por favor, selecione um arquivo .csv ou .vcf.');
         return;
@@ -94,29 +101,15 @@ fileInput.addEventListener('change', async (event) => {
 
     const reader = new FileReader();
     reader.onload = async (e) => {
-        const fileContent = e.target.result;
-        let newContacts = [];
+        csvContent = e.target.result;  //Store the content locally.
 
-        if (fileType === 'vcf') {
-            newContacts = parseVcfContent(fileContent);
-        } else if (fileType === 'csv') {
-            // Get headers and populate select elements
-            csvHeaders = await getCsvHeaders(fileContent);
+        if (fileType === 'csv') {
+            csvHeaders = await getCsvHeaders(csvContent);
             populateColumnSelects(csvHeaders);
-            newContacts = parseCsvContent(fileContent, nameColumnSelect.value, phoneColumnSelect.value);
-
+        } else {
+            //If is VCF then load contacts.
+            await loadContacts();
         }
-
-        // Adiciona os novos contatos, evitando duplicatas
-        newContacts.forEach(newContact => {
-            const isDuplicate = contacts.some(existingContact => existingContact.phoneNumber === newContact.phoneNumber);
-            if (!isDuplicate) {
-                contacts.push(newContact);
-            }
-        });
-
-        saveContactsToLocalStorage(contacts);
-        renderContactList(contacts);
     };
 
     if (fileType === 'csv') {
@@ -125,6 +118,36 @@ fileInput.addEventListener('change', async (event) => {
         reader.readAsText(file);
     }
 });
+
+// Add event listener for the "Carregar Contatos" button
+loadContactsBtn.addEventListener('click', async () => {
+    await loadContacts();
+    csvColumnSelectDiv.style.display = 'none';
+});
+
+async function loadContacts() {
+    let newContacts = [];
+
+    if (fileType === 'vcf') {
+        newContacts = parseVcfContent(csvContent); //Use locally stored value
+    } else if (fileType === 'csv') {
+        newContacts = parseCsvContent(csvContent, nameColumnSelect.value, phoneColumnSelect.value);
+    }
+
+    // Adiciona os novos contatos, evitando duplicatas
+    newContacts.forEach(newContact => {
+        const isDuplicate = contacts.some(existingContact => existingContact.phoneNumber === newContact.phoneNumber);
+        if (!isDuplicate) {
+            contacts.push(newContact);
+        }
+    });
+
+    saveContactsToLocalStorage(contacts);
+    renderContactList(contacts);
+
+    //Enable the 'Enviar Mensagens' button
+    sendMessageBtn.disabled = false;
+}
 
 
 // Function to get CSV headers
@@ -204,6 +227,12 @@ function parseCsvContent(csvContent, nameColumnIndex, phoneColumnIndex) {
 
         if (phoneNumber) {
             phoneNumber = phoneNumber.replace(/\D/g, '');  // Remove non-digit characters
+
+            //Check if phonenumber is a number.
+            if (!/^\d+$/.test(phoneNumber)) {
+                console.warn(`Número de telefone inválido encontrado: ${phoneNumber}. Ignorando.`);
+                continue; // Skip this contact if phone number is invalid
+            }
             contacts.push({
                 fullName,
                 phoneNumber
@@ -303,244 +332,124 @@ deselectAllButton.addEventListener('click', () => {
     renderContactList(contacts); // Renderiza a lista com todos desmarcados
 });
 
-// Antes do envio do formulário, atualize o campo de contatos selecionados
-const form = document.querySelector('form');
-// Function to get greetings based on language and time of day
-function getGreetings(languageCode) {
-    const now = new Date();
-    const hour = now.getHours();
-
-    const greetings = {
-        'en': { // English
-            morning: 'Good morning',
-            afternoon: 'Good afternoon',
-            evening: 'Good evening'
-        },
-        'es': { // Spanish
-            morning: 'Buenos días',
-            afternoon: 'Buenas tardes',
-            evening: 'Buenas noches'
-        },
-        'fr': { // French
-            morning: 'Bonjour',
-            afternoon: 'Bon après-midi',
-            evening: 'Bonsoir'
-        },
-        'de': { // German
-            morning: 'Guten Morgen',
-            afternoon: 'Guten Tag',
-            evening: 'Guten Abend'
-        },
-        'ja': { // Japanese
-            morning: 'おはようございます', // Ohayō gozaimasu
-            afternoon: 'こんにちは', // Konnichiwa
-            evening: 'こんばんは' // Konbanwa
-        },
-        'zh': { // Chinese (Simplified)
-            morning: '早上好', // Zǎoshang hǎo
-            afternoon: '下午好', // Xiàwǔ hǎo
-            evening: '晚上好' // Wǎnshàng hǎo
-        },
-        'pt': { // Portuguese
-            morning: 'Bom dia',
-            afternoon: 'Boa tarde',
-            evening: 'Boa noite'
-        },
-        'ru': { // Russian
-            morning: 'Доброе утро', // Dobroye utro
-            afternoon: 'Добрый день', // Dobryy den'
-            evening: 'Добрый вечер' // Dobryy vecher
-        },
-        'ar': { // Arabic
-            morning: 'صباح الخير', // Sabah al-khair
-            afternoon: 'مساء الخير', // Masa' al-khair
-            evening: 'مساء الخير' // Masa' al-khair (same as afternoon)
-        },
-        'it': { // Italian
-            morning: 'Buongiorno',
-            afternoon: 'Buon pomeriggio',
-            evening: 'Buonasera'
-        },
-        'ko': { // Korean
-            morning: '좋은 아침', // Joeun achim
-            afternoon: '좋은 오후', // Joeun ohu
-            evening: '좋은 저녁' // Joeun jeonyeok
-        },
-        'hi': { // Hindi
-            morning: 'शुभ प्रभात', // Shubh Prabhat
-            afternoon: 'शुभ दोपहर', // Shubh Dopahar
-            evening: 'शुभ संध्या' // Shubh Sandhya
-        },
-        'tr': { // Turkish
-            morning: 'Günaydın',
-            afternoon: 'İyi öğleden sonra',
-            evening: 'İyi akşamlar'
-        },
-        'nl': { // Dutch
-            morning: 'Goedemorgen',
-            afternoon: 'Goedemiddag',
-            evening: 'Goedenavond'
-        },
-        'sv': { // Swedish
-            morning: 'God morgon',
-            afternoon: 'God eftermiddag',
-            evening: 'God kväll'
-        },
-        'pl': { // Polish
-            morning: 'Dzień dobry',
-            afternoon: 'Dzień dobry (afternoon)',
-            evening: 'Dobry wieczór'
-        },
-        'da': { // Danish
-            morning: 'God morgen',
-            afternoon: 'God eftermiddag',
-            evening: 'God aften'
-        },
-        'no': { // Norwegian
-            morning: 'God morgen',
-            afternoon: 'God ettermiddag',
-            evening: 'God kveld'
-        },
-        'fi': { // Finnish
-            morning: 'Hyvää huomenta',
-            afternoon: 'Hyvää iltapäivää',
-            evening: 'Hyvää iltaa'
-        },
-        'id': { // Indonesian
-            morning: 'Selamat pagi',
-            afternoon: 'Selamat siang',
-            evening: 'Selamat malam'
-        }
-    };
-
-    const language = languageCode || 'en'; // Default to English if no language code provided. You'll need a way to detect this from contact or user settings
-
-    let timeOfDay = 'morning';
-    if (hour >= 12 && hour < 18) {
-        timeOfDay = 'afternoon';
-    } else if (hour >= 18) {
-        timeOfDay = 'evening';
-    }
-
-    if (greetings[language] && greetings[language][timeOfDay]) {
-        return greetings[language][timeOfDay];
+// Intercept the form submission
+mainForm.addEventListener('submit', function (event) {
+    if (sendMessageBtn.disabled) {
+        event.preventDefault(); // Prevent form submission
+        alert('Por favor, carregue os contatos antes de enviar as mensagens.');
     } else {
-        return greetings['en']; // Fallback to English if translation is missing
-    }
-}
+        // Proceed with your existing submit logic here
+        event.preventDefault();
 
-form.addEventListener('submit', function (event) {
-    event.preventDefault();
-
-    const contactsToSend = [];
-    contacts.forEach((contact) => {
-        if (selectedContacts.get(contact.labelText)) {
-            contactsToSend.push(contact);
-        }
-    });
-
-    const testModeCheckbox = document.getElementById('testMode');
-    const testMode = testModeCheckbox.checked;
-
-    let messageContent = document.getElementById('message').value;
-
-    // **Crucially, you need to determine the languageCode for each contact.**  This is a placeholder.
-    // In a real app, you might store the preferred language for each contact in your `contacts` array,
-    // get it from browser settings, or use a language detection library.
-    // Example:  contact.languageCode.  If you don't have this info, remove the languageCode parameter.
-    const languageCode = 'pt';  // Replace with dynamic language detection.  IMPORTANT!
-
-    messageContent = messageContent.replace(/\[greeting]/gi, getGreetings(languageCode));
-
-
-    fetch('/upload', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            contacts: contactsToSend,
-            message: messageContent,
-            testMode: testMode
-        })
-    })
-        .then(response => response.json())
-        .then(data => {
-            messageText.innerHTML = '';
-
-            data.results.forEach(result => {
-                const contactName = result.contact;
-                const status = result.status;
-                const message = result.message;
-
-                const resultElement = document.createElement('div');
-
-                const contactDiv = document.createElement('div');
-                contactDiv.style.display = 'flex';
-                contactDiv.style.flexDirection = 'row';
-                contactDiv.style.alignItems = 'center';
-
-                const contactLabel = document.createElement('div');
-                contactLabel.style.fontWeight = 'bold';
-                contactLabel.textContent = 'Contato: ';
-
-                const contactValue = document.createElement('div');
-                contactValue.textContent = contactName;
-
-                contactDiv.appendChild(contactLabel);
-                contactDiv.appendChild(contactValue);
-
-                const statusDiv = document.createElement('div');
-                statusDiv.style.display = 'flex';
-                statusDiv.style.flexDirection = 'row';
-                statusDiv.style.alignItems = 'center';
-
-                const statusLabel = document.createElement('div');
-                statusLabel.style.fontWeight = 'bold';
-                statusLabel.textContent = 'Status: ';
-
-                const statusImage = document.createElement('img');
-                statusImage.alt = status === 'success' ? 'Sucesso' : 'Erro';
-                statusImage.src = status === 'success' ? 'https://img.icons8.com/color/32/000000/checked-2--v1.png' : 'https://img.icons8.com/color/32/000000/cancel--v1.png';
-                statusImage.classList.add('formattedImage');
-
-                statusDiv.appendChild(statusLabel);
-                statusDiv.appendChild(statusImage);
-
-                const messageDiv = document.createElement('div');
-                messageDiv.style.display = 'flex';
-                messageDiv.style.flexDirection = 'column';
-
-                const messageLabel = document.createElement('div');
-                messageLabel.style.fontWeight = 'bold';
-                messageLabel.textContent = 'Mensagem Enviada: ';
-
-                const messageValue = document.createElement('div');
-                messageValue.classList.add('formattedMessage');
-                messageValue.textContent = message;
-
-                if (testMode) {
-                    messageValue.textContent = "[TESTE] " + messageValue.textContent;
-                }
-
-                messageDiv.appendChild(messageLabel);
-                messageDiv.appendChild(messageValue);
-
-                resultElement.appendChild(contactDiv);
-                resultElement.appendChild(statusDiv);
-                resultElement.appendChild(messageDiv);
-
-                messageText.appendChild(resultElement);
-            });
-
-            messageModal.style.display = "block";
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
-            messageModal.style.display = "block";
+        const contactsToSend = [];
+        contacts.forEach((contact) => {
+            if (selectedContacts.get(contact.labelText)) {
+                contactsToSend.push(contact);
+            }
         });
-        testModeCheckbox.checked = true;
+
+        const testModeCheckbox = document.getElementById('testMode');
+        const testMode = testModeCheckbox.checked;
+
+        let messageContent = document.getElementById('message').value;
+
+        // **Crucially, you need to determine the languageCode for each contact.**  This is a placeholder.
+        // In a real app, you might store the preferred language for each contact in your `contacts` array,
+        // get it from browser settings, or use a language detection library.
+        // Example:  contact.languageCode.  If you don't have this info, remove the languageCode parameter.
+        const languageCode = 'pt';  // Replace with dynamic language detection.  IMPORTANT!
+
+        messageContent = messageContent.replace(/\[greeting]/gi, getGreetings(languageCode));
+
+
+        fetch('/upload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contacts: contactsToSend,
+                message: messageContent,
+                testMode: testMode
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                messageText.innerHTML = '';
+
+                data.results.forEach(result => {
+                    const contactName = result.contact;
+                    const status = result.status;
+                    const message = result.message;
+
+                    const resultElement = document.createElement('div');
+
+                    const contactDiv = document.createElement('div');
+                    contactDiv.style.display = 'flex';
+                    contactDiv.style.flexDirection = 'row';
+                    contactDiv.style.alignItems = 'center';
+
+                    const contactLabel = document.createElement('div');
+                    contactLabel.style.fontWeight = 'bold';
+                    contactLabel.textContent = 'Contato: ';
+
+                    const contactValue = document.createElement('div');
+                    contactValue.textContent = contactName;
+
+                    contactDiv.appendChild(contactLabel);
+                    contactDiv.appendChild(contactValue);
+
+                    const statusDiv = document.createElement('div');
+                    statusDiv.style.display = 'flex';
+                    statusDiv.style.flexDirection = 'row';
+                    statusDiv.style.alignItems = 'center';
+
+                    const statusLabel = document.createElement('div');
+                    statusLabel.style.fontWeight = 'bold';
+                    statusLabel.textContent = 'Status: ';
+
+                    const statusImage = document.createElement('img');
+                    statusImage.alt = status === 'success' ? 'Sucesso' : 'Erro';
+                    statusImage.src = status === 'success' ? 'https://img.icons8.com/color/32/000000/checked-2--v1.png' : 'https://img.icons8.com/color/32/000000/cancel--v1.png';
+                    statusImage.classList.add('formattedImage');
+
+                    statusDiv.appendChild(statusLabel);
+                    statusDiv.appendChild(statusImage);
+
+                    const messageDiv = document.createElement('div');
+                    messageDiv.style.display = 'flex';
+                    messageDiv.style.flexDirection = 'column';
+
+                    const messageLabel = document.createElement('div');
+                    messageLabel.style.fontWeight = 'bold';
+                    messageLabel.textContent = 'Mensagem Enviada: ';
+
+                    const messageValue = document.createElement('div');
+                    messageValue.classList.add('formattedMessage');
+                    messageValue.textContent = message;
+
+                    if (testMode) {
+                        messageValue.textContent = "[TESTE] " + messageValue.textContent;
+                    }
+
+                    messageDiv.appendChild(messageLabel);
+                    messageDiv.appendChild(messageValue);
+
+                    resultElement.appendChild(contactDiv);
+                    resultElement.appendChild(statusDiv);
+                    resultElement.appendChild(messageDiv);
+
+                    messageText.appendChild(resultElement);
+                });
+
+                messageModal.style.display = "block";
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
+                messageModal.style.display = "block";
+            });
+    }
 });
 
 // Adicionar contato individualmente
@@ -552,6 +461,12 @@ addContactBtn.addEventListener('click', () => {
     phone = phone.replace(/\D/g, '');
 
     if (name && phone) {
+        //Check if phonenumber is a number.
+        if (!/^\d+$/.test(phone)) {
+            alert("Por favor, insira um número de telefone válido (apenas dígitos).");
+            return;
+        }
+
         const isDuplicate = contacts.some(existingContact => existingContact.phoneNumber === phone);
         if (!isDuplicate) {
             const newContact = {
