@@ -108,7 +108,3 @@ Este projeto permite o envio de mensagens personalizadas em massa através do Wh
 *   **Política do WhatsApp:** O uso excessivo de envio de mensagens automatizadas pode violar os termos de serviço do WhatsApp e resultar no bloqueio da sua conta. Use este projeto com responsabilidade.
 *   **Erro no envio:** As vezes o whatsapp-web.js apresenta erros de conexão, nesse caso, reinicie o serviço e tente novamente.
 *   **Atualização em tempo real:** As alterações feitas na lista de contatos serão automaticamente refletidas em todos os clientes conectados.
-
-## Contribuição
-
-Contribuições são bem-vindas! Sinta-se à vontade para abrir issues e enviar pull requests.
