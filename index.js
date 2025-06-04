@@ -5,8 +5,17 @@ const fileUpload = require('express-fileupload');
 const fs = require('fs').promises;
 const path = require('path');
 const zlib = require('zlib');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
+
 const app = express();
 const port = 3000;
+
+// Create HTTP server
+const httpServer = createServer(app);
+
+// Create WebSocket server
+const io = new Server(httpServer, { /* options */ });
 
 app.use(fileUpload());
 app.use(express.static('public'));
@@ -96,6 +105,9 @@ client.on('ready', async () => {
     } catch (error) {
         console.error('Failed to load contacts on ready:', error);
     }
+
+    // Send initial contact list to connected clients
+    io.emit('contacts_updated', contacts);
 });
 
 // Listen for incoming messages and update status to 'answered'
@@ -143,6 +155,7 @@ app.post('/upload', async (req, res) => {
 
                     // Update contact status to "sent" IMMEDIATELY after sending
                     await updateContactStatus(cleanedNumber, "sent");
+            
                 }
 
                 console.log(`Mensagem ${testMode ? '(TESTE) ' : ''}enviada para ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);
@@ -197,6 +210,10 @@ app.post('/update-contacts', async (req, res) => {
     try {
         await saveContactsToServer(updatedContacts);
         contacts = updatedContacts;
+
+        // Emit event to all connected clients
+        io.emit('contacts_updated', contacts);
+
         res.status(200).json({ message: 'Contacts updated successfully on the server.' });
     } catch (error) {
         console.error('Error updating contacts on the server:', error);
@@ -220,14 +237,30 @@ async function updateContactStatus(phoneNumber, newStatus) {
     if (contactToUpdate) {
         contactToUpdate.status = newStatus;
         await saveContactsToServer(contacts);
+
+        // Emit event to all connected clients
+        io.emit('contacts_updated', contacts);
+
         console.log(`Contact ${phoneNumber} status updated to ${newStatus}`);
     } else {
         console.warn(`Contact with phone number ${phoneNumber} not found.`);
     }
 }
 
+// WebSocket connection handling
+io.on('connection', (socket) => {
+    console.log('A user connected');
+
+    // Send the initial contact list to the newly connected client
+    socket.emit('contacts_updated', contacts);
+
+    socket.on('disconnect', () => {
+        console.log('A user disconnected');
+    });
+});
+
 ensureDataDirectoryExists().then(() => {
-    app.listen(port, () => {
+    httpServer.listen(port, () => {  // Use httpServer instead of app
         console.log(`Servidor rodando em http://localhost:${port}`);
     });
 });

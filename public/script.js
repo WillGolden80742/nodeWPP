@@ -87,6 +87,7 @@ const storedColumnSelections = loadColumnSelectionsFromLocalStorage();
 
 navButton.addEventListener('click', function (event) {
     isCheckedAllContacts(false);
+    renderContactLists(filteredContacts); 
 });
 
 fileInput.addEventListener('change', async (event) => {
@@ -284,7 +285,7 @@ async function updateContactsOnServer(contacts) {
 }
 
 function renderContactList(contactList, container) {
-    container.innerHTML = ''; 
+    container.innerHTML = '';
     const filteredContactList = contactList.filter(contact => contact.phoneNumber && contact.phoneNumber.length >= 9);
 
     filteredContactList.forEach((contact, index) => {
@@ -358,11 +359,17 @@ function renderContactList(contactList, container) {
 }
 
 function renderContactLists(contactList) {
-    const newContacts = contactList.filter(contact => contact.status === 'new');
-    const sentContacts = contactList.filter(contact => contact.status === 'sent');
-    const answeredContacts = contactList.filter(contact => contact.status === 'answered');
+    const searchTerm = searchInput.value.toLowerCase();
+    const filteredContacts = contactList.filter(contact =>
+        contact.fullName.toLowerCase().includes(searchTerm) ||
+        contact.phoneNumber.toLowerCase().includes(searchTerm)
+    );
 
-    renderContactList(contactList, contactListDiv);
+    const newContacts = filteredContacts.filter(contact => contact.status === 'new');
+    const sentContacts = filteredContacts.filter(contact => contact.status === 'sent');
+    const answeredContacts = filteredContacts.filter(contact => contact.status === 'answered');
+
+    renderContactList(filteredContacts, contactListDiv);
     renderContactList(newContacts, contactListNewDiv);
     renderContactList(sentContacts, contactListSentDiv);
     renderContactList(answeredContacts, contactListAnsweredDiv);
@@ -375,13 +382,9 @@ async function deleteContact(indexToDelete) {
 }
 
 searchInput.addEventListener('input', () => {
-    const searchTerm = searchInput.value.toLowerCase();
-    const filteredContacts = contacts.filter(contact =>
-        contact.fullName.toLowerCase().includes(searchTerm) ||
-        contact.phoneNumber.toLowerCase().includes(searchTerm)
-    );
-    renderContactLists(filteredContacts); // Renderiza a lista filtrada
+    renderContactLists(contacts); // Renderiza a lista filtrada
 });
+
 
 selectAllButton.addEventListener('click', () => {
     isCheckedAllContacts(true); // Marca todos os contatos
@@ -562,7 +565,7 @@ mainForm.addEventListener('submit', function (event) {
             messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
             messageModal.style.display = "block";
         });
-        testModeCheckbox.checked = true; 
+    testModeCheckbox.checked = true;
 });
 
 // Adicionar contato individualmente
@@ -601,6 +604,54 @@ addContactBtn.addEventListener('click', async () => {
         alert('Por favor, preencha o nome e o número de telefone.');
     }
 });
+
+// Add Socket.IO client-side library (you can use a CDN or install locally)
+const socket = io();
+
+// Listen for the 'contacts_updated' event
+// script.js
+
+// ... (previous code)
+
+// Function to save scroll positions
+function saveScrollPositions() {
+    const scrollPositions = {
+        contactList: document.getElementById('contactList').scrollTop,
+        contactListNew: document.getElementById('contactListNew').scrollTop,
+        contactListSent: document.getElementById('contactListSent').scrollTop,
+        contactListAnswered: document.getElementById('contactListAnswered').scrollTop
+    };
+    return scrollPositions;
+}
+
+// Function to restore scroll positions
+function restoreScrollPositions(scrollPositions) {
+    if (scrollPositions) {
+        document.getElementById('contactList').scrollTop = scrollPositions.contactList || 0;
+        document.getElementById('contactListNew').scrollTop = scrollPositions.contactListNew || 0;
+        document.getElementById('contactListSent').scrollTop = scrollPositions.contactListSent || 0;
+        document.getElementById('contactListAnswered').scrollTop = scrollPositions.contactListAnswered || 0;
+    }
+}
+
+socket.on('contacts_updated', (updatedContacts) => {
+    // Save scroll positions *before* updating the DOM
+    const scrollPositions = saveScrollPositions();
+
+    console.log('Received updated contacts from server:', updatedContacts);
+    contacts = updatedContacts; // Update the local contacts array
+    const searchTerm = searchInput.value.toLowerCase();
+    const filteredContacts = contacts.filter(contact =>
+        contact.fullName.toLowerCase().includes(searchTerm) ||
+        contact.phoneNumber.toLowerCase().includes(searchTerm)
+    );
+    renderContactLists(filteredContacts); // Re-render the contact lists
+
+    // Restore scroll positions *after* updating the DOM
+    restoreScrollPositions(scrollPositions);
+});
+
+// ... (rest of your code)
 
 // Load contacts from the server on page load
 async function loadContactsFromServer() {
