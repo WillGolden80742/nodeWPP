@@ -426,12 +426,7 @@ mainForm.addEventListener('submit', function (event) {
 
     let messageContent = document.getElementById('message').value;
 
-    // **Crucially, you need to determine the languageCode for each contact.**  This is a placeholder.
-    // In a real app, you might store the preferred language for each contact in your `contacts` array,
-    // get it from browser settings, or use a language detection library.
-    // Example:  contact.languageCode.  If you don't have this info, remove the languageCode parameter.
-    // Replace with dynamic language detection.  IMPORTANT!
-    const languageCode = 'pt';
+    const languageCode = Intl.DateTimeFormat().resolvedOptions().locale.split('-')[0];
 
     messageContent = messageContent.replace(/\[greeting]/gi, getGreetings(languageCode));
 
