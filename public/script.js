@@ -18,9 +18,27 @@ const loadContactsBtn = document.getElementById('loadContactsBtn');
 const sendMessageBtn = document.getElementById('sendMessageBtn');
 const mainForm = document.getElementById('mainForm');
 
-
 const CONTACTS_STORAGE_KEY = 'whatsapp_sender_contacts';
 const MESSAGE_STORAGE_KEY = 'whatsapp_sender_message';
+const NAME_COLUMN_STORAGE_KEY = 'whatsapp_sender_name_column';
+const PHONE_COLUMN_STORAGE_KEY = 'whatsapp_sender_phone_column';
+
+// Function to save selected column indexes to localStorage
+function saveColumnSelectionsToLocalStorage(nameColumnIndex, phoneColumnIndex) {
+    localStorage.setItem(NAME_COLUMN_STORAGE_KEY, nameColumnIndex);
+    localStorage.setItem(PHONE_COLUMN_STORAGE_KEY, phoneColumnIndex);
+}
+
+// Function to load selected column indexes from localStorage
+function loadColumnSelectionsFromLocalStorage() {
+    const storedNameColumnIndex = localStorage.getItem(NAME_COLUMN_STORAGE_KEY);
+    const storedPhoneColumnIndex = localStorage.getItem(PHONE_COLUMN_STORAGE_KEY);
+
+    return {
+        nameColumnIndex: storedNameColumnIndex !== null ? storedNameColumnIndex : null,
+        phoneColumnIndex: storedPhoneColumnIndex !== null ? storedPhoneColumnIndex : null
+    };
+}
 
 // Função para fechar a janela flutuante
 document.querySelector('.close').addEventListener('click', function () {
@@ -80,6 +98,7 @@ messageTextarea.addEventListener('input', () => {
 //Disable the 'Enviar Mensagens' Button until Contacts loaded.
 sendMessageBtn.disabled = true;
 
+const storedColumnSelections = loadColumnSelectionsFromLocalStorage();
 
 fileInput.addEventListener('change', async (event) => {
     const file = event.target.files[0];
@@ -121,6 +140,9 @@ fileInput.addEventListener('change', async (event) => {
 
 // Add event listener for the "Carregar Contatos" button
 loadContactsBtn.addEventListener('click', async () => {
+    // Save the selected column indexes to localStorage
+    saveColumnSelectionsToLocalStorage(nameColumnSelect.value, phoneColumnSelect.value);
+
     await loadContacts();
     csvColumnSelectDiv.style.display = 'none';
 });
@@ -172,6 +194,14 @@ function populateColumnSelects(headers) {
         nameColumnSelect.appendChild(option.cloneNode(true)); // Clone to avoid moving the option
         phoneColumnSelect.appendChild(option);
     });
+
+    // Select stored column indexes if available
+    if (storedColumnSelections.nameColumnIndex !== null) {
+        nameColumnSelect.value = storedColumnSelections.nameColumnIndex;
+    }
+    if (storedColumnSelections.phoneColumnIndex !== null) {
+        phoneColumnSelect.value = storedColumnSelections.phoneColumnIndex;
+    }
 }
 
 
