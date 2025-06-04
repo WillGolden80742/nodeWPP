@@ -18,7 +18,6 @@ const loadContactsBtn = document.getElementById('loadContactsBtn');
 const sendMessageBtn = document.getElementById('sendMessageBtn');
 const mainForm = document.getElementById('mainForm');
 
-const CONTACTS_STORAGE_KEY = 'whatsapp_sender_contacts';
 const MESSAGE_STORAGE_KEY = 'whatsapp_sender_message';
 const NAME_COLUMN_STORAGE_KEY = 'whatsapp_sender_name_column';
 const PHONE_COLUMN_STORAGE_KEY = 'whatsapp_sender_phone_column';
@@ -59,20 +58,6 @@ let fileType = null; // Store the file type (csv or vcf)
 let csvContent = null; // Store the CSV file content
 
 
-// Função para salvar os contatos no localStorage
-function saveContactsToLocalStorage(contacts) {
-    localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(contacts));
-}
-
-// Função para carregar os contatos do localStorage
-function loadContactsFromLocalStorage() {
-    const storedContacts = localStorage.getItem(CONTACTS_STORAGE_KEY);
-    if (storedContacts) {
-        return JSON.parse(storedContacts);
-    }
-    return [];
-}
-
 // Function to save message to localStorage
 function saveMessageToLocalStorage(message) {
     localStorage.setItem(MESSAGE_STORAGE_KEY, message);
@@ -82,10 +67,6 @@ function saveMessageToLocalStorage(message) {
 function loadMessageFromLocalStorage() {
     return localStorage.getItem(MESSAGE_STORAGE_KEY) || "";
 }
-
-// Carrega os contatos do localStorage ao carregar a página
-contacts = loadContactsFromLocalStorage();
-renderContactList(contacts);
 
 // Load the message from localStorage and set the textarea value
 messageTextarea.value = loadMessageFromLocalStorage();
@@ -164,7 +145,7 @@ async function loadContacts() {
         }
     });
 
-    saveContactsToLocalStorage(contacts);
+    await updateContactsOnServer(contacts);  // Save to server
     renderContactList(contacts);
 
     //Enable the 'Enviar Mensagens' button
@@ -272,6 +253,28 @@ function parseCsvContent(csvContent, nameColumnIndex, phoneColumnIndex) {
     return contacts;
 }
 
+async function updateContactsOnServer(contacts) {
+    try {
+        const response = await fetch('/update-contacts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ contacts: contacts })
+        });
+
+        if (!response.ok) {
+            console.error('Failed to update contacts on the server:', response.status, response.statusText);
+            alert('Failed to update contacts on the server.');
+        } else {
+            console.log('Contacts updated on the server.');
+        }
+    } catch (error) {
+        console.error('Error updating contacts on the server:', error);
+        alert('Error updating contacts on the server.');
+    }
+}
+
 
 function renderContactList(contactList) {
     contactListDiv.innerHTML = ''; // Limpa a lista existente
@@ -325,9 +328,9 @@ function renderContactList(contactList) {
     });
 }
 
-function deleteContact(indexToDelete) {
+async function deleteContact(indexToDelete) {
     contacts.splice(indexToDelete, 1); // Remove o contato do array
-    saveContactsToLocalStorage(contacts); // Salva a lista atualizada no localStorage
+    await updateContactsOnServer(contacts);  // Save to server
     renderContactList(contacts); // Renderiza a lista atualizada
 }
 
@@ -483,7 +486,7 @@ mainForm.addEventListener('submit', function (event) {
 });
 
 // Adicionar contato individualmente
-addContactBtn.addEventListener('click', () => {
+addContactBtn.addEventListener('click', async () => {
     const name = newContactNameInput.value.trim();
     let phone = newContactPhoneInput.value.trim();
 
@@ -504,7 +507,7 @@ addContactBtn.addEventListener('click', () => {
                 phoneNumber: phone
             };
             contacts.push(newContact);
-            saveContactsToLocalStorage(contacts);
+           await updateContactsOnServer(contacts);  // Save to server
             renderContactList(contacts);
         } else {
             alert('Este número de telefone já está na lista.');
@@ -517,3 +520,22 @@ addContactBtn.addEventListener('click', () => {
         alert('Por favor, preencha o nome e o número de telefone.');
     }
 });
+
+// Load contacts from the server on page load
+async function loadContactsFromServer() {
+    try {
+        const response = await fetch('/update-contacts'); // Adjust the URL if needed
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        contacts = await response.json();
+        renderContactList(contacts);
+    } catch (error) {
+        console.error('Failed to load contacts from server:', error);
+        alert('Failed to load contacts from server. Check the console for details.');
+        contacts = [];  // Ensure contacts is an empty array if loading fails
+    } finally {
+        renderContactList(contacts);  // Render even if loading fails (shows an empty list)
+    }
+
+}
