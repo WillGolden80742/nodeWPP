@@ -140,6 +140,7 @@ async function loadContacts() {
     newContacts.forEach(newContact => {
         const isDuplicate = contacts.some(existingContact => existingContact.phoneNumber === newContact.phoneNumber);
         if (!isDuplicate) {
+            newContact.status = "new";  // Set initial status
             contacts.push(newContact);
         }
     });
@@ -214,7 +215,8 @@ function parseVcfContent(vcfContent) {
         if (phoneNumber) {
             contacts.push({
                 fullName,
-                phoneNumber
+                phoneNumber,
+                status: 'new' // Initialize status
             });
         }
     }
@@ -242,7 +244,8 @@ function parseCsvContent(csvContent, nameColumnIndex, phoneColumnIndex) {
             }
             contacts.push({
                 fullName,
-                phoneNumber
+                phoneNumber,
+                status: 'new' // Initialize status
             });
         }
     }
@@ -284,7 +287,7 @@ function renderContactList(contactList) {
         checkbox.id = contactId;
         checkbox.dataset.index = index;
 
-        const contactText = document.createTextNode(` ${contact.fullName} (${contact.phoneNumber})`);
+        const contactText = document.createTextNode(` ${contact.fullName} (${contact.phoneNumber}) - Status: ${contact.status}`);
 
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
@@ -539,7 +542,8 @@ addContactBtn.addEventListener('click', async () => {
         if (!isDuplicate) {
             const newContact = {
                 fullName: name,
-                phoneNumber: phone
+                phoneNumber: phone,
+                status: 'new'  // Initialize status
             };
             contacts.push(newContact);
             await updateContactsOnServer(contacts);  // Save to server

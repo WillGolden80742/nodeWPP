@@ -2,65 +2,54 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const express = require('express');
 const fileUpload = require('express-fileupload');
-const fs = require('fs').promises; // Use promises for fs
-const path = require('path'); // Import the 'path' module
-const zlib = require('zlib');  // Import the zlib module
+const fs = require('fs').promises;
+const path = require('path');
+const zlib = require('zlib');
 const app = express();
 const port = 3000;
 
 app.use(fileUpload());
 app.use(express.static('public'));
-app.use(express.json({ limit: '1024mb' })); // Increased JSON limit
+app.use(express.json({ limit: '1024mb' }));
 
-// Define the data directory and file path
 const dataDir = path.join(__dirname, 'data');
-const contactsFilePath = path.join(dataDir, 'contacts.json.gz'); // Store as .json.gz
+const contactsFilePath = path.join(dataDir, 'contacts.json.gz');
 
-// Create the data directory if it doesn't exist
 async function ensureDataDirectoryExists() {
     try {
-        await fs.mkdir(dataDir, { recursive: true }); // recursive: true creates parent directories if needed
+        await fs.mkdir(dataDir, { recursive: true });
     } catch (error) {
         console.error('Error creating data directory:', error);
-        // Handle the error appropriately (e.g., exit the application)
-        process.exit(1);  // Exit with an error code
+        process.exit(1);
     }
 }
 
-// Load contacts from the compressed JSON file
 async function loadContactsFromServer() {
     try {
-        const compressedData = await fs.readFile(contactsFilePath);  // Read compressed data
-
-        // Decompress the data using gunzip
+        const compressedData = await fs.readFile(contactsFilePath);
         const jsonData = await new Promise((resolve, reject) => {
             zlib.gunzip(compressedData, (err, data) => {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(data.toString('utf8'));  // Convert Buffer to string
+                    resolve(data.toString('utf8'));
                 }
             });
         });
-
         return JSON.parse(jsonData);
     } catch (error) {
         if (error.code === 'ENOENT') {
-            // File doesn't exist, return an empty array
             return [];
         } else {
             console.error('Error reading or decompressing contacts file:', error);
-            return [];  // Or handle the error more gracefully
+            return [];
         }
     }
 }
 
-// Save contacts to the compressed JSON file
 async function saveContactsToServer(contacts) {
     try {
-        const jsonData = JSON.stringify(contacts, null, 2); // Pretty-print the JSON
-
-        // Compress the JSON data using gzip
+        const jsonData = JSON.stringify(contacts, null, 2);
         const compressedData = await new Promise((resolve, reject) => {
             zlib.gzip(jsonData, (err, data) => {
                 if (err) {
@@ -70,15 +59,13 @@ async function saveContactsToServer(contacts) {
                 }
             });
         });
-
-        await fs.writeFile(contactsFilePath, compressedData);  // Write compressed data
+        await fs.writeFile(contactsFilePath, compressedData);
         console.log('Contacts saved to server (compressed).');
     } catch (error) {
         console.error('Error compressing or writing contacts file:', error);
     }
 }
 
-// Initialize the WhatsApp client
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
@@ -89,8 +76,6 @@ const client = new Client({
 });
 
 let whatsappReady = false;
-
-// Global variable to store contacts
 let contacts = [];
 
 client.on('qr', qr => {
@@ -105,14 +90,18 @@ client.on('authenticated', () => {
 client.on('ready', async () => {
     console.log('Cliente WhatsApp está pronto!');
     whatsappReady = true;
-
-    // Load contacts from the server when WhatsApp is ready
     try {
-        contacts = await loadContactsFromServer(); // Assign to the global 'contacts' array
+        contacts = await loadContactsFromServer();
         console.log('Contacts loaded from server:', contacts.length, 'contacts.');
     } catch (error) {
         console.error('Failed to load contacts on ready:', error);
     }
+});
+
+// Listen for incoming messages and update status to 'answered'
+client.on('message', async message => {
+    const senderNumber = message.from.replace('@c.us', '');
+    await updateContactStatus(senderNumber, 'answered');
 });
 
 client.initialize();
@@ -126,23 +115,23 @@ app.post('/upload', async (req, res) => {
         return res.status(503).send('WhatsApp ainda não está pronto. Tente novamente em alguns segundos.');
     }
 
-    const contacts = req.body.contacts; // Pega a lista de contatos selecionados do corpo da requisição
-    const messageTemplate = req.body.message; // Pega o conteúdo da mensagem do corpo da requisição
-    const testMode = req.body.testMode || false; // Pega o estado do modo de teste
+    const contactsToSend = req.body.contacts;
+    const messageTemplate = req.body.message;
+    const testMode = req.body.testMode || false;
 
-    if (!contacts || contacts.length === 0) {
+    if (!contactsToSend || contactsToSend.length === 0) {
         return res.status(400).send('Nenhum contato selecionado.');
     }
 
-    console.log(`Iniciando envio de mensagens para ${contacts.length} contatos...`);
+    console.log(`Iniciando envio de mensagens para ${contactsToSend.length} contatos...`);
     console.log(`Modo de Teste: ${testMode}`);
 
     async function sendMessages() {
-        const results = []; // Array para armazenar os resultados de cada envio
+        const results = [];
         let successCount = 0;
         let errorCount = 0;
 
-        for (const contact of contacts) { // Itera sobre a lista de contatos selecionados
+        for (const contact of contactsToSend) {
             const fullName = contact.fullName;
             const cleanedNumber = contact.phoneNumber;
             const chatId = `${cleanedNumber}@c.us`;
@@ -151,10 +140,13 @@ app.post('/upload', async (req, res) => {
             try {
                 if (!testMode) {
                     await client.sendMessage(chatId, personalizedMessage);
+
+                    // Update contact status to "sent" IMMEDIATELY after sending
+                    await updateContactStatus(cleanedNumber, "sent");
                 }
 
                 console.log(`Mensagem ${testMode ? '(TESTE) ' : ''}enviada para ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);
-                results.push({ contact: fullName, status: 'success', message: personalizedMessage }); // Salva a mensagem enviada
+                results.push({ contact: fullName, status: 'success', message: personalizedMessage });
                 successCount++;
             } catch (err) {
                 console.error(`Erro ao enviar mensagem para ${fullName} (${cleanedNumber}): ${err.message}`);
@@ -164,14 +156,12 @@ app.post('/upload', async (req, res) => {
         }
 
         console.log('\nEnvio de mensagens concluído.');
-        // Retorna os resultados e os contadores
         return { results, successCount, errorCount };
     }
 
-    // Chama a função assíncrona e envia a resposta após a conclusão
     sendMessages()
-        .then(({ results, successCount, errorCount }) => {
-            // Formata os resultados para enviar como JSON
+        .then(async ({ results, successCount, errorCount }) => {
+            //Format the results for the client
             res.json({
                 results: results,
                 successCount: successCount,
@@ -184,39 +174,48 @@ app.post('/upload', async (req, res) => {
         });
 });
 
-// Endpoint to update contacts on the server
 app.post('/update-contacts', async (req, res) => {
     console.log("Update contacts endpoint called");
-    console.log("Request body:", req.body); // Log the request body
+    console.log("Request body:", req.body);
 
     const updatedContacts = req.body.contacts;
 
     if (!updatedContacts) {
-        return res.status(400).json({ error: 'No contacts provided to update.' }); // Send JSON response
+        return res.status(400).json({ error: 'No contacts provided to update.' });
     }
 
     try {
         await saveContactsToServer(updatedContacts);
-        contacts = updatedContacts;  // Update the in-memory contacts as well
-        res.status(200).json({ message: 'Contacts updated successfully on the server.' }); // Send JSON response
+        contacts = updatedContacts;
+        res.status(200).json({ message: 'Contacts updated successfully on the server.' });
     } catch (error) {
         console.error('Error updating contacts on the server:', error);
-        res.status(500).json({ error: 'Failed to update contacts on the server.' }); // Send JSON response
+        res.status(500).json({ error: 'Failed to update contacts on the server.' });
     }
 });
 
-// Endpoint to retrieve contacts
 app.get('/update-contacts', async (req, res) => {
     try {
         const contacts = await loadContactsFromServer();
-        res.status(200).json(contacts);  // Send contacts as JSON
+        res.status(200).json(contacts);
     } catch (error) {
         console.error('Error loading contacts:', error);
         res.status(500).json({ error: 'Failed to load contacts from server.' });
     }
 });
 
-// Before starting the server, ensure the data directory exists
+async function updateContactStatus(phoneNumber, newStatus) {
+    const contactToUpdate = contacts.find(contact => contact.phoneNumber === phoneNumber);
+
+    if (contactToUpdate) {
+        contactToUpdate.status = newStatus;
+        await saveContactsToServer(contacts);
+        console.log(`Contact ${phoneNumber} status updated to ${newStatus}`);
+    } else {
+        console.warn(`Contact with phone number ${phoneNumber} not found.`);
+    }
+}
+
 ensureDataDirectoryExists().then(() => {
     app.listen(port, () => {
         console.log(`Servidor rodando em http://localhost:${port}`);
