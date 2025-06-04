@@ -71,7 +71,7 @@ footer {
     width: 100%;
 }
 
-#contactList {
+#contactList, #contactListNew, #contactListSent, #contactListAnswered {
     max-height: 300px;
     overflow-y: auto;
     border: 1px solid #ced4da;
@@ -80,7 +80,7 @@ footer {
     margin-bottom: 10px;
 }
 
-#contactList label {
+#contactList label, #contactListNew label, #contactListSent label, #contactListAnswered label {
     display: block;
     margin-bottom: 2px;
 }

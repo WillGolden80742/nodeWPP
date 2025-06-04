@@ -301,8 +301,7 @@ function renderContactList(contactList, container) {
         // Cria o elemento para o ícone de status
         const statusIcon = document.createElement('i');
         statusIcon.classList.add('mdi'); // Adiciona a classe 'mdi'
-
-        let statusText = ''; // Texto para exibir ao lado do ícone (opcional)
+        
         switch (contact.status) {
             case 'new':
                 statusIcon.classList.add('mdi-new-box'); // Ícone para 'new'
@@ -315,10 +314,7 @@ function renderContactList(contactList, container) {
                 break;
             default:
                 statusIcon.classList.add('mdi-help-circle'); // Ícone padrão
-                statusText = 'Desconhecido';
         }
-
-        const statusTextNode = document.createTextNode(` ${statusText}`); // Node de texto para o texto do status
 
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
@@ -337,7 +333,6 @@ function renderContactList(contactList, container) {
         label.appendChild(checkbox);
         label.appendChild(contactText);
         label.appendChild(statusIcon); // Adiciona o ícone ao label
-        label.appendChild(statusTextNode); // Adiciona o texto do status ao label (opcional)
         label.appendChild(deleteButton);
 
         container.appendChild(label);
