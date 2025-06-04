@@ -365,6 +365,46 @@ deselectAllButton.addEventListener('click', () => {
     renderContactList(contacts); // Renderiza a lista com todos desmarcados
 });
 
+function getGreetings(languageCode) {
+    const now = new Date();
+    const hour = now.getHours();
+
+    let period;
+    if (hour >= 6 && hour < 12) {
+        period = "morning";
+    } else if (hour >= 12 && hour < 18) {
+        period = "afternoon";
+    } else {
+        period = "evening";
+    }
+
+    const greetings = {
+        pt: { morning: "Bom dia", afternoon: "Boa tarde", evening: "Boa noite" },
+        en: { morning: "Good morning", afternoon: "Good afternoon", evening: "Good evening" },
+        es: { morning: "Buenos días", afternoon: "Buenas tardes", evening: "Buenas noches" },
+        fr: { morning: "Bonjour", afternoon: "Bon après-midi", evening: "Bonsoir" },
+        de: { morning: "Guten Morgen", afternoon: "Guten Tag", evening: "Guten Abend" },
+        it: { morning: "Buongiorno", afternoon: "Buon pomeriggio", evening: "Buonasera" },
+        ru: { morning: "Доброе утро", afternoon: "Добрый день", evening: "Добрый вечер" },
+        zh: { morning: "早上好", afternoon: "下午好", evening: "晚上好" },
+        ja: { morning: "おはようございます", afternoon: "こんにちは", evening: "こんばんは" },
+        ko: { morning: "좋은 아침입니다", afternoon: "안녕하세요", evening: "안녕하세요" },
+        ar: { morning: "صباح الخير", afternoon: "مساء الخير", evening: "مساء الخير" },
+        hi: { morning: "सुप्रभात", afternoon: "नमस्कार", evening: "शुभ संध्या" },
+        nl: { morning: "Goedemorgen", afternoon: "Goedemiddag", evening: "Goedenavond" },
+        sv: { morning: "God morgon", afternoon: "God eftermiddag", evening: "God kväll" },
+        tr: { morning: "Günaydın", afternoon: "Tünaydın", evening: "İyi akşamlar" },
+        pl: { morning: "Dzień dobry", afternoon: "Dzień dobry", evening: "Dobry wieczór" },
+        ro: { morning: "Bună dimineața", afternoon: "Bună ziua", evening: "Bună seara" },
+        el: { morning: "Καλημέρα", afternoon: "Καλό απόγευμα", evening: "Καλησπέρα" },
+        fi: { morning: "Hyvää huomenta", afternoon: "Hyvää iltapäivää", evening: "Hyvää iltaa" },
+        he: { morning: "בוקר טוב", afternoon: "צהריים טובים", evening: "ערב טוב" }
+    };
+
+    const selectedLanguage = greetings[languageCode] || greetings["en"];
+    return selectedLanguage[period];
+}
+
 // Intercept the form submission
 mainForm.addEventListener('submit', function (event) {
     if (sendMessageBtn.disabled) {
