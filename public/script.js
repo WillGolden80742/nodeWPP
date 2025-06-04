@@ -1,5 +1,6 @@
 // script.js
-const vcfFile = document.getElementById('vcfFile');
+const fileInput = document.getElementById('fileInput');
+const fileTypeSelect = document.getElementById('fileType');
 const contactListDiv = document.getElementById('contactList');
 const searchInput = document.getElementById('search');
 const selectAllButton = document.getElementById('selectAll');
@@ -7,13 +8,17 @@ const deselectAllButton = document.getElementById('deselectAll');
 const messageModal = document.getElementById('messageModal');
 const messageModalContent = document.getElementById('messageModalContent');
 const messageText = document.getElementById('messageText');
-const messageTextarea = document.getElementById('message'); // Get the textarea element
-const newContactNameInput = document.getElementById('newContactName');  // Novo
-const newContactPhoneInput = document.getElementById('newContactPhone');  // Novo
-const addContactBtn = document.getElementById('addContactBtn');  // Novo
+const messageTextarea = document.getElementById('message');
+const newContactNameInput = document.getElementById('newContactName');
+const newContactPhoneInput = document.getElementById('newContactPhone');
+const addContactBtn = document.getElementById('addContactBtn');
+const csvColumnSelectDiv = document.getElementById('csvColumnSelect');
+const nameColumnSelect = document.getElementById('nameColumn');
+const phoneColumnSelect = document.getElementById('phoneColumn');
 
-const CONTACTS_STORAGE_KEY = 'whatsapp_sender_contacts'; // Chave para armazenar no localStorage
-const MESSAGE_STORAGE_KEY = 'whatsapp_sender_message';   // Key to store the message
+
+const CONTACTS_STORAGE_KEY = 'whatsapp_sender_contacts';
+const MESSAGE_STORAGE_KEY = 'whatsapp_sender_message';
 
 // Função para fechar a janela flutuante
 document.querySelector('.close').addEventListener('click', function () {
@@ -27,8 +32,9 @@ window.onclick = function (event) {
     }
 }
 
-let contacts = []; // Armazena todos os contatos extraídos do VCF
-let selectedContacts = new Map(); // Armazena o estado dos checkboxes (true/false)
+let contacts = [];
+let selectedContacts = new Map();
+let csvHeaders = [];  // Store CSV headers
 
 // Função para salvar os contatos no localStorage
 function saveContactsToLocalStorage(contacts) {
@@ -51,13 +57,12 @@ function saveMessageToLocalStorage(message) {
 
 // Function to load message from localStorage
 function loadMessageFromLocalStorage() {
-    return localStorage.getItem(MESSAGE_STORAGE_KEY) || ""; // Return empty string if not found
+    return localStorage.getItem(MESSAGE_STORAGE_KEY) || "";
 }
-
 
 // Carrega os contatos do localStorage ao carregar a página
 contacts = loadContactsFromLocalStorage();
-renderContactList(contacts); // Renderiza a lista inicial
+renderContactList(contacts);
 
 // Load the message from localStorage and set the textarea value
 messageTextarea.value = loadMessageFromLocalStorage();
@@ -67,14 +72,35 @@ messageTextarea.addEventListener('input', () => {
     saveMessageToLocalStorage(messageTextarea.value);
 });
 
-vcfFile.addEventListener('change', async (event) => {
+fileTypeSelect.addEventListener('change', () => {
+    if (fileTypeSelect.value === 'csv') {
+        csvColumnSelectDiv.style.display = 'block';
+    } else {
+        csvColumnSelectDiv.style.display = 'none';
+    }
+});
+
+
+fileInput.addEventListener('change', async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
+    const fileType = fileTypeSelect.value;
+
     const reader = new FileReader();
     reader.onload = async (e) => {
-        const vcfContent = e.target.result;
-        const newContacts = parseVcfContent(vcfContent); // Extrai os novos contatos
+        const fileContent = e.target.result;
+        let newContacts = [];
+
+        if (fileType === 'vcf') {
+            newContacts = parseVcfContent(fileContent);
+        } else if (fileType === 'csv') {
+            // Get headers and populate select elements
+            csvHeaders = await getCsvHeaders(fileContent);
+            populateColumnSelects(csvHeaders);
+            newContacts = parseCsvContent(fileContent, nameColumnSelect.value, phoneColumnSelect.value);
+
+        }
 
         // Adiciona os novos contatos, evitando duplicatas
         newContacts.forEach(newContact => {
@@ -84,11 +110,42 @@ vcfFile.addEventListener('change', async (event) => {
             }
         });
 
-        saveContactsToLocalStorage(contacts); // Salva os contatos atualizados no localStorage
-        renderContactList(contacts); // Renderiza a lista atualizada
+        saveContactsToLocalStorage(contacts);
+        renderContactList(contacts);
     };
-    reader.readAsText(file);
+
+    if (fileType === 'csv') {
+        reader.readAsText(file, 'ISO-8859-1');  // For CSV, specify encoding.  This might need to change.
+    } else {
+        reader.readAsText(file);
+    }
 });
+
+
+// Function to get CSV headers
+async function getCsvHeaders(csvContent) {
+    const lines = csvContent.split(/\r?\n/).filter(Boolean);
+    if (lines.length > 0) {
+        return lines[0].split(';'); // Using semicolon as delimiter
+
+    }
+    return [];
+}
+
+// Function to populate the select elements with column names
+function populateColumnSelects(headers) {
+    nameColumnSelect.innerHTML = '';
+    phoneColumnSelect.innerHTML = '';
+
+    headers.forEach((header, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = header;
+        nameColumnSelect.appendChild(option.cloneNode(true)); // Clone to avoid moving the option
+        phoneColumnSelect.appendChild(option);
+    });
+}
+
 
 function parseVcfContent(vcfContent) {
     const contacts = [];
@@ -129,6 +186,29 @@ function parseVcfContent(vcfContent) {
     return contacts;
 }
 
+function parseCsvContent(csvContent, nameColumnIndex, phoneColumnIndex) {
+    const contacts = [];
+    const lines = csvContent.split(/\r?\n/).filter(Boolean);
+
+    if (lines.length <= 1) return [];  //Need headers *and* data
+
+    for (let i = 1; i < lines.length; i++) {  // Skip the header line
+        const values = lines[i].split(';'); // Using semicolon as delimiter
+        const fullName = values[nameColumnIndex] ? values[nameColumnIndex].trim() : 'Contato';
+        let phoneNumber = values[phoneColumnIndex] ? values[phoneColumnIndex].trim() : null;
+
+        if (phoneNumber) {
+            phoneNumber = phoneNumber.replace(/\D/g, '');  // Remove non-digit characters
+            contacts.push({
+                fullName,
+                phoneNumber
+            });
+        }
+    }
+    return contacts;
+}
+
+
 function renderContactList(contactList) {
     contactListDiv.innerHTML = ''; // Limpa a lista existente
 
@@ -153,7 +233,7 @@ function renderContactList(contactList) {
         deleteIcon.classList.add('mdi', 'mdi-delete');
 
         deleteButton.appendChild(deleteIcon); // Adiciona o ícone ao botão
-        deleteButton.addEventListener('click', function() {  //Move o EventListener pra cá para não ficar no loop posterior.
+        deleteButton.addEventListener('click', function () {  //Move o EventListener pra cá para não ficar no loop posterior.
             const indexToDelete = parseInt(this.dataset.index);
             deleteContact(indexToDelete);
         });
@@ -321,7 +401,7 @@ function getGreetings(languageCode) {
             afternoon: 'Hyvää iltapäivää',
             evening: 'Hyvää iltaa'
         },
-         'id': { // Indonesian
+        'id': { // Indonesian
             morning: 'Selamat pagi',
             afternoon: 'Selamat siang',
             evening: 'Selamat malam'

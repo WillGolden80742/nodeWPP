@@ -20,12 +20,40 @@
         <form action="/upload" method="post" enctype="multipart/form-data">
 
             <div class="mb-3">
-                <label for="vcfFile" class="form-label"><i class="mdi mdi-file-document"></i> Selecione o arquivo
-                    VCF:</label>
-                <input type="file" class="form-control" id="vcfFile" name="vcfFile" accept=".vcf">
+                <label class="form-label"><i class="mdi mdi-file-document"></i> Selecione o tipo de arquivo:</label>
+                <select class="form-select" id="fileType" name="fileType">
+                    <option value="vcf">VCF (.vcf)</option>
+                    <option value="csv">CSV (.csv)</option>
+                </select>
             </div>
 
-                        <!-- Formulário para adicionar contato individual -->
+            <div class="mb-3">
+                <label for="fileInput" class="form-label"><i class="mdi mdi-upload"></i> Selecione o
+                    arquivo:</label>
+                <input type="file" class="form-control" id="fileInput" name="fileInput" accept=".csv,.vcf">
+            </div>
+
+            <div id="csvColumnSelect" style="display: none;">
+                <div class="mb-3">
+                    <label class="form-label"><i class="mdi mdi-table-column"></i> Selecione as colunas do
+                        CSV:</label>
+                    <div class="row g-2">
+                        <div class="col-md">
+                            <label for="nameColumn" class="form-label">Coluna do Nome:</label>
+                            <select class="form-select" id="nameColumn" name="nameColumn">
+                            </select>
+                        </div>
+                        <div class="col-md">
+                            <label for="phoneColumn" class="form-label">Coluna do Telefone:</label>
+                            <select class="form-select" id="phoneColumn" name="phoneColumn">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Formulário para adicionar contato individual -->
             <div class="mb-3">
                 <label class="form-label"><i class="mdi mdi-account-plus"></i> Adicionar Contato Individual:</label>
                 <div class="row g-2">
@@ -50,7 +78,8 @@
 
             <div class="mb-3 form-check">
                 <input type="checkbox" class="form-check-input" id="testMode" name="testMode" checked>
-                <label class="form-check-label" for="testMode"><i class="mdi mdi-test-tube"></i> Modo de Teste (Não envia mensagens reais)</label>
+                <label class="form-check-label" for="testMode"><i class="mdi mdi-test-tube"></i> Modo de Teste (Não
+                    envia mensagens reais)</label>
             </div>
 
             <div class="mb-3">

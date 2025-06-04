@@ -2,8 +2,6 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const express = require('express');
 const fileUpload = require('express-fileupload');
-const fs = require('fs');
-
 const app = express();
 const port = 3000;
 
