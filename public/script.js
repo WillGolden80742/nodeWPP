@@ -22,6 +22,12 @@ const MESSAGE_STORAGE_KEY = 'whatsapp_sender_message';
 const NAME_COLUMN_STORAGE_KEY = 'whatsapp_sender_name_column';
 const PHONE_COLUMN_STORAGE_KEY = 'whatsapp_sender_phone_column';
 
+let contacts = [];
+let selectedContacts = new Map();
+let csvHeaders = [];  // Store CSV headers
+let fileType = null; // Store the file type (csv or vcf)
+let csvContent = null; // Store the CSV file content
+
 // Function to save selected column indexes to localStorage
 function saveColumnSelectionsToLocalStorage(nameColumnIndex, phoneColumnIndex) {
     localStorage.setItem(NAME_COLUMN_STORAGE_KEY, nameColumnIndex);
@@ -51,13 +57,6 @@ window.onclick = function (event) {
     }
 }
 
-let contacts = [];
-let selectedContacts = new Map();
-let csvHeaders = [];  // Store CSV headers
-let fileType = null; // Store the file type (csv or vcf)
-let csvContent = null; // Store the CSV file content
-
-
 // Function to save message to localStorage
 function saveMessageToLocalStorage(message) {
     localStorage.setItem(MESSAGE_STORAGE_KEY, message);
@@ -76,7 +75,7 @@ messageTextarea.addEventListener('input', () => {
     saveMessageToLocalStorage(messageTextarea.value);
 });
 
-//Disable the 'Enviar Mensagens' Button until Contacts loaded.
+// Initial state of the send button (disabled)
 sendMessageBtn.disabled = true;
 
 const storedColumnSelections = loadColumnSelectionsFromLocalStorage();
@@ -147,9 +146,6 @@ async function loadContacts() {
 
     await updateContactsOnServer(contacts);  // Save to server
     renderContactList(contacts);
-
-    //Enable the 'Enviar Mensagens' button
-    sendMessageBtn.disabled = false;
 }
 
 
@@ -275,7 +271,6 @@ async function updateContactsOnServer(contacts) {
     }
 }
 
-
 function renderContactList(contactList) {
     contactListDiv.innerHTML = ''; // Limpa a lista existente
 
@@ -323,9 +318,11 @@ function renderContactList(contactList) {
         checkbox.addEventListener('change', (event) => {
             // Atualiza o Map com o estado do checkbox
             selectedContacts.set(labelText, event.target.checked);
-
+            updateSendButtonState();  // Update button state on change
         });
     });
+
+    updateSendButtonState(); // Update button state after rendering
 }
 
 async function deleteContact(indexToDelete) {
@@ -333,7 +330,6 @@ async function deleteContact(indexToDelete) {
     await updateContactsOnServer(contacts);  // Save to server
     renderContactList(contacts); // Renderiza a lista atualizada
 }
-
 
 searchInput.addEventListener('input', () => {
     const searchTerm = searchInput.value.toLowerCase();
@@ -345,22 +341,15 @@ searchInput.addEventListener('input', () => {
 });
 
 selectAllButton.addEventListener('click', () => {
-    contacts.forEach((contact, index) => {
-        const contactId = `contact-${index}`;
-        const label = document.querySelector(`#${contactId}`).parentElement; // Seleciona o label pai
-        const labelText = label.textContent.trim();
-        selectedContacts.set(labelText, true); // Define todos como selecionados no Map
-
+    contacts.forEach((contact) => {
+        selectedContacts.set(contact.labelText, true); // Define todos como selecionados no Map
     });
     renderContactList(contacts); // Renderiza a lista com todos selecionados
 });
 
 deselectAllButton.addEventListener('click', () => {
-    contacts.forEach((contact, index) => {
-        const contactId = `contact-${index}`;
-        const label = document.querySelector(`#${contactId}`).parentElement; // Seleciona o label pai
-        const labelText = label.textContent.trim();
-        selectedContacts.set(labelText, false); // Define todos como não selecionados no Map
+    contacts.forEach((contact) => {
+        selectedContacts.set(contact.labelText, false); // Define todos como não selecionados no Map
     });
     renderContactList(contacts); // Renderiza a lista com todos desmarcados
 });
@@ -405,124 +394,135 @@ function getGreetings(languageCode) {
     return selectedLanguage[period];
 }
 
+function updateSendButtonState() {
+    let atLeastOneSelected = false;
+    for (const value of selectedContacts.values()) {
+        if (value === true) {
+            atLeastOneSelected = true;
+            break;
+        }
+    }
+    sendMessageBtn.disabled = !atLeastOneSelected;
+}
+
 // Intercept the form submission
 mainForm.addEventListener('submit', function (event) {
+    event.preventDefault(); // Prevent form submission
+
     if (sendMessageBtn.disabled) {
-        event.preventDefault(); // Prevent form submission
-        alert('Por favor, carregue os contatos antes de enviar as mensagens.');
-    } else {
-        // Proceed with your existing submit logic here
-        event.preventDefault();
-
-        const contactsToSend = [];
-        contacts.forEach((contact) => {
-            if (selectedContacts.get(contact.labelText)) {
-                contactsToSend.push(contact);
-            }
-        });
-
-        const testModeCheckbox = document.getElementById('testMode');
-        const testMode = testModeCheckbox.checked;
-
-        let messageContent = document.getElementById('message').value;
-
-        // **Crucially, you need to determine the languageCode for each contact.**  This is a placeholder.
-        // In a real app, you might store the preferred language for each contact in your `contacts` array,
-        // get it from browser settings, or use a language detection library.
-        // Example:  contact.languageCode.  If you don't have this info, remove the languageCode parameter.
-        const languageCode = 'pt';  // Replace with dynamic language detection.  IMPORTANT!
-
-        messageContent = messageContent.replace(/\[greeting]/gi, getGreetings(languageCode));
-
-
-        fetch('/upload', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                contacts: contactsToSend,
-                message: messageContent,
-                testMode: testMode
-            })
-        })
-            .then(response => response.json())
-            .then(data => {
-                messageText.innerHTML = '';
-
-                data.results.forEach(result => {
-                    const contactName = result.contact;
-                    const status = result.status;
-                    const message = result.message;
-
-                    const resultElement = document.createElement('div');
-
-                    const contactDiv = document.createElement('div');
-                    contactDiv.style.display = 'flex';
-                    contactDiv.style.flexDirection = 'row';
-                    contactDiv.style.alignItems = 'center';
-
-                    const contactLabel = document.createElement('div');
-                    contactLabel.style.fontWeight = 'bold';
-                    contactLabel.textContent = 'Contato: ';
-
-                    const contactValue = document.createElement('div');
-                    contactValue.textContent = contactName;
-
-                    contactDiv.appendChild(contactLabel);
-                    contactDiv.appendChild(contactValue);
-
-                    const statusDiv = document.createElement('div');
-                    statusDiv.style.display = 'flex';
-                    statusDiv.style.flexDirection = 'row';
-                    statusDiv.style.alignItems = 'center';
-
-                    const statusLabel = document.createElement('div');
-                    statusLabel.style.fontWeight = 'bold';
-                    statusLabel.textContent = 'Status: ';
-
-                    const statusImage = document.createElement('img');
-                    statusImage.alt = status === 'success' ? 'Sucesso' : 'Erro';
-                    statusImage.src = status === 'success' ? 'https://img.icons8.com/color/32/000000/checked-2--v1.png' : 'https://img.icons8.com/color/32/000000/cancel--v1.png';
-                    statusImage.classList.add('formattedImage');
-
-                    statusDiv.appendChild(statusLabel);
-                    statusDiv.appendChild(statusImage);
-
-                    const messageDiv = document.createElement('div');
-                    messageDiv.style.display = 'flex';
-                    messageDiv.style.flexDirection = 'column';
-
-                    const messageLabel = document.createElement('div');
-                    messageLabel.style.fontWeight = 'bold';
-                    messageLabel.textContent = 'Mensagem Enviada: ';
-
-                    const messageValue = document.createElement('div');
-                    messageValue.classList.add('formattedMessage');
-                    messageValue.textContent = message;
-
-                    if (testMode) {
-                        messageValue.textContent = "[TESTE] " + messageValue.textContent;
-                    }
-
-                    messageDiv.appendChild(messageLabel);
-                    messageDiv.appendChild(messageValue);
-
-                    resultElement.appendChild(contactDiv);
-                    resultElement.appendChild(statusDiv);
-                    resultElement.appendChild(messageDiv);
-
-                    messageText.appendChild(resultElement);
-                });
-
-                messageModal.style.display = "block";
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
-                messageModal.style.display = "block";
-            });
+        alert('Por favor, selecione ao menos um contato antes de enviar as mensagens.');
+        return;
     }
+
+    const contactsToSend = [];
+    contacts.forEach((contact) => {
+        if (selectedContacts.get(contact.labelText)) {
+            contactsToSend.push(contact);
+        }
+    });
+
+    const testModeCheckbox = document.getElementById('testMode');
+    const testMode = testModeCheckbox.checked;
+
+    let messageContent = document.getElementById('message').value;
+
+    // **Crucially, you need to determine the languageCode for each contact.**  This is a placeholder.
+    // In a real app, you might store the preferred language for each contact in your `contacts` array,
+    // get it from browser settings, or use a language detection library.
+    // Example:  contact.languageCode.  If you don't have this info, remove the languageCode parameter.
+    // Replace with dynamic language detection.  IMPORTANT!
+    const languageCode = 'pt';
+
+    messageContent = messageContent.replace(/\[greeting]/gi, getGreetings(languageCode));
+
+
+    fetch('/upload', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            contacts: contactsToSend,
+            message: messageContent,
+            testMode: testMode
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            messageText.innerHTML = '';
+
+            data.results.forEach(result => {
+                const contactName = result.contact;
+                const status = result.status;
+                const message = result.message;
+
+                const resultElement = document.createElement('div');
+
+                const contactDiv = document.createElement('div');
+                contactDiv.style.display = 'flex';
+                contactDiv.style.flexDirection = 'row';
+                contactDiv.style.alignItems = 'center';
+
+                const contactLabel = document.createElement('div');
+                contactLabel.style.fontWeight = 'bold';
+                contactLabel.textContent = 'Contato: ';
+
+                const contactValue = document.createElement('div');
+                contactValue.textContent = contactName;
+
+                contactDiv.appendChild(contactLabel);
+                contactDiv.appendChild(contactValue);
+
+                const statusDiv = document.createElement('div');
+                statusDiv.style.display = 'flex';
+                statusDiv.style.flexDirection = 'row';
+                statusDiv.style.alignItems = 'center';
+
+                const statusLabel = document.createElement('div');
+                statusLabel.style.fontWeight = 'bold';
+                statusLabel.textContent = 'Status: ';
+
+                const statusImage = document.createElement('img');
+                statusImage.alt = status === 'success' ? 'Sucesso' : 'Erro';
+                statusImage.src = status === 'success' ? 'https://img.icons8.com/color/32/000000/checked-2--v1.png' : 'https://img.icons8.com/color/32/000000/cancel--v1.png';
+                statusImage.classList.add('formattedImage');
+
+                statusDiv.appendChild(statusLabel);
+                statusDiv.appendChild(statusImage);
+
+                const messageDiv = document.createElement('div');
+                messageDiv.style.display = 'flex';
+                messageDiv.style.flexDirection = 'column';
+
+                const messageLabel = document.createElement('div');
+                messageLabel.style.fontWeight = 'bold';
+                messageLabel.textContent = 'Mensagem Enviada: ';
+
+                const messageValue = document.createElement('div');
+                messageValue.classList.add('formattedMessage');
+                messageValue.textContent = message;
+
+                if (testMode) {
+                    messageValue.textContent = "[TESTE] " + messageValue.textContent;
+                }
+
+                messageDiv.appendChild(messageLabel);
+                messageDiv.appendChild(messageValue);
+
+                resultElement.appendChild(contactDiv);
+                resultElement.appendChild(statusDiv);
+                resultElement.appendChild(messageDiv);
+
+                messageText.appendChild(resultElement);
+            });
+
+            messageModal.style.display = "block";
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
+            messageModal.style.display = "block";
+        });
 });
 
 // Adicionar contato individualmente
@@ -547,7 +547,7 @@ addContactBtn.addEventListener('click', async () => {
                 phoneNumber: phone
             };
             contacts.push(newContact);
-           await updateContactsOnServer(contacts);  // Save to server
+            await updateContactsOnServer(contacts);  // Save to server
             renderContactList(contacts);
         } else {
             alert('Este número de telefone já está na lista.');
@@ -569,6 +569,10 @@ async function loadContactsFromServer() {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         contacts = await response.json();
+        // Initialize selectedContacts Map
+        contacts.forEach(contact => {
+            selectedContacts.set(contact.labelText, false);  // Initially, no contact is selected
+        });
         renderContactList(contacts);
     } catch (error) {
         console.error('Failed to load contacts from server:', error);
@@ -577,5 +581,4 @@ async function loadContactsFromServer() {
     } finally {
         renderContactList(contacts);  // Render even if loading fails (shows an empty list)
     }
-
 }
