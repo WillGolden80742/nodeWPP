@@ -1,91 +1,194 @@
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte do WhatsApp Web */
+    background-color: #f0f2f5; /* Cor de fundo geral */
     margin: 0;
     padding: 0;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
+    height: 100vh; /* Ocupa a altura total da tela */
 }
 
 .container {
-    width: 90%;
-    max-width: 768px;
+    display: flex; /* Divide a tela em duas colunas */
+    width: 100%; /* Ocupa toda a largura */
+    height: 100%;
+}
+
+#mainForm {
     padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
-    margin-bottom: 60px;
 }
 
-h1 {
-    color: #007bff;
-    text-align: center;
-    margin-bottom: 20px;
+/* Coluna da lista de contatos (similar à barra lateral do WhatsApp Web) */
+.sidebar {
+    width: 450px; /* Largura da barra lateral */
+    background-color: #ededed; /* Cor de fundo da barra lateral */
+    border-right: 1px solid #d1d7db; /* Separador visual */
+    display: flex;
+    flex-direction: column;
 }
 
-label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+/* Estilos para o cabeçalho da barra lateral */
+.sidebar-header {
+    background-color: #ededed; /* Cor de fundo do cabeçalho */
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-input[type="file"],
-textarea {
+.sidebar-header h1 {
+    color: #54656f; /* Cor do título */
+    font-size: 1.2rem;
+    margin: 0;
+    font-weight: 500; /* Ajuste do peso da fonte */
+}
+
+/* Estilos para a barra de pesquisa */
+.search-container {
+    padding: 8px;
+    background-color: #f0f2f5;
+}
+
+.search-container input {
     width: 100%;
     padding: 8px;
-    margin-bottom: 15px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    box-sizing: border-box;
+    border: none;
+    border-radius: 20px; /* Mais arredondado como no WhatsApp */
+    background-color: white;
+    outline: none;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Sutil sombra interna */
 }
 
-textarea {
-    resize: vertical;
-    min-height: 100px;
+/* Estilos para as abas de contato */
+.contact-tabs .nav-link {
+    color: #54656f; /* Cor do texto das abas */
+    background-color: transparent; /* Fundo transparente */
+    border: none; /* Remove bordas */
+    border-bottom: 2px solid transparent; /* Linha inferior para indicar a aba ativa */
+    border-radius: 0; /* Remove cantos arredondados */
+    margin-bottom: 0; /* Remove margem inferior */
+    padding: 8px 15px; /* Ajusta o preenchimento */
+    font-weight: 500; /* Ajusta o peso da fonte */
+    transition: border-bottom-color 0.2s ease-in-out; /* Transição suave */
 }
 
-button[type="submit"] {
-    background-color: #28a745;
+.contact-tabs .nav-link.active {
+    color: #00a884; /* Cor do texto da aba ativa (verde do WhatsApp) */
+    border-bottom-color: #00a884; /* Cor da linha inferior da aba ativa */
+}
+
+.contact-tabs .nav-link:hover {
+    background-color: rgba(0, 0, 0, 0.05); /* Efeito de hover sutil */
+}
+
+/* Estilos para a lista de contatos */
+.contact-list-container {
+    flex-grow: 1; /* Ocupa o espaço restante na barra lateral */
+    overflow-y: auto; /* Adiciona barra de rolagem vertical se necessário */
+    padding: 8px;
+    height:522px;
+}
+
+.contact-list-container label {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+    margin-bottom: 4px; /* Espaçamento entre os contatos */
+}
+
+.contact-list-container label:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.contact-list-container label input[type="checkbox"] {
+    margin-right: 12px;
+}
+
+.contact-list-container label .contact-info {
+    flex-grow: 1;
+}
+
+.contact-list-container label .contact-name {
+    font-weight: 500;
+    color: #111b21;
+}
+
+.contact-list-container label .contact-number {
+    color: #667781;
+    font-size: 0.85rem;
+}
+
+.contact-list-container label .status-icon {
+    margin-left: auto;
+    font-size: 1.2rem;
+    color: #00a884; /* Cor do ícone de status (verde do WhatsApp) */
+}
+
+/* Estilos para a coluna de envio de mensagens (similar à área de chat do WhatsApp Web) */
+.message-area {
+    flex-grow: 1; /* Ocupa o espaço restante da tela */
+    background-color: #efeae2; /* Cor de fundo da área de mensagens */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Estilos para o cabeçalho da área de mensagens */
+.message-area-header {
+    background-color: #ededed; /* Cor de fundo do cabeçalho */
+    padding: 10px;
+    border-bottom: 1px solid #d1d7db;
+    display: flex;
+    align-items: center;
+}
+
+.message-area-header h2 {
+    color: #54656f;
+    font-size: 1.2rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Estilos para a área de digitação da mensagem */
+.message-input-area {
+    padding-top: 10px;
+    display: flex;
+    align-items: center;
+    border-top: 1px solid #d1d7db;
+}
+
+.message-input-area textarea {
+    flex-grow: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 20px;
+    background-color: white;
+    outline: none;
+    resize: none; /* Impede o redimensionamento */
+    height: auto; /* Ajusta a altura automaticamente */
+    overflow: hidden; /* Esconde o overflow */
+    font-size: 1rem;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Sutil sombra interna */
+}
+
+/* Estilos para o botão de envio */
+.send-button {
+    background-color: #00a884; /* Cor de fundo do botão (verde do WhatsApp) */
     color: white;
     padding: 10px 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s ease-in-out;
+    margin-left: 10px;
 }
 
-button[type="submit"]:hover {
-    background-color: #218838;
+.send-button:hover {
+    background-color: #008069; /* Verde mais escuro no hover */
 }
 
-footer {
-    background-color: #343a40;
-    color: white;
-    text-align: center;
-    padding: 10px;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-}
-
-#contactList, #contactListNew, #contactListSent, #contactListAnswered {
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    padding: 5px;
-    margin-bottom: 10px;
-}
-
-#contactList label, #contactListNew label, #contactListSent label, #contactListAnswered label {
-    display: block;
-    margin-bottom: 2px;
-}
-
-/* Estilos para a janela flutuante */
+/* Estilos para o modal de resultado */
 #messageModal {
     display: none;
     position: fixed;
@@ -94,7 +197,6 @@ footer {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    /* Fundo semi-transparente */
     z-index: 1000;
     overflow: auto;
 }
@@ -102,12 +204,11 @@ footer {
 #messageModalContent {
     position: relative;
     background-color: #fefefe;
-    margin: auto auto;
-    /* Centraliza verticalmente e horizontalmente */
+    margin: 5% auto; /* Centraliza com um pouco de margem */
     padding: 20px;
     border: 1px solid #888;
     width: 80%;
-    max-width: 600px;
+    max-width: 700px;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     animation-name: animatetop;
     animation-duration: 0.4s
@@ -144,9 +245,7 @@ footer {
 /* Estilos para a mensagem dentro da janela */
 #messageText {
     overflow-y: auto;
-    /* Adiciona scroll vertical se a mensagem for muito longa */
     max-height: 400px;
-    /* Define uma altura máxima para a mensagem */
     white-space: pre-wrap;
 }
 
@@ -166,7 +265,6 @@ footer {
 /* Estilos para formatar a mensagem */
 .formattedMessage {
     font-family: monospace;
-    /* Fonte monoespaçada para melhor visualização do código */
     background-color: #f0f0f0;
     padding: 10px;
     border: 1px solid #ccc;
@@ -174,95 +272,32 @@ footer {
     margin-top: 5px;
     margin-bottom: 10px;
     overflow-x: auto;
-    /* Adiciona barra de rolagem horizontal se a mensagem for muito longa */
     white-space: pre-wrap;
 }
 
 /* Estilo para imagem formatada */
 .formattedImage {
     max-width: 32px;
-    /* Garante que a imagem não ultrapasse a largura do container */
     height: 32px;
-    /* Mantém a proporção da imagem */
     border: 0px solid #ccc;
-    /* Adiciona uma borda para melhor visualização */
     border-radius: 5px;
-    /* Arredonda as bordas */
     margin-top: 5px;
-    /* Adiciona um espaço acima da imagem */
     display: block;
-    /* Garante que a imagem se comporte como um bloco */
 }
 
-/* Adiciona responsividade para telas landscape em dispositivos móveis */
-@media screen and (max-width: 768px) and (orientation: landscape) {
+/* Responsividade para telas menores */
+@media (max-width: 768px) {
     .container {
-        width: 95%;
-        margin-top: 10px;
-        margin-bottom: 50px;
-        padding: 10px;
+        flex-direction: column; /* Empilha as colunas em telas pequenas */
     }
 
-    h1 {
-        font-size: 1.5rem;
-        margin-bottom: 10px;
+    .sidebar {
+        width: 100%; /* Ocupa toda a largura */
+        border-right: none; /* Remove a borda */
+        border-bottom: 1px solid #d1d7db; /* Adiciona uma borda inferior */
     }
 
-    label {
-        font-size: 0.9rem;
+    .message-area {
+        flex-grow: 1;
     }
-
-    input[type="file"],
-    textarea {
-        padding: 6px;
-        margin-bottom: 10px;
-    }
-
-    button[type="submit"] {
-        padding: 8px 16px;
-        font-size: 0.9rem;
-    }
-}
-
-/* Estilo para o botão "Carregar Contatos" */
-#loadContactsBtn {
-    background-color: #007bff; /* Cor primária do Bootstrap */
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    margin-top: 10px; /* Adiciona um espaço acima do botão */
-}
-
-#loadContactsBtn:hover {
-    background-color: #0056b3; /* Cor mais escura para o hover */
-}
-
-#loadContactsBtn:focus {
-    outline: none; /* Remove a borda de foco padrão */
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5); /* Adiciona uma sombra de foco */
-}
-
-/*Estilos para as abas de contato*/
-.nav-tabs .nav-link {
-    color: #007bff; /* Cor do texto das abas */
-    background-color: #f8f9fa; /* Cor de fundo das abas */
-    border: 1px solid #dee2e6; /* Borda das abas */
-    border-bottom: none; /* Remove a borda inferior das abas */
-    border-radius: 0.25rem 0.25rem 0 0; /* Arredonda os cantos superiores */
-    margin-bottom: -1px; /* Sobrepõe a borda do conteúdo das abas */
-}
-
-.nav-tabs .nav-link.active {
-    color: #495057; /* Cor do texto da aba ativa */
-    background-color: #fff; /* Cor de fundo da aba ativa */
-    border-color: #dee2e6 #dee2e6 #fff; /* Borda da aba ativa */
-}
-
-.tab-content {
-    border: 1px solid #dee2e6; /* Borda do conteúdo das abas */
-    padding: 1rem; /* Espaçamento interno do conteúdo das abas */
-    border-top: none; /* Remove a borda superior do conteúdo das abas */
 }

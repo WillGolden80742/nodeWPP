@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.3.67/css/materialdesignicons.min.css">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="/socket.io/socket.io.js"></script>  
+    <script src="/socket.io/socket.io.js"></script>
+
     <!-- Estilo customizado -->
     <link rel="stylesheet" href="style.css">
 
@@ -17,146 +18,137 @@
 
 <body>
     <div class="container">
-        <h1><i class="mdi mdi-whatsapp"></i> Enviar Mensagens WhatsApp</h1>
-        <form action="/upload" method="post" enctype="multipart/form-data" id="mainForm">
-
-            <div class="mb-3">
-                <label for="fileInput" class="form-label"><i class="mdi mdi-upload"></i> Selecione o
-                    arquivo:</label>
-                <input type="file" class="form-control" id="fileInput" name="fileInput" accept=".csv,.vcf">
+        <!-- Barra lateral (lista de contatos) -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>WhatsApp Sender</h1>
             </div>
 
-            <div id="csvColumnSelect" style="display: none;">
-                <div class="mb-3">
-                    <label class="form-label"><i class="mdi mdi-table-column"></i> Selecione as colunas do
-                        CSV:</label>
-                    <div class="row g-2">
-                        <div class="col-md">
-                            <label for="nameColumn" class="form-label">Coluna do Nome:</label>
-                            <select class="form-select" id="nameColumn" name="nameColumn">
-                            </select>
-                        </div>
-                        <div class="col-md">
-                            <label for="phoneColumn" class="form-label">Coluna do Telefone:</label>
-                            <select class="form-select" id="phoneColumn" name="phoneColumn">
-                            </select>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-primary" id="loadContactsBtn"><i
-                            class="mdi mdi-upload"></i> Carregar Contatos</button>
-                </div>
+            <div class="search-container">
+                <input type="text" id="search" placeholder="Pesquisar ou começar uma nova conversa">
             </div>
 
-
-            <!-- Formulário para adicionar contato individual -->
-            <div class="mb-3">
-                <label class="form-label"><i class="mdi mdi-account-plus"></i> Adicionar Contato Individual:</label>
-                <div class="row g-2">
-                    <div class="col-md">
-                        <input type="text" class="form-control" id="newContactName" placeholder="Nome">
-                    </div>
-                    <div class="col-md">
-                        <input type="tel" class="form-control" id="newContactPhone" placeholder="Telefone" type="number">
-                    </div>
-                    <div class="col-md-auto">
-                        <button type="button" class="btn btn-success" id="addContactBtn"><i
-                                class="mdi mdi-plus"></i> Adicionar</button>
-                    </div>
-                </div>
-            </div>
-
-
-            <div class="mb-3">
-                <label for="search" class="form-label"><i class="mdi mdi-magnify"></i> Pesquisar Contato:</label>
-                <input type="text" class="form-control" id="search" placeholder="Digite para pesquisar">
-            </div>
-
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="testMode" name="testMode" checked>
-                <label class="form-check-label" for="testMode"><i class="mdi mdi-test-tube"></i> Modo de Teste (Não
-                    envia mensagens reais)</label>
-            </div>
-
-            <div>
-                <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">Selecionar
-                    Todos</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">Desmarcar
-                    Todos</button>
-            </div>
             <!-- Tabs -->
-            <ul class="nav nav-tabs" id="contactTabs" role="tablist">
+            <ul class="nav nav-tabs contact-tabs" id="contactTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">Todos</button>
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all"
+                        type="button" role="tab" aria-controls="all" aria-selected="true">Todos</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="new-tab" data-bs-toggle="tab" data-bs-target="#new" type="button" role="tab" aria-controls="new" aria-selected="false">Novos</button>
+                    <button class="nav-link" id="new-tab" data-bs-toggle="tab" data-bs-target="#new" type="button"
+                        role="tab" aria-controls="new" aria-selected="false">Novos</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent" type="button" role="tab" aria-controls="sent" aria-selected="false">Enviados</button>
+                    <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent" type="button"
+                        role="tab" aria-controls="sent" aria-selected="false">Não Respondidos</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="answered-tab" data-bs-toggle="tab" data-bs-target="#answered" type="button" role="tab" aria-controls="answered" aria-selected="false">Respondidos</button>
+                    <button class="nav-link" id="answered-tab" data-bs-toggle="tab" data-bs-target="#answered"
+                        type="button" role="tab" aria-controls="answered" aria-selected="false">Respondidos</button>
                 </li>
             </ul>
 
             <div class="tab-content" id="contactTabsContent">
                 <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
-                    <div class="mb-3">
-                        <label class="form-label"><i class="mdi mdi-account-multiple"></i> Contatos (Todos):</label>
-                        <div id="contactList">
-                            <!-- A lista de contatos será inserida aqui dinamicamente -->
-                        </div>
+                    <div class="contact-list-container" id="contactList">
+                        <!-- A lista de contatos será inserida aqui dinamicamente -->
                     </div>
                 </div>
                 <div class="tab-pane fade" id="new" role="tabpanel" aria-labelledby="new-tab">
-                    <div class="mb-3">
-                        <label class="form-label"><i class="mdi mdi-account-multiple"></i> Contatos (Novos):</label>
-                        <div id="contactListNew">
-                            <!-- A lista de contatos NOVOS será inserida aqui dinamicamente -->
-                        </div>
+                    <div class="contact-list-container" id="contactListNew">
+                        <!-- A lista de contatos NOVOS será inserida aqui dinamicamente -->
                     </div>
                 </div>
                 <div class="tab-pane fade" id="sent" role="tabpanel" aria-labelledby="sent-tab">
-                    <div class="mb-3">
-                        <label class="form-label"><i class="mdi mdi-account-multiple"></i> Contatos (Não Respondidos):</label>
-                        <div id="contactListSent">
-                            <!-- A lista de contatos NÃO RESPONDIDOS será inserida aqui dinamicamente -->
-                        </div>
+                    <div class="contact-list-container" id="contactListSent">
+                        <!-- A lista de contatos NÃO RESPONDIDOS será inserida aqui dinamicamente -->
                     </div>
                 </div>
                 <div class="tab-pane fade" id="answered" role="tabpanel" aria-labelledby="answered-tab">
-                    <div class="mb-3">
-                        <label class="form-label"><i class="mdi mdi-account-multiple"></i> Contatos (Respondidos):</label>
-                        <div id="contactListAnswered">
-                            <!-- A lista de contatos RESPONDIDOS será inserida aqui dinamicamente -->
-                        </div>
+                    <div class="contact-list-container" id="contactListAnswered">
+                        <!-- A lista de contatos RESPONDIDOS será inserida aqui dinamicamente -->
                     </div>
                 </div>
             </div>
             <!-- End Tabs -->
+        </div>
 
-
-
-            <div class="mb-3">
-                <label for="message" class="form-label"><i class="mdi mdi-message-text"></i> Mensagem</label>
-                Use:
-                <ul>
-                    <li><b>[name]</b> para o nome do contato</li>
-                    <li><b>[greeting]</b> para "Bom dia", "Boa tarde" ou "Boa noite" (automático)</li>
-                </ul>
-                <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
+        <!-- Área de envio de mensagens -->
+        <div class="message-area">
+            <div class="message-area-header">
+                <h2>Enviar Mensagem</h2>
             </div>
+            <form action="/upload" method="post" enctype="multipart/form-data" id="mainForm">
+                <div class="mb-3">
+                    <label for="fileInput" class="form-label"><i class="mdi mdi-upload"></i> Selecione o
+                        arquivo:</label>
+                    <input type="file" class="form-control" id="fileInput" name="fileInput" accept=".csv,.vcf">
+                </div>
 
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-success" id="sendMessageBtn"><i class="mdi mdi-send"></i> Enviar
-                    Mensagens</button>
-            </div>
-        </form>
+                <div id="csvColumnSelect" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label"><i class="mdi mdi-table-column"></i> Selecione as colunas do
+                            CSV:</label>
+                        <div class="row g-2">
+                            <div class="col-md">
+                                <label for="nameColumn" class="form-label">Coluna do Nome:</label>
+                                <select class="form-select" id="nameColumn" name="nameColumn">
+                                </select>
+                            </div>
+                            <div class="col-md">
+                                <label for="phoneColumn" class="form-label">Coluna do Telefone:</label>
+                                <select class="form-select" id="phoneColumn" name="phoneColumn">
+                                </select>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" id="loadContactsBtn"><i
+                                class="mdi mdi-upload"></i> Carregar Contatos</button>
+                    </div>
+                </div>
+
+
+                <!-- Formulário para adicionar contato individual -->
+                <div class="mb-3">
+                    <label class="form-label"><i class="mdi mdi-account-plus"></i> Adicionar Contato
+                        Individual:</label>
+                    <div class="row g-2">
+                        <div class="col-md">
+                            <input type="text" class="form-control" id="newContactName" placeholder="Nome">
+                        </div>
+                        <div class="col-md">
+                            <input type="tel" class="form-control" id="newContactPhone" placeholder="Telefone"
+                                type="number">
+                        </div>
+                        <div class="col-md-auto">
+                            <button type="button" class="btn btn-success" id="addContactBtn"><i
+                                    class="mdi mdi-plus"></i> Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="testMode" name="testMode" checked>
+                    <label class="form-check-label" for="testMode"><i class="mdi mdi-test-tube"></i> Modo de Teste
+                        (Não
+                        envia mensagens reais)</label>
+                </div>
+
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">Selecionar
+                        Todos</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">Desmarcar
+                        Todos</button>
+                </div>
+
+                <div class="message-input-area">
+                    <textarea class="form-control" id="message" name="message" rows="4" required
+                        placeholder="Digite sua mensagem aqui..."></textarea>
+                    <button type="submit" class="send-button" id="sendMessageBtn"><i
+                            class="mdi mdi-send"></i></button>
+                </div>
+            </form>
+        </div>
     </div>
-
-    <footer>
-        © 2024 WhatsApp Sender. Todos os direitos reservados.
-    </footer>
 
     <!-- Janela flutuante (Modal) -->
     <div id="messageModal">
