@@ -178,11 +178,21 @@ app.post('/update-contacts', async (req, res) => {
     console.log("Update contacts endpoint called");
     console.log("Request body:", req.body);
 
-    const updatedContacts = req.body.contacts;
+    let updatedContacts = req.body.contacts;
 
     if (!updatedContacts) {
         return res.status(400).json({ error: 'No contacts provided to update.' });
     }
+
+    // Filter out contacts with phone numbers shorter than 9 digits
+    updatedContacts = updatedContacts.filter(contact => {
+        if (contact.phoneNumber && contact.phoneNumber.length >= 9) {
+            return true; // Keep the contact
+        } else {
+            console.warn(`Contact ${contact.fullName} with phone number ${contact.phoneNumber} ignored due to length < 9.`);
+            return false; // Filter out the contact
+        }
+    });
 
     try {
         await saveContactsToServer(updatedContacts);

@@ -284,9 +284,10 @@ async function updateContactsOnServer(contacts) {
 }
 
 function renderContactList(contactList, container) {
-    container.innerHTML = ''; // Limpa a lista existente
+    container.innerHTML = ''; 
+    const filteredContactList = contactList.filter(contact => contact.phoneNumber && contact.phoneNumber.length >= 9);
 
-    contactList.forEach((contact, index) => {
+    filteredContactList.forEach((contact, index) => {
         const contactId = `contact-${index}`; // ID único para cada contato
 
         const label = document.createElement('label');
@@ -301,7 +302,7 @@ function renderContactList(contactList, container) {
         // Cria o elemento para o ícone de status
         const statusIcon = document.createElement('i');
         statusIcon.classList.add('mdi'); // Adiciona a classe 'mdi'
-        
+
         switch (contact.status) {
             case 'new':
                 statusIcon.classList.add('mdi-new-box'); // Ícone para 'new'
