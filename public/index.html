@@ -28,6 +28,59 @@
                 <input type="text" id="search" placeholder="Pesquisar ou começar uma nova conversa">
             </div>
 
+            <!-- Input de arquivo -->
+            <div class="mb-3">
+                <label for="fileInput" class="form-label"><i class="mdi mdi-upload"></i> Selecione o arquivo:</label>
+                <input type="file" class="form-control" id="fileInput" name="fileInput" accept=".csv,.vcf">
+            </div>
+
+            <!-- Seleção de colunas CSV -->
+            <div id="csvColumnSelect" style="display: none;">
+                <div class="mb-3">
+                    <label class="form-label"><i class="mdi mdi-table-column"></i> Selecione as colunas do CSV:</label>
+                    <div class="row g-2">
+                        <div class="col-md">
+                            <label for="nameColumn" class="form-label">Coluna do Nome:</label>
+                            <select class="form-select" id="nameColumn" name="nameColumn">
+                            </select>
+                        </div>
+                        <div class="col-md">
+                            <label for="phoneColumn" class="form-label">Coluna do Telefone:</label>
+                            <select class="form-select" id="phoneColumn" name="phoneColumn">
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="loadContactsBtn"><i
+                            class="mdi mdi-upload"></i> Carregar Contatos</button>
+                </div>
+            </div>
+
+            <!-- Adicionar contato individual -->
+            <div class="mb-3">
+                <label class="form-label"><i class="mdi mdi-account-plus"></i> Adicionar Contato Individual:</label>
+                <div class="row g-2">
+                    <div class="col-md">
+                        <input type="text" class="form-control" id="newContactName" placeholder="Nome">
+                    </div>
+                    <div class="col-md">
+                        <input type="tel" class="form-control" id="newContactPhone" placeholder="Telefone"
+                            type="number">
+                    </div>
+                    <div class="col-md-auto">
+                        <button type="button" class="btn btn-success" id="addContactBtn"><i
+                                class="mdi mdi-plus"></i> Adicionar</button>
+                    </div>
+                </div>
+            </div>
+
+                        <!-- Botões de seleção -->
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">Selecionar
+                    Todos</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">Desmarcar
+                    Todos</button>
+            </div>
+
             <!-- Tabs -->
             <ul class="nav nav-tabs contact-tabs" id="contactTabs" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -71,6 +124,7 @@
                 </div>
             </div>
             <!-- End Tabs -->
+
         </div>
 
         <!-- Área de envio de mensagens -->
@@ -79,67 +133,12 @@
                 <h2>Enviar Mensagem</h2>
             </div>
             <form action="/upload" method="post" enctype="multipart/form-data" id="mainForm">
-                <div class="mb-3">
-                    <label for="fileInput" class="form-label"><i class="mdi mdi-upload"></i> Selecione o
-                        arquivo:</label>
-                    <input type="file" class="form-control" id="fileInput" name="fileInput" accept=".csv,.vcf">
-                </div>
-
-                <div id="csvColumnSelect" style="display: none;">
-                    <div class="mb-3">
-                        <label class="form-label"><i class="mdi mdi-table-column"></i> Selecione as colunas do
-                            CSV:</label>
-                        <div class="row g-2">
-                            <div class="col-md">
-                                <label for="nameColumn" class="form-label">Coluna do Nome:</label>
-                                <select class="form-select" id="nameColumn" name="nameColumn">
-                                </select>
-                            </div>
-                            <div class="col-md">
-                                <label for="phoneColumn" class="form-label">Coluna do Telefone:</label>
-                                <select class="form-select" id="phoneColumn" name="phoneColumn">
-                                </select>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-primary" id="loadContactsBtn"><i
-                                class="mdi mdi-upload"></i> Carregar Contatos</button>
-                    </div>
-                </div>
-
-
-                <!-- Formulário para adicionar contato individual -->
-                <div class="mb-3">
-                    <label class="form-label"><i class="mdi mdi-account-plus"></i> Adicionar Contato
-                        Individual:</label>
-                    <div class="row g-2">
-                        <div class="col-md">
-                            <input type="text" class="form-control" id="newContactName" placeholder="Nome">
-                        </div>
-                        <div class="col-md">
-                            <input type="tel" class="form-control" id="newContactPhone" placeholder="Telefone"
-                                type="number">
-                        </div>
-                        <div class="col-md-auto">
-                            <button type="button" class="btn btn-success" id="addContactBtn"><i
-                                    class="mdi mdi-plus"></i> Adicionar</button>
-                        </div>
-                    </div>
-                </div>
-
+                <!-- Modo de Teste -->
                 <div class="mb-3 form-check">
                     <input type="checkbox" class="form-check-input" id="testMode" name="testMode" checked>
-                    <label class="form-check-label" for="testMode"><i class="mdi mdi-test-tube"></i> Modo de Teste
-                        (Não
+                    <label class="form-check-label" for="testMode"><i class="mdi mdi-test-tube"></i> Modo de Teste (Não
                         envia mensagens reais)</label>
                 </div>
-
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">Selecionar
-                        Todos</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">Desmarcar
-                        Todos</button>
-                </div>
-
                 <div class="message-input-area">
                     <textarea class="form-control" id="message" name="message" rows="4" required
                         placeholder="Digite sua mensagem aqui..."></textarea>
