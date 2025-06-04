@@ -1,6 +1,10 @@
 // script.js
 const fileInput = document.getElementById('fileInput');
 const contactListDiv = document.getElementById('contactList');
+const contactListNewDiv = document.getElementById('contactListNew');
+const contactListSentDiv = document.getElementById('contactListSent');
+const contactListAnsweredDiv = document.getElementById('contactListAnswered');
+const navButton = document.querySelector('.nav-tabs');
 const searchInput = document.getElementById('search');
 const selectAllButton = document.getElementById('selectAll');
 const deselectAllButton = document.getElementById('deselectAll');
@@ -80,6 +84,11 @@ sendMessageBtn.disabled = true;
 
 const storedColumnSelections = loadColumnSelectionsFromLocalStorage();
 
+
+navButton.addEventListener('click', function (event) {
+    isCheckedAllContacts(false);
+});
+
 fileInput.addEventListener('change', async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -146,7 +155,7 @@ async function loadContacts() {
     });
 
     await updateContactsOnServer(contacts);  // Save to server
-    renderContactList(contacts);
+    renderContactLists(contacts);
 }
 
 
@@ -274,8 +283,8 @@ async function updateContactsOnServer(contacts) {
     }
 }
 
-function renderContactList(contactList) {
-    contactListDiv.innerHTML = ''; // Limpa a lista existente
+function renderContactList(contactList, container) {
+    container.innerHTML = ''; // Limpa a lista existente
 
     contactList.forEach((contact, index) => {
         const contactId = `contact-${index}`; // ID único para cada contato
@@ -307,7 +316,7 @@ function renderContactList(contactList) {
         label.appendChild(contactText);
         label.appendChild(deleteButton);
 
-        contactListDiv.appendChild(label);
+        container.appendChild(label);
 
         const labelText = label.textContent.trim(); // Pega o texto do label
 
@@ -328,10 +337,21 @@ function renderContactList(contactList) {
     updateSendButtonState(); // Update button state after rendering
 }
 
+function renderContactLists(contactList) {
+    const newContacts = contactList.filter(contact => contact.status === 'new');
+    const sentContacts = contactList.filter(contact => contact.status === 'sent');
+    const answeredContacts = contactList.filter(contact => contact.status === 'answered');
+
+    renderContactList(contactList, contactListDiv);
+    renderContactList(newContacts, contactListNewDiv);
+    renderContactList(sentContacts, contactListSentDiv);
+    renderContactList(answeredContacts, contactListAnsweredDiv);
+}
+
 async function deleteContact(indexToDelete) {
     contacts.splice(indexToDelete, 1); // Remove o contato do array
     await updateContactsOnServer(contacts);  // Save to server
-    renderContactList(contacts); // Renderiza a lista atualizada
+    renderContactLists(contacts); // Renderiza a lista atualizada
 }
 
 searchInput.addEventListener('input', () => {
@@ -340,22 +360,23 @@ searchInput.addEventListener('input', () => {
         contact.fullName.toLowerCase().includes(searchTerm) ||
         contact.phoneNumber.toLowerCase().includes(searchTerm)
     );
-    renderContactList(filteredContacts); // Renderiza a lista filtrada
+    renderContactLists(filteredContacts); // Renderiza a lista filtrada
 });
 
 selectAllButton.addEventListener('click', () => {
-    contacts.forEach((contact) => {
-        selectedContacts.set(contact.labelText, true); // Define todos como selecionados no Map
-    });
-    renderContactList(contacts); // Renderiza a lista com todos selecionados
+    isCheckedAllContacts(true); // Marca todos os contatos
 });
 
 deselectAllButton.addEventListener('click', () => {
-    contacts.forEach((contact) => {
-        selectedContacts.set(contact.labelText, false); // Define todos como não selecionados no Map
-    });
-    renderContactList(contacts); // Renderiza a lista com todos desmarcados
+    isCheckedAllContacts(false); // Desmarca todos os contatos
 });
+
+function isCheckedAllContacts(b) {
+    contacts.forEach((contact) => {
+        selectedContacts.set(contact.labelText, b); // Define todos como não selecionados no Map
+    });
+    renderContactLists(contacts); // Renderiza a lista com todos desmarcados
+}
 
 function getGreetings(languageCode) {
     const now = new Date();
@@ -521,6 +542,7 @@ mainForm.addEventListener('submit', function (event) {
             messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
             messageModal.style.display = "block";
         });
+        testModeCheckbox.checked = true; 
 });
 
 // Adicionar contato individualmente
@@ -547,7 +569,7 @@ addContactBtn.addEventListener('click', async () => {
             };
             contacts.push(newContact);
             await updateContactsOnServer(contacts);  // Save to server
-            renderContactList(contacts);
+            renderContactLists(contacts);
         } else {
             alert('Este número de telefone já está na lista.');
         }
@@ -572,12 +594,12 @@ async function loadContactsFromServer() {
         contacts.forEach(contact => {
             selectedContacts.set(contact.labelText, false);  // Initially, no contact is selected
         });
-        renderContactList(contacts);
+        renderContactLists(contacts);
     } catch (error) {
         console.error('Failed to load contacts from server:', error);
         alert('Failed to load contacts from server. Check the console for details.');
         contacts = [];  // Ensure contacts is an empty array if loading fails
     } finally {
-        renderContactList(contacts);  // Render even if loading fails (shows an empty list)
+        renderContactLists(contacts);  // Render even if loading fails (shows an empty list)
     }
 }

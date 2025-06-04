@@ -244,3 +244,25 @@ footer {
     outline: none; /* Remove a borda de foco padrão */
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5); /* Adiciona uma sombra de foco */
 }
+
+/*Estilos para as abas de contato*/
+.nav-tabs .nav-link {
+    color: #007bff; /* Cor do texto das abas */
+    background-color: #f8f9fa; /* Cor de fundo das abas */
+    border: 1px solid #dee2e6; /* Borda das abas */
+    border-bottom: none; /* Remove a borda inferior das abas */
+    border-radius: 0.25rem 0.25rem 0 0; /* Arredonda os cantos superiores */
+    margin-bottom: -1px; /* Sobrepõe a borda do conteúdo das abas */
+}
+
+.nav-tabs .nav-link.active {
+    color: #495057; /* Cor do texto da aba ativa */
+    background-color: #fff; /* Cor de fundo da aba ativa */
+    border-color: #dee2e6 #dee2e6 #fff; /* Borda da aba ativa */
+}
+
+.tab-content {
+    border: 1px solid #dee2e6; /* Borda do conteúdo das abas */
+    padding: 1rem; /* Espaçamento interno do conteúdo das abas */
+    border-top: none; /* Remove a borda superior do conteúdo das abas */
+}
