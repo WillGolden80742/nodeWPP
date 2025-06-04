@@ -87,7 +87,7 @@ const storedColumnSelections = loadColumnSelectionsFromLocalStorage();
 
 navButton.addEventListener('click', function (event) {
     isCheckedAllContacts(false);
-    renderContactLists(filteredContacts); 
+    renderContactLists(contacts); //Use the master list of contacts.
 });
 
 fileInput.addEventListener('change', async (event) => {
@@ -159,6 +159,17 @@ async function loadContacts() {
     renderContactLists(contacts);
 }
 
+// Function to generate contact key
+function generateContactKey(contact) {
+    return `${contact.fullName}-${contact.phoneNumber}`;
+}
+
+// Function to add key to contact
+function addKeyToContact(contact) {
+    contact.key = generateContactKey(contact);
+    return contact;
+}
+
 
 // Function to get CSV headers
 async function getCsvHeaders(csvContent) {
@@ -223,11 +234,13 @@ function parseVcfContent(vcfContent) {
         }
 
         if (phoneNumber) {
-            contacts.push({
+            let contact = {
                 fullName,
                 phoneNumber,
                 status: 'new' // Initialize status
-            });
+            };
+            contact = addKeyToContact(contact);
+            contacts.push(contact);
         }
     }
     return contacts;
@@ -252,11 +265,13 @@ function parseCsvContent(csvContent, nameColumnIndex, phoneColumnIndex) {
                 console.warn(`Número de telefone inválido encontrado: ${phoneNumber}. Ignorando.`);
                 continue; // Skip this contact if phone number is invalid
             }
-            contacts.push({
+            let contact = {
                 fullName,
                 phoneNumber,
                 status: 'new' // Initialize status
-            });
+            };
+            contact = addKeyToContact(contact);
+            contacts.push(contact);
         }
     }
     return contacts;
@@ -296,7 +311,6 @@ function renderContactList(contactList, container) {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = contactId;
-        checkbox.dataset.index = index;
 
         const contactText = document.createTextNode(` ${contact.fullName} (${contact.phoneNumber}) `);
 
@@ -321,15 +335,15 @@ function renderContactList(contactList, container) {
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
         deleteButton.classList.add('btn', 'btn-sm', 'deleteContactBtn');
-        deleteButton.dataset.index = index;
+        deleteButton.dataset.key = contact.key; // Store the contact's key here!!!
 
         const deleteIcon = document.createElement('i');
         deleteIcon.classList.add('mdi', 'mdi-delete');
 
         deleteButton.appendChild(deleteIcon); // Adiciona o ícone ao botão
         deleteButton.addEventListener('click', function () {  //Move o EventListener pra cá para não ficar no loop posterior.
-            const indexToDelete = parseInt(this.dataset.index);
-            deleteContact(indexToDelete);
+            const keyToDelete = this.dataset.key;  // Get the key from the button.
+            deleteContact(keyToDelete);
         });
 
         label.appendChild(checkbox);
@@ -375,8 +389,8 @@ function renderContactLists(contactList) {
     renderContactList(answeredContacts, contactListAnsweredDiv);
 }
 
-async function deleteContact(indexToDelete) {
-    contacts.splice(indexToDelete, 1); // Remove o contato do array
+async function deleteContact(keyToDelete) {
+    contacts = contacts.filter(contact => contact.key !== keyToDelete); // Filter by key
     await updateContactsOnServer(contacts);  // Save to server
     renderContactLists(contacts); // Renderiza a lista atualizada
 }
@@ -568,6 +582,17 @@ mainForm.addEventListener('submit', function (event) {
     testModeCheckbox.checked = true;
 });
 
+// Function to add contact
+function addContact(name, phone) {
+    const newContact = {
+        fullName: name,
+        phoneNumber: phone,
+        status: 'new'  // Initialize status
+    };
+
+    return addKeyToContact(newContact);
+}
+
 // Adicionar contato individualmente
 addContactBtn.addEventListener('click', async () => {
     const name = newContactNameInput.value.trim();
@@ -585,11 +610,8 @@ addContactBtn.addEventListener('click', async () => {
 
         const isDuplicate = contacts.some(existingContact => existingContact.phoneNumber === phone);
         if (!isDuplicate) {
-            const newContact = {
-                fullName: name,
-                phoneNumber: phone,
-                status: 'new'  // Initialize status
-            };
+            const newContact = addContact(name, phone);
+
             contacts.push(newContact);
             await updateContactsOnServer(contacts);  // Save to server
             renderContactLists(contacts);
@@ -640,6 +662,7 @@ socket.on('contacts_updated', (updatedContacts) => {
 
     console.log('Received updated contacts from server:', updatedContacts);
     contacts = updatedContacts; // Update the local contacts array
+    contacts = contacts.map(contact => addKeyToContact(contact));
     const searchTerm = searchInput.value.toLowerCase();
     const filteredContacts = contacts.filter(contact =>
         contact.fullName.toLowerCase().includes(searchTerm) ||
@@ -661,6 +684,7 @@ async function loadContactsFromServer() {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         contacts = await response.json();
+        contacts = contacts.map(contact => addKeyToContact(contact));
         // Initialize selectedContacts Map
         contacts.forEach(contact => {
             selectedContacts.set(contact.labelText, false);  // Initially, no contact is selected
@@ -674,3 +698,7 @@ async function loadContactsFromServer() {
         renderContactLists(contacts);  // Render even if loading fails (shows an empty list)
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadContactsFromServer(); // Call the function from script.js
+});
