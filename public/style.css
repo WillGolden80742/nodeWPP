@@ -32,9 +32,13 @@ body {
     font-weight: bold;
 }
 
+.whatsapp-sidebar-header span {
+    font-size: 24px;
+}
+
 .whatsapp-icon {
     width: 30px;
-    height: 30px;
+    font-size:32px;
     margin-right: 10px;
     display: inline-block; /* Ensure proper alignment */
 }
@@ -112,7 +116,7 @@ body {
 .contact-list-container {
     padding: .5rem;
     overflow-y: auto;
-    max-height: calc(100vh - 367px); /* Adjusted max-height */
+    max-height: calc(100vh - 390px); /* Adjusted max-height */
 }
 
 .contact-list-container label {
