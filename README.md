@@ -1,110 +1,131 @@
-# nodeWPP - Envio de Mensagens WhatsApp Automatizado
+# nodeWPP - WhatsApp Sender
 
-Este projeto permite o envio de mensagens personalizadas em massa através do WhatsApp, utilizando a biblioteca `whatsapp-web.js`. Você pode importar contatos, gerenciar uma lista de contatos na interface web e enviar mensagens personalizadas com facilidade.
+A web application built with Node.js and WhatsApp Web.js to send personalized messages to a list of contacts imported from CSV or VCF files.
 
-## Características
+## Features
 
-*   **Importação de Contatos:** Importe contatos de arquivos CSV e VCF. Selecione as colunas correspondentes aos nomes e telefones no arquivo CSV.
-*   **Gerenciamento de Contatos:** Adicione, edite e exclua contatos diretamente na interface web. A lista de contatos é persistida no servidor.
-*   **Pesquisa de Contatos:** Filtre a lista de contatos por nome ou número de telefone.
-*   **Seleção Múltipla:** Selecione contatos individualmente ou em lote para o envio de mensagens.
-*   **Personalização de Mensagens:** Utilize variáveis como `[name]` e `[greeting]` para personalizar as mensagens.
-*   **Modo de Teste:** Envie mensagens em modo de teste sem efetivamente enviar as mensagens para os contatos.
-*   **Interface Web:** Interface amigável para gerenciar contatos e configurar o envio de mensagens.
-*   **Saudações Personalizadas:** Inclui suporte para saudações baseadas na hora do dia e idioma (Bom dia, Boa tarde, Boa noite).
-*   **Atualização em Tempo Real:** A lista de contatos é atualizada em tempo real para todos os clientes conectados via WebSocket.
-*   **Persistência de Dados:** Os contatos são armazenados no servidor, garantindo que não sejam perdidos ao fechar o navegador.
+-   **Contact Management:**
+    -   Import contacts from CSV or VCF files.
+    -   Add contacts individually.
+    -   Categorize contacts into "All," "New," "Sent," and "Answered."
+    -   Search and filter contacts by name or phone number.
+    -   Select/Deselect all contacts for sending messages.
+    -   Delete individual contacts from the list.
+-   **Message Sending:**
+    -   Compose personalized messages using placeholders for greetings and contact names.
+    -   Test mode to simulate message sending without actually sending them.
+    -   Displays the status of sent messages (success/error) with the name of the contact and the actual message sent.
+-   **Real-time Updates:**
+    -   Uses Socket.IO for real-time updates on contact status and list changes.
+-   **Data Persistence:**
+    -   Stores contact data in a JSON file on the server.
+    -   Saves message content to local storage for persistent editing.
+-   **User Interface:**
+    -   Modern and intuitive WhatsApp-inspired user interface.
 
-## Tecnologias Utilizadas
+## Technologies
 
-*   **Node.js:** Ambiente de execução JavaScript para o servidor.
-*   **Express:** Framework web para Node.js, utilizado para criar o servidor e gerenciar as rotas.
-*   **Socket.IO:** Biblioteca para comunicação em tempo real bidirecional entre clientes web e servidor.
-*   **whatsapp-web.js:** Biblioteca para controlar o WhatsApp Web através do Node.js.
-*   **qrcode-terminal:** Biblioteca para exibir o QR Code no terminal.
-*   **express-fileupload:** Middleware para facilitar o upload de arquivos.
-*   **Bootstrap:** Framework CSS para estilização da interface web.
-*   **Material Design Icons:** Conjunto de ícones para a interface web.
-*   **JavaScript:** Linguagem de programação para a lógica do cliente e do servidor.
-*   **HTML:** Linguagem de marcação para a estrutura da interface web.
-*   **CSS:** Linguagem de estilo para a apresentação visual da interface web.
-*   **Zlib:** Biblioteca para compactação/descompactação gzip.
+-   **Backend:**
+    -   Node.js
+    -   Express.js
+    -   WhatsApp Web.js
+    -   Socket.IO
+    -   express-fileupload
+-   **Frontend:**
+    -   HTML
+    -   CSS
+    -   JavaScript
+    -   Bootstrap
+    -   Material Design Icons
+-   **Other:**
+    -   qrcode-terminal (for QR code display in the console)
 
-## Pré-requisitos
+## Setup and Installation
 
-*   **Node.js:** Certifique-se de ter o Node.js instalado em sua máquina. Você pode baixá-lo em [https://nodejs.org/](https://nodejs.org/).
-*   **NPM (Node Package Manager):** O NPM é instalado automaticamente com o Node.js.
-*   **Google Chrome:** É recomendável que o Google Chrome esteja instalado, pois o `puppeteer` (dependência do `whatsapp-web.js`) o utiliza para controlar o WhatsApp Web.
-
-## Instalação
-
-1.  **Clone o repositório:**
+1.  **Clone the repository:**
 
     ```bash
     git clone https://github.com/WillGolden80742/nodeWPP.git
     cd nodeWPP
     ```
 
-2.  **Instale as dependências:**
+2.  **Install dependencies:**
 
     ```bash
     npm install
     ```
 
-## Configuração
+3.  **Configure Chrome Executable Path:**
 
-1.  **Caminho do Chrome (Opcional):**
+    -   Modify the `executablePath` in `index.js` to point to your Chrome installation.
+        ```javascript
+        const client = new Client({
+            authStrategy: new LocalAuth(),
+            puppeteer: {
+                headless: true,
+                executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', // <-- Change this!
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            }
+        });
+        ```
+    -   **Important:**  Make sure the path is correct, or the WhatsApp Web.js client might not work.
 
-    *Por padrão, o `whatsapp-web.js` tentará encontrar uma instalação do Chrome.*
-
-    Se você tiver problemas, pode especificar o caminho para o executável do Chrome no arquivo `index.js`. Certifique-se de substituir o caminho existente pelo caminho correto no seu sistema:
-
-    ```javascript
-    const client = new Client({
-        authStrategy: new LocalAuth(),
-        puppeteer: {
-            headless: true,
-            executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', // Substitua pelo seu caminho
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        }
-    });
-    ```
-
-2.  **Execução:**
+4.  **Start the server:**
 
     ```bash
     npm start
     ```
 
-    Isso iniciará o servidor Node.js.
+5.  **Access the application:**
 
-3.  **Acesse a interface web:**
+    -   Open your web browser and navigate to `http://localhost:3000`.
 
-    Abra o seu navegador e acesse `http://localhost:3000`.
+6.  **WhatsApp Authentication:**
 
-## Utilização
+    -   Scan the QR code displayed in the console with your WhatsApp mobile app to authenticate.
 
-1.  **Autenticação:** Ao iniciar o servidor, um QR Code será exibido no terminal. Escaneie este QR Code com o seu celular utilizando o WhatsApp (WhatsApp Web > Aparelhos Conectados).
+## Usage
 
-2.  **Importar Contatos:** Clique no botão "Selecione o arquivo" e selecione um arquivo CSV ou VCF contendo seus contatos. Se for um arquivo CSV, selecione as colunas correspondentes aos nomes e telefones.
+1.  **Import Contacts:**
+    -   Upload a CSV or VCF file containing your contacts using the "Selecione o arquivo" button.
+    -   For CSV files, select the appropriate columns for "Nome" (Name) and "Telefone" (Phone Number).
 
-3.  **Gerenciar Contatos:**
-    *   Utilize a barra de pesquisa para filtrar contatos.
-    *   Selecione os contatos que você deseja enviar a mensagem marcando os checkboxes.
-    *   Clique em "Selecionar Todos" ou "Desmarcar Todos" para selecionar/desmarcar todos os contatos.
-    *   Adicione contatos individuais utilizando o formulário "Adicionar Contato Individual".
+2.  **Add Contacts Manually:**
+    -   Enter the name and phone number in the "Adicionar Contato" section and click the "+" button.
 
-4.  **Escrever Mensagem:** Escreva a mensagem que você deseja enviar no campo "Mensagem". Utilize as variáveis `[name]` para o nome do contato e `[greeting]` para uma saudação personalizada (Bom dia, Boa tarde, Boa noite).
+3.  **Compose Message:**
+    -   Enter your message in the text area, using `[greeting]` for a personalized greeting and `[name]` for the contact's name.
+    -   Example: "Olá [name], [greeting]! Esta é uma mensagem personalizada."
 
-5.  **Modo de Teste:** Marque a caixa "Modo de Teste" se você quiser testar o envio de mensagens sem realmente enviá-las.
+4.  **Select Contacts:**
+    -   Select the contacts you want to send the message to using the checkboxes in the contact list.
+    -   Use the "Selecionar Todos" or "Desmarcar Todos" buttons to quickly select/deselect all contacts.
 
-6.  **Enviar Mensagens:** Clique no botão "Enviar Mensagens" para iniciar o processo de envio.
+5.  **Send Message:**
+    -   Make sure the "Modo de Teste" checkbox is selected to simulate sending without actual delivery.
+    -   Click the "Enviar Mensagem" button to send the message to the selected contacts.
 
-7.  **Visualizar Resultados:** Uma janela flutuante será exibida com o resultado do envio das mensagens para cada contato.
+6.  **View Results:**
+    -   A modal window will appear displaying the status (success/error) of each message sent.
 
-## Observações
+## Important Notes
 
-*   **WhatsApp Web:** Este projeto utiliza o WhatsApp Web. Certifique-se de que sua conta do WhatsApp esteja conectada ao WhatsApp Web para que as mensagens possam ser enviadas.
-*   **Política do WhatsApp:** O uso excessivo de envio de mensagens automatizadas pode violar os termos de serviço do WhatsApp e resultar no bloqueio da sua conta. Use este projeto com responsabilidade.
-*   **Erro no envio:** As vezes o whatsapp-web.js apresenta erros de conexão, nesse caso, reinicie o serviço e tente novamente.
-*   **Atualização em tempo real:** As alterações feitas na lista de contatos serão automaticamente refletidas em todos os clientes conectados.
+-   **WhatsApp Web.js Limitations:**  This project relies on WhatsApp Web.js, which is an unofficial WhatsApp API.  It's subject to changes and limitations imposed by WhatsApp.  Use at your own risk and be mindful of WhatsApp's terms of service.
+-   **Chrome Executable Path:**  Ensure the `executablePath` in `index.js` is correctly configured to point to your Chrome installation.
+-   **Rate Limiting:**  Be cautious about sending too many messages in a short period to avoid being flagged for spam. Implement delays or throttling mechanisms if needed.
+-   **Test Mode:**  Always use test mode before sending messages to actual contacts.
+-   **File Encoding:**  For CSV files, ensure proper encoding (e.g., UTF-8, ISO-8859-1) to avoid character encoding issues. The default in `script.js` is ISO-8859-1, so adapt as needed.
+-   **Phone Number Formatting:** The code removes non-digit characters from phone numbers, but you may need to adapt the phone number cleaning logic if your contact lists use specific formatting.
+
+## Future Enhancements
+
+-   Add media sending capabilities (images, videos, documents).
+-   Implement a scheduling feature for sending messages at specific times.
+-   Provide more robust error handling and logging.
+-   Offer more granular contact management options (tagging, grouping).
+-   Add support for other messaging platforms.
+-   Implement a more sophisticated UI with better error reporting and user feedback.
+
+## Contributing
+
+Contributions are welcome! Feel free to submit pull requests or open issues to suggest improvements or report bugs.
