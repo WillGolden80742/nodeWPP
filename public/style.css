@@ -1,6 +1,6 @@
 body {
-    font-family: "Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
-    background-color: #f0f2f5
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
 }
 
 .whatsapp-container {
@@ -9,42 +9,54 @@ body {
     max-width: 1200px;
     margin: auto;
     background-color: #fff;
-    box-shadow: 0 0 10px rgba(0,0,0,.1)
+    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
 }
 
 .whatsapp-sidebar {
     width: 600px;
     border-right: 1px solid #ddd;
     background-color: #f0f2f5;
-    overflow-y: hidden
+    overflow-y: hidden;
 }
 
 .whatsapp-sidebar-header {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
+    justify-content: center;
     padding: 1rem;
-    text-align: left;
+    text-align: center;
     border-bottom: 1px solid #ddd;
     background-color: #075e54;
-    color: #fff
+    color: #fff;
+    font-weight: bold;
 }
 
 .whatsapp-icon {
     width: 30px;
     height: 30px;
-    margin-right: 10px
+    margin-right: 10px;
 }
 
 .whatsapp-search-container {
     padding: .5rem;
     position: relative;
-    font-size: 18px
+    font-size: 18px;
+    background-color: #f0f0f0; /* Cor de fundo mais clara */
+    border-radius: 20px;
+    border: 1px solid #ddd;  /* Borda sutil */
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); /* Leve sombra */
+    margin: 0.5rem; /* Adiciona margem para separar visualmente da barra lateral */
 }
 
 .whatsapp-search-container input {
-    border-radius: 20px;
+    border: none; /* Remove a borda padrão do input */
+    outline: none; /* Remove a borda de foco */
+    border-radius: 20px; /* Mantém o arredondamento */
     padding-left: 35px;
-    width: 100%
+    width: 100%;
+    height: 36px; /* Altura para corresponder visualmente ao WhatsApp Web */
+    font-size: 1rem; /* Tamanho da fonte para corresponder visualmente */
+    background-color: transparent; /* Faz o fundo do input ser transparente para mostrar a cor do container */
 }
 
 .search-icon {
@@ -52,11 +64,12 @@ body {
     left: 1.5rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #999
+    color: #919191; /* Cor do ícone mais próxima do WhatsApp Web */
+    font-size: 1.2rem; /* Ícone um pouco maior */
 }
 
 .file-upload-container {
-    padding: .5rem
+    padding: .5rem;
 }
 
 .file-upload-label {
@@ -66,34 +79,34 @@ body {
     border-radius: 20px;
     cursor: pointer;
     text-align: center;
-    color: #555
+    color: #555;
 }
 
 .file-upload-input {
-    display: none
+    display: none;
 }
 
 .add-contact-container {
-    padding: .5rem
+    padding: .5rem;
 }
 
 .add-contact-container .input-group {
-    display: flex
+    display: flex;
 }
 
 .add-contact-container input {
     border-radius: 20px;
-    margin-right: .5rem
+    margin-right: .5rem;
 }
 
 .add-contact-container .btn {
-    border-radius: 20px
+    border-radius: 20px;
 }
 
 .contact-list-container {
     padding: .5rem;
     overflow-y: auto;
-    max-height: calc(100vh - 342px)
+    max-height: calc(100vh - 342px);
 }
 
 .contact-list-container label {
@@ -103,15 +116,11 @@ body {
     cursor: pointer;
     border-radius: 10px;
     margin-bottom: .25rem;
-    background-color: #f9f9f9
+    background-color: #f9f9f9;
 }
 
 .contact-list-container label:hover {
-    background-color: #f0f0f0
-}
-
-.contact-list-container input[type=checkbox] {
-    margin-right: .5rem
+    background-color: #f0f0f0;
 }
 
 .whatsapp-message-area {
@@ -119,19 +128,19 @@ body {
     padding: 1rem;
     background-color: #efebe9;
     display: flex;
-    flex-direction: column
+    flex-direction: column;
 }
 
 .whatsapp-message-area-header {
     margin-bottom: 1rem;
     padding-bottom: .5rem;
-    border-bottom: 1px solid #ddd
+    border-bottom: 1px solid #ddd;
 }
 
 .whatsapp-message-input-area {
     display: flex;
     flex-direction: column;
-    height: 100%
+    height: 100%;
 }
 
 .whatsapp-textarea {
@@ -140,14 +149,14 @@ body {
     border: 0;
     padding: 1rem;
     resize: none;
-    box-shadow: none!important;
-    margin-bottom: .5rem
+    box-shadow: none !important;
+    margin-bottom: .5rem;
 }
 
 .message-actions {
     display: flex;
     align-items: center;
-    justify-content: flex-end
+    justify-content: flex-end;
 }
 
 .attach-button {
@@ -156,11 +165,11 @@ body {
     font-size: 1.5rem;
     color: #777;
     cursor: pointer;
-    margin-right: 10px
+    margin-right: 10px;
 }
 
 .attach-button:hover {
-    color: #555
+    color: #555;
 }
 
 .whatsapp-send-button {
@@ -170,11 +179,11 @@ body {
     padding: .75rem 1.5rem;
     border-radius: 20px;
     cursor: pointer;
-    align-self: flex-end
+    align-self: flex-end;
 }
 
 .whatsapp-send-button:hover {
-    background-color: #128c7e
+    background-color: #128c7e;
 }
 
 .modal {
@@ -186,39 +195,40 @@ body {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,.4)
+    background-color: rgba(0, 0, 0, .4);
 }
 
 .modal-content {
     background-color: #fefefe;
-    margin: 15%auto;
+    margin: 15% auto;
     padding: 20px;
     border: 1px solid #888;
-    width: 80%
+    width: 80%;
 }
 
 .close {
     color: #aaa;
     float: right;
     font-size: 28px;
-    font-weight: 700
+    font-weight: 700;
 }
 
-.close:hover,.close:focus {
+.close:hover,
+.close:focus {
     color: #000;
     text-decoration: none;
-    cursor: pointer
+    cursor: pointer;
 }
 
 .contact-tabs .nav-link {
     font-size: .8rem;
-    color: #555
+    color: #555;
 }
 
 .contact-tabs .nav-link.active {
     background-color: #e9ecef;
     border-color: #ddd #ddd #fff;
-    color: #333
+    color: #333;
 }
 
 .deleteContactBtn {
@@ -226,100 +236,103 @@ body {
     border: 0;
     color: #dc3545;
     cursor: pointer;
-    margin-left: 5px
+    margin-left: 5px;
 }
 
 .deleteContactBtn:hover {
-    color: #c82333
+    color: #c82333;
 }
 
 .formattedImage {
     width: 20px;
     height: 20px;
     margin-left: 5px;
-    margin-right: 5px
+    margin-right: 5px;
 }
 
 .formattedMessage {
-    white-space: pre-line
+    white-space: pre-line;
 }
 
 .whatsapp-icon {
     font-size: 1.5rem;
     color: #fff;
-    margin-right: 10px
+    margin-right: 10px;
 }
 
 #csvColumnSelect {
-    padding: 10px
+    padding: 10px;
 }
 
 .selection-buttons {
     padding: .5rem;
     display: flex;
     justify-content: left;
-    gap: 10px
+    gap: 10px;
 }
 
 .selection-buttons .btn {
     border-radius: 20px;
-    transition: background-color .3s,color .3s
+    transition: background-color .3s, color .3s;
 }
 
 .selection-buttons .btn-outline-primary {
     color: #075e54;
-    border-color: #075e54
+    border-color: #075e54;
 }
 
-.selection-buttons .btn-outline-primary:hover,.selection-buttons .btn-outline-primary:focus {
+.selection-buttons .btn-outline-primary:hover,
+.selection-buttons .btn-outline-primary:focus {
     background-color: #075e54;
-    color: #fff
+    color: #fff;
 }
 
 .selection-buttons .btn-outline-secondary {
     color: #6c757d;
-    border-color: #6c757d
+    border-color: #6c757d;
 }
 
-.selection-buttons .btn-outline-secondary:hover,.selection-buttons .btn-outline-secondary:focus {
+.selection-buttons .btn-outline-secondary:hover,
+.selection-buttons .btn-outline-secondary:focus {
     background-color: #6c757d;
-    color: #fff
+    color: #fff;
 }
 
 .contact-list-container input[type=checkbox]:checked+label {
     background-color: #d4edda;
-    border-color: #c3e6cb
+    border-color: #c3e6cb;
 }
 
 .contact-list-container input[type=checkbox]+label {
-    transition: background-color .2s ease-in-out,border-color .2s ease-in-out
+    transition: background-color .2s ease-in-out, border-color .2s ease-in-out;
 }
 
 #loadContactsBtn {
     background-color: #25d366;
     border-color: #25d366;
     color: #fff;
-    transition: background-color .3s,border-color .3s
+    transition: background-color .3s, border-color .3s;
 }
 
-#loadContactsBtn:hover,#loadContactsBtn:focus {
+#loadContactsBtn:hover,
+#loadContactsBtn:focus {
     background-color: #128c7e;
     border-color: #128c7e;
-    color: #fff
+    color: #fff;
 }
 
 .form-check-input:checked {
     background-color: #25d366;
-    border-color: #25d366
+    border-color: #25d366;
 }
 
 .form-check-input:focus {
     border-color: #86cb9b;
-    box-shadow: 0 0 0 .25rem rgba(37,211,102,.25)
+    box-shadow: 0 0 0 .25rem rgba(37, 211, 102, .25);
 }
 
 .form-check-label:hover {
-    color: #25d366
+    color: #25d366;
 }
 
 .modal {
@@ -331,7 +344,7 @@ body {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,.4)
+    background-color: rgba(0, 0, 0, .4);
 }
 
 .whatsapp-modal-content {
@@ -343,34 +356,35 @@ body {
     width: 80%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 4px 8px rgba(0,0,0,.1)
+    box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
 }
 
 .whatsapp-modal-content h2 {
     font-size: 1.2rem;
     margin-bottom: 1rem;
-    color: #075e54
+    color: #075e54;
 }
 
 .close {
     color: #aaa;
     float: right;
     font-size: 28px;
-    font-weight: 700
+    font-weight: 700;
 }
 
-.close:hover,.close:focus {
+.close:hover,
+.close:focus {
     color: #000;
     text-decoration: none;
-    cursor: pointer
+    cursor: pointer;
 }
 
 .whatsapp-message-list {
-    padding: 0
+    padding: 0;
 }
 
 .whatsapp-message-list>div {
-    margin-bottom: .5rem
+    margin-bottom: .5rem;
 }
 
 .whatsapp-message-container {
@@ -380,19 +394,19 @@ body {
     padding: .75rem;
     margin-bottom: .5rem;
     word-break: break-word;
-    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
     max-width: 80%;
-    align-self: flex-start
+    align-self: flex-start;
 }
 
 .whatsapp-message-container.incoming {
     background-color: #fff;
-    align-self: flex-start
+    align-self: flex-start;
 }
 
 .whatsapp-message-container.outgoing {
     background-color: #dcf8c6;
-    align-self: flex-end
+    align-self: flex-end;
 }
 
 .whatsapp-message-container:before {
@@ -400,7 +414,7 @@ body {
     position: absolute;
     width: 0;
     height: 0;
-    border-style: solid
+    border-style: solid;
 }
 
 .whatsapp-message-container.incoming:before {
@@ -408,7 +422,7 @@ body {
     border-color: transparent #fff transparent transparent;
     left: 0;
     bottom: 0;
-    margin-left: -10px
+    margin-left: -10px;
 }
 
 .whatsapp-message-container.outgoing:before {
@@ -416,14 +430,14 @@ body {
     border-color: transparent transparent transparent #dcf8c6;
     right: 0;
     bottom: 0;
-    margin-right: -10px
+    margin-right: -10px;
 }
 
 .whatsapp-message-container .contact {
     font-weight: 700;
     color: #333;
     display: block;
-    margin-bottom: .25rem
+    margin-bottom: .25rem;
 }
 
 .whatsapp-message-container .status {
@@ -431,29 +445,29 @@ body {
     align-items: center;
     margin-top: .25rem;
     font-size: .8rem;
-    color: #777
+    color: #777;
 }
 
 .whatsapp-message-container .success-icon {
     width: 16px;
     height: 16px;
-    margin-left: 5px
+    margin-left: 5px;
 }
 
 .whatsapp-message-container .formatted-message {
     white-space: pre-line;
-    color: #555
+    color: #555;
 }
 
 .whatsapp-message-container.error {
-    background-color: #f8d7da
+    background-color: #f8d7da;
 }
 
 .whatsapp-message-container.error .status {
-    color: #721c24
+    color: #721c24;
 }
 
 .contact-tabs {
     padding-left: 10px;
-    padding-right: 10px
+    padding-right: 10px;
 }

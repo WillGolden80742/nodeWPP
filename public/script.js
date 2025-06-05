@@ -309,6 +309,7 @@ function renderContactList(contactList, container) {
         const label = document.createElement('label');
 
         const checkbox = document.createElement('input');
+        checkbox.classList.add('form-check-input');
         checkbox.type = 'checkbox';
         checkbox.id = contactId;
 
