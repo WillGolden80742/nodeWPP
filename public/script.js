@@ -21,7 +21,6 @@ const phoneColumnSelect = document.getElementById('phoneColumn');
 const loadContactsBtn = document.getElementById('loadContactsBtn');
 const sendMessageBtn = document.getElementById('sendMessageBtn');
 const mainForm = document.getElementById('mainForm');
-
 // Get loading spinners
 const loadingAll = document.getElementById('loadingAll');
 const loadingNew = document.getElementById('loadingNew');
@@ -324,7 +323,13 @@ function renderContactList(contactList, container) {
         checkbox.type = 'checkbox';
         checkbox.id = contactId;
 
-        const contactText = document.createTextNode(` ${contact.fullName} (${contact.phoneNumber}) `);
+        const contactName = document.createElement('span');
+        contactName.classList.add('contact-name');
+        contactName.textContent = contact.fullName;
+
+        const contactNumber = document.createElement('span');
+        contactNumber.classList.add('contact-number');
+        contactNumber.textContent = contact.phoneNumber;
 
         // Cria o elemento para o ícone de status
         const statusIcon = document.createElement('i');
@@ -359,7 +364,8 @@ function renderContactList(contactList, container) {
         });
 
         label.appendChild(checkbox);
-        label.appendChild(contactText);
+        label.appendChild(contactName);
+        label.appendChild(contactNumber);
         label.appendChild(statusIcon); // Adiciona o ícone ao label
         label.appendChild(deleteButton);
 
@@ -552,71 +558,51 @@ mainForm.addEventListener('submit', function (event) {
     })
         .then(response => response.json())
         .then(data => {
-            messageText.innerHTML = '';
+            messageText.innerHTML = ''; // Clear existing results
 
             data.results.forEach(result => {
                 const contactName = result.contact;
                 const status = result.status;
                 const message = result.message;
 
-                const resultElement = document.createElement('div');
+                // Create the container for the contact bubble
+                const bubbleContainer = document.createElement('div');
+                bubbleContainer.classList.add('contact-bubble-container');
 
-                const contactDiv = document.createElement('div');
-                contactDiv.style.display = 'flex';
-                contactDiv.style.flexDirection = 'row';
-                contactDiv.style.alignItems = 'center';
-
-                const contactLabel = document.createElement('div');
-                contactLabel.style.fontWeight = 'bold';
-                contactLabel.textContent = 'Contato: ';
-
-                const contactValue = document.createElement('div');
-                contactValue.textContent = contactName;
-
-                contactDiv.appendChild(contactLabel);
-                contactDiv.appendChild(contactValue);
-
-                const statusDiv = document.createElement('div');
-                statusDiv.style.display = 'flex';
-                statusDiv.style.flexDirection = 'row';
-                statusDiv.style.alignItems = 'center';
-
-                const statusLabel = document.createElement('div');
-                statusLabel.style.fontWeight = 'bold';
-                statusLabel.textContent = 'Status: ';
-
-                const statusImage = document.createElement('img');
-                statusImage.alt = status === 'success' ? 'Sucesso' : 'Erro';
-                statusImage.src = status === 'success' ? 'https://img.icons8.com/color/32/000000/checked-2--v1.png' : 'https://img.icons8.com/color/32/000000/cancel--v1.png';
-                statusImage.classList.add('formattedImage');
-
-                statusDiv.appendChild(statusLabel);
-                statusDiv.appendChild(statusImage);
-
-                const messageDiv = document.createElement('div');
-                messageDiv.style.display = 'flex';
-                messageDiv.style.flexDirection = 'column';
-
-                const messageLabel = document.createElement('div');
-                messageLabel.style.fontWeight = 'bold';
-                messageLabel.textContent = 'Mensagem Enviada: ';
-
-                const messageValue = document.createElement('div');
-                messageValue.classList.add('formattedMessage');
-                messageValue.textContent = message;
-
-                if (testMode) {
-                    messageValue.textContent = "[TESTE] " + messageValue.textContent;
+                // Add 'outgoing' class if the message was successfully sent
+                if (status === 'success') {
+                    bubbleContainer.classList.add('outgoing');
                 }
 
-                messageDiv.appendChild(messageLabel);
-                messageDiv.appendChild(messageValue);
+                // Create the contact bubble
+                const contactBubble = document.createElement('div');
+                contactBubble.classList.add('contact-bubble');
+                contactBubble.classList.add(status === 'success' ? 'outgoing' : 'incoming');
 
-                resultElement.appendChild(contactDiv);
-                resultElement.appendChild(statusDiv);
-                resultElement.appendChild(messageDiv);
+                // Create the contact name element
+                const contactNameElement = document.createElement('div');
+                contactNameElement.classList.add('contact-name');
+                contactNameElement.textContent = contactName;
 
-                messageText.appendChild(resultElement);
+                // Create the message element
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('contact-message');
+                messageElement.textContent = message;
+
+                // If in test mode, prepend "[TESTE]" to the message
+                if (testMode) {
+                    messageElement.textContent = "[TESTE] " + message;
+                }
+
+                // Append the contact name and message to the contact bubble
+                contactBubble.appendChild(contactNameElement);
+                contactBubble.appendChild(messageElement);
+
+                // Append the contact bubble to the bubble container
+                bubbleContainer.appendChild(contactBubble);
+
+                // Append the bubble container to the message text area
+                messageText.appendChild(bubbleContainer);
             });
 
             messageModal.style.display = "block";
@@ -677,11 +663,6 @@ addContactBtn.addEventListener('click', async () => {
 // Add Socket.IO client-side library (you can use a CDN or install locally)
 const socket = io();
 
-// Listen for the 'contacts_updated' event
-// script.js
-
-// ... (previous code)
-
 // Function to save scroll positions
 function saveScrollPositions() {
     const scrollPositions = {
@@ -720,10 +701,6 @@ socket.on('contacts_updated', (updatedContacts) => {
     // Restore scroll positions *after* updating the DOM
     restoreScrollPositions(scrollPositions);
 });
-
-// ... (rest of your code)
-
-// Function to add key to contact
 
 // Function to show loading spinner
 function showLoadingSpinner(tabId) {

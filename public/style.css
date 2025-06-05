@@ -1,47 +1,65 @@
+/* C:\Users\willi\OneDrive\Desktop\nodeWPP\public\style.css */
+/* Existing Scrollbar Styles */
 ::-webkit-scrollbar {
-  width: 8px;  /* Largura da barra */
-  height: 8px; /* Altura para scroll horizontal */
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f0f2f5; /* Cor do "trilho" da barra (semelhante ao fundo do WhatsApp) */
-  border-radius: 10px;
+    background: #f0f2f5;
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #a8a8a8; /* Cor do "polegar" da barra (parte que você arrasta) */
-  border-radius: 10px;
+    background: #a8a8a8;
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #888; /* Cor do "polegar" ao passar o mouse */
+    background: #888;
 }
 
-/* Estilo para o "corner" da barra de rolagem (onde as barras vertical e horizontal se encontram) */
 ::-webkit-scrollbar-corner {
-  background: #f0f2f5;
+    background: #f0f2f5;
 }
 
-
+/* Basic Reset and Body Styles */
 body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f0f2f5;
-    margin: 0; /* Reset default margin */
-    overflow-y: hidden; /* Prevent horizontal scrollbar */
+    margin: 0;
+    overflow-y: hidden;
 }
 
-/* Utility classes (consider using a CSS-in-JS solution for larger projects) */
-.d-flex { display: flex; }
-.align-items-center { align-items: center; }
-.justify-content-start { justify-content: flex-start; }
-.justify-content-end { justify-content: flex-end; }
-.flex-column { flex-direction: column; }
-.flex-grow-1 { flex-grow: 1; }
+/* Utility Classes */
+.d-flex {
+    display: flex;
+}
 
-/* Container */
+.align-items-center {
+    align-items: center;
+}
+
+.justify-content-start {
+    justify-content: flex-start;
+}
+
+.justify-content-end {
+    justify-content: flex-end;
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+.flex-grow-1 {
+    flex-grow: 1;
+}
+
+/* Main Container */
 .whatsapp-container {
     display: flex;
-    min-height: 100vh; /* Use min-height for full viewport height */
+    min-height: 100vh;
     max-width: 1200px;
     margin: auto;
     background-color: #fff;
@@ -53,7 +71,7 @@ body {
     width: 600px;
     border-right: 1px solid #ddd;
     background-color: #f0f2f5;
-    overflow-y: hidden; /* Hide scrollbar */
+    overflow-y: hidden;
 }
 
 .whatsapp-sidebar-header {
@@ -109,7 +127,8 @@ body {
 }
 
 /* File Upload */
-.file-upload-container, .add-contact-container {
+.file-upload-container,
+.add-contact-container {
     padding: .5rem;
     padding-left: 0;
     padding-right: 0;
@@ -129,7 +148,6 @@ body {
 .file-upload-input {
     display: none;
 }
-
 
 .add-contact-container .input-group {
     display: flex;
@@ -159,7 +177,6 @@ body {
     font-size: 18px;
 }
 
-
 /* Optimized Contact List Label */
 .contact-list-container label {
     display: flex;
@@ -170,8 +187,10 @@ body {
     border-radius: 5px;
     margin-bottom: .25rem;
     background-color: #fff;
-    transition: background-color 0.15s ease-out; /* Faster transition */
-    user-select: none; /* Prevent text selection during clicks */
+    transition: background-color 0.15s ease-out;
+    /* Faster transition */
+    user-select: none;
+    /* Prevent text selection during clicks */
 }
 
 .contact-list-container label:hover {
@@ -266,7 +285,7 @@ body {
     padding: 1rem;
     border: 0;
     border-radius: 10px;
-    width: 80%;
+    width: 600px;
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
@@ -305,7 +324,7 @@ body {
     margin-bottom: .5rem;
 }
 
-/* Message Container */
+/* Message Container - Original Styles */
 .whatsapp-message-container {
     position: relative;
     border-radius: 7.5px;
@@ -326,11 +345,10 @@ body {
 
 .whatsapp-message-container.outgoing {
     background-color: #dcf8c6;
-    align-self: flex-end;
+    align-self: normal;
     float: right;
 }
 
-/* Contact Name Styling */
 .whatsapp-message-container .contact {
     font-weight: 700;
     color: #333;
@@ -338,7 +356,6 @@ body {
     margin-bottom: .25rem;
 }
 
-/* Status Styling */
 .whatsapp-message-container .status {
     display: flex;
     align-items: center;
@@ -347,26 +364,65 @@ body {
     color: #777;
 }
 
-/* Success Icon Styling */
 .whatsapp-message-container .success-icon {
     width: 16px;
     height: 16px;
     margin-left: 5px;
 }
 
-/* Formatted Message Styling */
 .whatsapp-message-container .formatted-message {
     white-space: pre-line;
     color: #555;
 }
 
-/* Error Message Styling */
 .whatsapp-message-container.error {
     background-color: #f8d7da;
 }
 
 .whatsapp-message-container.error .status {
     color: #721c24;
+}
+
+/*  STYLES FOR BUBBLE CONTACTS */
+.contact-bubble-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align items to the start (left) by default */
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+.contact-bubble-container.outgoing {
+    align-items: flex-end; /* Align items to the end (right) for outgoing messages */
+}
+
+.contact-bubble {
+    position: relative;
+    border-radius: 7.5px;
+    padding: .75rem;
+    word-break: break-word;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+    width: 100%; /* 10% of the viewport width */
+}
+
+.contact-bubble.incoming {
+    background-color: #fff;
+    color: #333;
+}
+
+.contact-bubble.outgoing {
+    background-color: #dcf8c6;
+    color: #333;
+}
+
+.contact-name {
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.contact-message {
+    white-space: pre-line;
+    color: #555;
 }
 
 /* Tabs */
@@ -423,6 +479,7 @@ body {
     display: flex;
     justify-content: left;
     gap: 10px;
+    padding-top:0px;
 }
 
 .selection-buttons .btn {
@@ -459,7 +516,13 @@ body {
 }
 
 .contact-list-container input[type=checkbox]+label {
-    transition: background-color .15s ease-out, border-color .15s ease-out; /* Faster transition */
+    transition: background-color .15s ease-out, border-color .15s ease-out;
+    /* Faster transition */
+}
+
+.contact-list-container .form-check-input {
+    margin-top: 0px;
+    width:30px;
 }
 
 /* Load Contacts Button */
@@ -492,7 +555,9 @@ body {
     color: #25d366;
 }
 
-.mdi-new-box, .mdi-send, .mdi-check-circle {
+.mdi-new-box,
+.mdi-send,
+.mdi-check-circle {
     margin-left: 10px;
 }
 
@@ -501,6 +566,15 @@ body {
     width: 100%;
     align-items: center;
     justify-content: space-between;
+}
+
+.contact-name {
+    width: 100%;
+}
+
+.contact-number {
+    opacity:0.7;
+    width: 200px;
 }
 
 /* Loading Spinner */
@@ -515,6 +589,11 @@ body {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
