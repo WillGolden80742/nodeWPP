@@ -31,6 +31,8 @@ const MESSAGE_STORAGE_KEY = 'whatsapp_sender_message';
 const NAME_COLUMN_STORAGE_KEY = 'whatsapp_sender_name_column';
 const PHONE_COLUMN_STORAGE_KEY = 'whatsapp_sender_phone_column';
 
+let latitude;
+let longitude;
 let contacts = [];
 let selectedContacts = new Map();
 let csvHeaders = [];  // Store CSV headers
@@ -103,6 +105,19 @@ navButton.addEventListener('click', function (event) {
 fileInput.addEventListener('change', async (event) => {
     const file = event.target.files[0];
     if (!file) return;
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            latitude = position.coords.latitude;
+            longitude = position.coords.longitude;
+            console.log("Latitude:", latitude);
+            console.log("Longitude:", longitude);
+        });
+    } else {
+        alert("Aceite Geocalização para continuar.");
+        location.href.reload();
+        return;
+    }
 
     const fileName = file.name.toLowerCase();
 

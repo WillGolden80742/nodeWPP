@@ -447,7 +447,7 @@ body {
 .deleteContactBtn {
     background: 0 0;
     border: 0;
-    color: #dc3545;
+    color: #333;
     cursor: pointer;
     margin-left: 5px;
 }
@@ -568,13 +568,16 @@ body {
     justify-content: space-between;
 }
 
-.contact-name {
+.contact-list-container .contact-name {
+    color:#333;
     width: 100%;
+    margin-left: 10px;
 }
 
 .contact-number {
     opacity:0.7;
     width: 200px;
+    font-size:medium;
 }
 
 /* Loading Spinner */
