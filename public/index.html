@@ -5,86 +5,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>WhatsApp Sender</title>
-    <!-- Importação do Material Design Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.3.67/css/materialdesignicons.min.css">
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="/socket.io/socket.io.js"></script>
-    <!-- Estilo customizado -->
-    <link rel="stylesheet" href="style.css">
-    <!-- Font Awesome for the paperclip icon -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
 
+    <!-- Preload important resources (optional, but can help) -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.3.67/css/materialdesignicons.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.3.67/css/materialdesignicons.min.css"></noscript>
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"></noscript>
+    <noscript><link rel="stylesheet" href="style.css"></noscript>
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+
+    <script src="/socket.io/socket.io.js" defer></script>  <!-- Use defer to load after the DOM -->
 </head>
 
 <body>
     <div class="container whatsapp-container">
-        <!-- Barra lateral (lista de contatos) -->
         <div class="sidebar whatsapp-sidebar">
             <div class="sidebar-header whatsapp-sidebar-header">
-                <i class="mdi mdi-whatsapp whatsapp-icon"></i>
+                <i class="mdi mdi-whatsapp whatsapp-icon" aria-hidden="true"></i>
                 <span>WhatsApp Sender</span>
             </div>
 
             <div class="search-container whatsapp-search-container">
-                <i class="mdi mdi-magnify search-icon"></i>
-                <input type="text" id="search" >
+                <i class="mdi mdi-magnify search-icon" aria-hidden="true"></i>
+                <input type="text" id="search" placeholder="Pesquisar..."> <!-- Added placeholder -->
             </div>
 
-            <!-- Input de arquivo -->
             <div class="file-upload-container">
                 <label for="fileInput" class="file-upload-label">
-                    <i class="mdi mdi-upload"></i> Selecione o arquivo
+                    <i class="mdi mdi-upload" aria-hidden="true"></i> Selecione o arquivo
                 </label>
                 <input type="file" class="form-control file-upload-input" id="fileInput" name="fileInput"
                     accept=".csv,.vcf">
             </div>
 
-            <!-- Seleção de colunas CSV -->
             <div id="csvColumnSelect" style="display: none;">
                 <div class="mb-3">
-                    <label class="form-label"><i class="mdi mdi-table-column"></i> Selecione as colunas do CSV:</label>
+                    <label class="form-label"><i class="mdi mdi-table-column" aria-hidden="true"></i> Selecione as colunas do CSV:</label>
                     <div class="row g-2">
                         <div class="col-md">
                             <label for="nameColumn" class="form-label">Coluna do Nome:</label>
-                            <select class="form-select" id="nameColumn" name="nameColumn">
-                            </select>
+                            <select class="form-select" id="nameColumn" name="nameColumn"></select>
                         </div>
                         <div class="col-md">
                             <label for="phoneColumn" class="form-label">Coluna do Telefone:</label>
-                            <select class="form-select" id="phoneColumn" name="phoneColumn">
-                            </select>
+                            <select class="form-select" id="phoneColumn" name="phoneColumn"></select>
                         </div>
                     </div>
                     <button type="button" class="btn btn-primary" id="loadContactsBtn"><i
-                            class="mdi mdi-upload"></i> Carregar Contatos</button>
+                            class="mdi mdi-upload" aria-hidden="true"></i> Carregar Contatos</button>
                 </div>
             </div>
 
-            <!-- Adicionar contato individual -->
             <div class="add-contact-container">
-                <label class="form-label"><i class="mdi mdi-account-plus"></i> Adicionar Contato</label>
+                <label class="form-label"><i class="mdi mdi-account-plus" aria-hidden="true"></i> Adicionar Contato</label>
                 <div class="input-group">
                     <input type="text" class="form-control" id="newContactName" placeholder="Nome">
                     <input type="tel" class="form-control" id="newContactPhone" placeholder="Telefone"
                         type="number">
                     <button class="btn btn-success" type="button" id="addContactBtn">
-                        <i class="mdi mdi-plus"></i>
+                        <i class="mdi mdi-plus" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Botões de seleção -->
             <div class="selection-buttons">
-                <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">Selecionar
-                    Todos</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">Desmarcar
-                    Todos</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">Selecionar Todos</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">Desmarcar Todos</button>
             </div>
 
-            <!-- Tabs -->
             <ul class="nav nav-tabs contact-tabs" id="contactTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all"
@@ -107,49 +98,45 @@
             <div class="tab-content" id="contactTabsContent">
                 <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
                     <div class="contact-list-container" id="contactList">
-                        <!-- A lista de contatos será inserida aqui dinamicamente -->
+                        <!-- Contact list will be inserted here dynamically -->
                     </div>
                 </div>
                 <div class="tab-pane fade" id="new" role="tabpanel" aria-labelledby="new-tab">
                     <div class="contact-list-container" id="contactListNew">
-                        <!-- A lista de contatos NOVOS será inserida aqui dinamicamente -->
+                        <!-- New contacts will be inserted here dynamically -->
                     </div>
                 </div>
                 <div class="tab-pane fade" id="sent" role="tabpanel" aria-labelledby="sent-tab">
                     <div class="contact-list-container" id="contactListSent">
-                        <!-- A lista de contatos NÃO RESPONDIDOS será inserida aqui dinamicamente -->
+                        <!-- Sent contacts will be inserted here dynamically -->
                     </div>
                 </div>
                 <div class="tab-pane fade" id="answered" role="tabpanel" aria-labelledby="answered-tab">
                     <div class="contact-list-container" id="contactListAnswered">
-                        <!-- A lista de contatos RESPONDIDOS será inserida aqui dinamicamente -->
+                        <!-- Answered contacts will be inserted here dynamically -->
                     </div>
                 </div>
             </div>
-            <!-- End Tabs -->
-
         </div>
 
-        <!-- Área de envio de mensagens -->
         <div class="message-area whatsapp-message-area">
             <div class="message-area-header whatsapp-message-area-header">
                 <h2>Enviar Mensagem</h2>
             </div>
             <form action="/upload" method="post" enctype="multipart/form-data" id="mainForm">
-                <!-- Modo de Teste -->
                 <div class="mb-3 form-check">
                     <input type="checkbox" class="form-check-input" id="testMode" name="testMode" checked>
-                    <label class="form-check-label" for="testMode"><i class="mdi mdi-test-tube"></i> Modo de Teste
-                        (Não
-                        envia mensagens reais)</label>
+                    <label class="form-check-label" for="testMode">
+                        <i class="mdi mdi-test-tube" aria-hidden="true"></i> Modo de Teste (Não envia mensagens reais)
+                    </label>
                 </div>
                 <div class="message-input-area whatsapp-message-input-area">
                     <textarea class="form-control whatsapp-textarea" id="message" name="message" rows="4" required
                         placeholder="Use [greeting] para uma saudação personalizada e [name] para o nome do contato."></textarea>
-
                     <div class="message-actions">
-                        <button type="submit" class="send-button whatsapp-send-button" id="sendMessageBtn"><i
-                                class="mdi mdi-send"></i></button>
+                        <button type="submit" class="send-button whatsapp-send-button" id="sendMessageBtn">
+                            <i class="mdi mdi-send" aria-hidden="true"></i>
+                        </button>
                     </div>
                 </div>
             </form>
@@ -161,13 +148,13 @@
             <span class="close">×</span>
             <h2>Resultado do Envio</h2>
             <div id="messageText" class="whatsapp-message-list">
-                <!-- Each individual message will go here -->
+                <!-- Individual messages will go here -->
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="script.js" defer></script> <!-- Load after the DOM -->
 </body>
 
 </html>

@@ -4,7 +4,6 @@ const express = require('express');
 const fileUpload = require('express-fileupload');
 const fs = require('fs').promises;
 const path = require('path');
-const zlib = require('zlib');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 
@@ -22,7 +21,7 @@ app.use(express.static('public'));
 app.use(express.json({ limit: '1024mb' }));
 
 const dataDir = path.join(__dirname, 'data');
-const contactsFilePath = path.join(dataDir, 'contacts.json.gz');
+const contactsFilePath = path.join(dataDir, 'contacts.json'); // Changed to .json
 
 async function ensureDataDirectoryExists() {
     try {
@@ -35,22 +34,13 @@ async function ensureDataDirectoryExists() {
 
 async function loadContactsFromServer() {
     try {
-        const compressedData = await fs.readFile(contactsFilePath);
-        const jsonData = await new Promise((resolve, reject) => {
-            zlib.gunzip(compressedData, (err, data) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(data.toString('utf8'));
-                }
-            });
-        });
-        return JSON.parse(jsonData);
+        const data = await fs.readFile(contactsFilePath, 'utf8');
+        return JSON.parse(data);
     } catch (error) {
         if (error.code === 'ENOENT') {
             return [];
         } else {
-            console.error('Error reading or decompressing contacts file:', error);
+            console.error('Error reading contacts file:', error);
             return [];
         }
     }
@@ -59,19 +49,10 @@ async function loadContactsFromServer() {
 async function saveContactsToServer(contacts) {
     try {
         const jsonData = JSON.stringify(contacts, null, 2);
-        const compressedData = await new Promise((resolve, reject) => {
-            zlib.gzip(jsonData, (err, data) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(data);
-                }
-            });
-        });
-        await fs.writeFile(contactsFilePath, compressedData);
-        console.log('Contacts saved to server (compressed).');
+        await fs.writeFile(contactsFilePath, jsonData);
+        console.log('Contacts saved to server.');
     } catch (error) {
-        console.error('Error compressing or writing contacts file:', error);
+        console.error('Error writing contacts file:', error);
     }
 }
 
@@ -155,7 +136,7 @@ app.post('/upload', async (req, res) => {
 
                     // Update contact status to "sent" IMMEDIATELY after sending
                     await updateContactStatus(cleanedNumber, "sent");
-            
+
                 }
 
                 console.log(`Mensagem ${testMode ? '(TESTE) ' : ''}enviada para ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);

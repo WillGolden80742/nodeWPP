@@ -1,11 +1,22 @@
 body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f0f2f5;
+    margin: 0; /* Reset default margin */
+    overflow-x: hidden; /* Prevent horizontal scrollbar */
 }
 
+/* Utility classes (consider using a CSS-in-JS solution for larger projects) */
+.d-flex { display: flex; }
+.align-items-center { align-items: center; }
+.justify-content-start { justify-content: flex-start; }
+.justify-content-end { justify-content: flex-end; }
+.flex-column { flex-direction: column; }
+.flex-grow-1 { flex-grow: 1; }
+
+/* Container */
 .whatsapp-container {
     display: flex;
-    height: 100vh;
+    min-height: 100vh; /* Use min-height for full viewport height */
     max-width: 1200px;
     margin: auto;
     background-color: #fff;
@@ -14,18 +25,18 @@ body {
 
 /* Sidebar */
 .whatsapp-sidebar {
-    width: 600px; /* Reduced sidebar width */
+    width: 600px;
     border-right: 1px solid #ddd;
     background-color: #f0f2f5;
-    overflow-y: hidden;
+    overflow-y: hidden; /* Hide scrollbar */
 }
 
 .whatsapp-sidebar-header {
     display: flex;
-    align-items: center; /* Align items vertically in the center */
-    justify-content: flex-start; /* Align items to the start, pushing the icon to the left */
+    align-items: center;
+    justify-content: flex-start;
     padding: 1rem;
-    text-align: left; /* Align text to the left */
+    text-align: left;
     border-bottom: 1px solid #ddd;
     background-color: #075e54;
     color: #fff;
@@ -38,9 +49,9 @@ body {
 
 .whatsapp-icon {
     width: 30px;
-    font-size:32px;
+    font-size: 32px;
     margin-right: 10px;
-    display: inline-block; /* Ensure proper alignment */
+    display: inline-block;
 }
 
 /* Search Container */
@@ -48,7 +59,7 @@ body {
     padding: .5rem;
     position: relative;
     font-size: 18px;
-    background-color: #fff; /* White background for search */
+    background-color: #fff;
     border-radius: 5px;
     border: 1px solid #ddd;
     margin: 0.5rem;
@@ -105,7 +116,7 @@ body {
     border-radius: 5px;
     margin-right: .5rem;
     border: 1px solid #ddd;
-    padding: .5rem; /* Added padding */
+    padding: .5rem;
 }
 
 .add-contact-container .btn {
@@ -116,19 +127,21 @@ body {
 .contact-list-container {
     padding: .5rem;
     overflow-y: auto;
-    max-height: calc(100vh - 390px); /* Adjusted max-height */
+    max-height: calc(100vh - 390px);
 }
 
+/* Optimized Contact List Label */
 .contact-list-container label {
-    display: flex; /* Use flexbox for alignment */
-    align-items: center; /* Vertically align the checkbox and text */
+    display: flex;
+    align-items: center;
     padding: .75rem;
     border-bottom: 1px solid #eee;
     cursor: pointer;
     border-radius: 5px;
     margin-bottom: .25rem;
     background-color: #fff;
-    transition: background-color 0.2s ease-in-out; /* Add transition for smooth hover effect */
+    transition: background-color 0.15s ease-out; /* Faster transition */
+    user-select: none; /* Prevent text selection during clicks */
 }
 
 .contact-list-container label:hover {
@@ -136,7 +149,7 @@ body {
 }
 
 .contact-list-container input[type=checkbox] {
-    margin-right: .5rem; /* Add spacing between checkbox and text */
+    margin-right: .5rem;
 }
 
 /* Message Area */
@@ -251,7 +264,7 @@ body {
 
 .whatsapp-message-list {
     padding: 0;
-    display: flex; /* Use flexbox for message alignment */
+    display: flex;
     flex-direction: column;
 }
 
@@ -267,50 +280,21 @@ body {
     margin-bottom: .5rem;
     word-break: break-word;
     box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
-    max-width: 80%; /* Adjusted max-width */
-    align-self: flex-start; /* Default alignment */
-    clear: both; /* Prevent floating issues */
+    max-width: 80%;
+    align-self: flex-start;
+    clear: both;
 }
 
-/* Incoming Message Styling */
 .whatsapp-message-container.incoming {
-    background-color: #fff; /* White background for incoming messages */
-    align-self: flex-start; /* Align to the left */
-    float: left; /* Ensure proper positioning */
+    background-color: #fff;
+    align-self: flex-start;
+    float: left;
 }
 
-/* Outgoing Message Styling */
 .whatsapp-message-container.outgoing {
-    background-color: #dcf8c6; /* Green background for outgoing messages */
-    align-self: flex-end; /* Align to the right */
-    float: right; /* Ensure proper positioning */
-}
-
-/*  Tail (Not needed with modern bubble style) */
-.whatsapp-message-container:before {
-    content: "";
-    position: absolute;
-    width: 0;
-    height: 0;
-    border-style: solid;
-}
-
-/* Tail for Incoming Messages (Not needed with modern bubble style) */
-.whatsapp-message-container.incoming:before {
-    border-width: 10px 10px 10px 0;
-    border-color: transparent #fff transparent transparent;
-    left: 0;
-    bottom: 0;
-    margin-left: -10px;
-}
-
-/* Tail for Outgoing Messages (Not needed with modern bubble style) */
-.whatsapp-message-container.outgoing:before {
-    border-width: 10px 0 10px 10px;
-    border-color: transparent transparent transparent #dcf8c6;
-    right: 0;
-    bottom: 0;
-    margin-right: -10px;
+    background-color: #dcf8c6;
+    align-self: flex-end;
+    float: right;
 }
 
 /* Contact Name Styling */
@@ -441,7 +425,7 @@ body {
 }
 
 .contact-list-container input[type=checkbox]+label {
-    transition: background-color .2s ease-in-out, border-color .2s ease-in-out;
+    transition: background-color .15s ease-out, border-color .15s ease-out; /* Faster transition */
 }
 
 /* Load Contacts Button */
