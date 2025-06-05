@@ -33,43 +33,6 @@
                 <input type="text" id="search" placeholder="Pesquisar..."> <!-- Added placeholder -->
             </div>
 
-            <div class="file-upload-container">
-                <label for="fileInput" class="file-upload-label">
-                    <i class="mdi mdi-upload" aria-hidden="true"></i> Selecione o arquivo
-                </label>
-                <input type="file" class="form-control file-upload-input" id="fileInput" name="fileInput"
-                    accept=".csv,.vcf">
-            </div>
-
-            <div id="csvColumnSelect" style="display: none;">
-                <div class="mb-3">
-                    <label class="form-label"><i class="mdi mdi-table-column" aria-hidden="true"></i> Selecione as colunas do CSV:</label>
-                    <div class="row g-2">
-                        <div class="col-md">
-                            <label for="nameColumn" class="form-label">Coluna do Nome:</label>
-                            <select class="form-select" id="nameColumn" name="nameColumn"></select>
-                        </div>
-                        <div class="col-md">
-                            <label for="phoneColumn" class="form-label">Coluna do Telefone:</label>
-                            <select class="form-select" id="phoneColumn" name="phoneColumn"></select>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-primary" id="loadContactsBtn"><i
-                            class="mdi mdi-upload" aria-hidden="true"></i> Carregar Contatos</button>
-                </div>
-            </div>
-
-            <div class="add-contact-container">
-                <label class="form-label"><i class="mdi mdi-account-plus" aria-hidden="true"></i> Adicionar Contato</label>
-                <div class="input-group">
-                    <input type="text" class="form-control" id="newContactName" placeholder="Nome">
-                    <input type="tel" class="form-control" id="newContactPhone" placeholder="Telefone"
-                        type="number">
-                    <button class="btn btn-success" type="button" id="addContactBtn">
-                        <i class="mdi mdi-plus" aria-hidden="true"></i>
-                    </button>
-                </div>
-            </div>
 
             <div class="selection-buttons">
                 <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">Selecionar Todos</button>
@@ -130,6 +93,49 @@
                         <i class="mdi mdi-test-tube" aria-hidden="true"></i> Modo de Teste (Não envia mensagens reais)
                     </label>
                 </div>
+
+                
+                <div class="file-upload-container">
+                    <label for="fileInput" class="file-upload-label">
+                        <i class="mdi mdi-upload" aria-hidden="true"></i> Selecione o arquivo
+                    </label>
+                    <input type="file" class="form-control file-upload-input" id="fileInput" name="fileInput"
+                        accept=".csv,.vcf">
+                </div>
+
+                <!-- CSV Column Select & Add Contact (Moved Here) -->
+                <div class="csv-contact-options">
+                    <div id="csvColumnSelect" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="mdi mdi-table-column" aria-hidden="true"></i> Selecione as colunas do CSV:</label>
+                            <div class="row g-2">
+                                <div class="col-md">
+                                    <label for="nameColumn" class="form-label">Coluna do Nome:</label>
+                                    <select class="form-select" id="nameColumn" name="nameColumn"></select>
+                                </div>
+                                <div class="col-md">
+                                    <label for="phoneColumn" class="form-label">Coluna do Telefone:</label>
+                                    <select class="form-select" id="phoneColumn" name="phoneColumn"></select>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="loadContactsBtn"><i
+                                    class="mdi mdi-upload" aria-hidden="true"></i> Carregar Contatos</button>
+                        </div>
+                    </div>
+
+                    <div class="add-contact-container">
+                        <label class="form-label"><i class="mdi mdi-account-plus" aria-hidden="true"></i> Adicionar Contato</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="newContactName" placeholder="Nome">
+                            <input type="tel" class="form-control" id="newContactPhone" placeholder="Telefone"
+                                type="number">
+                            <button class="btn btn-success" type="button" id="addContactBtn">
+                                <i class="mdi mdi-plus" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="message-input-area whatsapp-message-input-area">
                     <textarea class="form-control whatsapp-textarea" id="message" name="message" rows="4" required
                         placeholder="Use [greeting] para uma saudação personalizada e [name] para o nome do contato."></textarea>

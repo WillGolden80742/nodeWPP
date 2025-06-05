@@ -2,7 +2,7 @@ body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f0f2f5;
     margin: 0; /* Reset default margin */
-    overflow-x: hidden; /* Prevent horizontal scrollbar */
+    overflow-y: hidden; /* Prevent horizontal scrollbar */
 }
 
 /* Utility classes (consider using a CSS-in-JS solution for larger projects) */
@@ -84,8 +84,10 @@ body {
 }
 
 /* File Upload */
-.file-upload-container {
+.file-upload-container, .add-contact-container {
     padding: .5rem;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 .file-upload-label {
@@ -103,10 +105,6 @@ body {
     display: none;
 }
 
-/* Add Contact */
-.add-contact-container {
-    padding: .5rem;
-}
 
 .add-contact-container .input-group {
     display: flex;
@@ -127,8 +125,15 @@ body {
 .contact-list-container {
     padding: .5rem;
     overflow-y: auto;
-    max-height: calc(100vh - 390px);
+    max-height: calc(100vh - 236px);
+    font-size: 18px;
+    font-weight: 600;
 }
+
+.mdi-delete {
+    font-size: 18px;
+}
+
 
 /* Optimized Contact List Label */
 .contact-list-container label {
@@ -170,7 +175,6 @@ body {
 .whatsapp-message-input-area {
     display: flex;
     flex-direction: column;
-    height: 100%;
 }
 
 .whatsapp-textarea {
@@ -181,6 +185,7 @@ body {
     resize: none;
     box-shadow: none !important;
     margin-bottom: .5rem;
+    height: calc(100vh - 370px);
 }
 
 /* Message Actions */
@@ -251,9 +256,12 @@ body {
 .close {
     color: #aaa;
     float: right;
-    font-size: 28px;
+    font-size: 36px;
     font-weight: 700;
     cursor: pointer;
+    position: absolute;
+    right: 10px;
+    top: 0;
 }
 
 .close:hover,
@@ -343,7 +351,7 @@ body {
 }
 
 .contact-tabs .nav-link {
-    font-size: .8rem;
+    font-size: 18px;
     color: #555;
 }
 
@@ -351,6 +359,7 @@ body {
     background-color: #e9ecef;
     border-color: #ddd #ddd #fff;
     color: #333;
+    font-weight: 600;
 }
 
 /* Delete Button */
@@ -458,15 +467,13 @@ body {
     color: #25d366;
 }
 
-/* Responsive Design Adjustments */
-@media (max-width: 992px) {
-    .whatsapp-container {
-        flex-direction: column;
-    }
+.mdi-new-box, .mdi-send, .mdi-check-circle {
+    margin-left: 10px;
+}
 
-    .whatsapp-sidebar {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid #ddd;
-    }
+.contact-list-container label {
+    overflow-x: auto;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
 }
