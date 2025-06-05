@@ -22,6 +22,12 @@ const loadContactsBtn = document.getElementById('loadContactsBtn');
 const sendMessageBtn = document.getElementById('sendMessageBtn');
 const mainForm = document.getElementById('mainForm');
 
+// Get loading spinners
+const loadingAll = document.getElementById('loadingAll');
+const loadingNew = document.getElementById('loadingNew');
+const loadingSent = document.getElementById('loadingSent');
+const loadingAnswered = document.getElementById('loadingAnswered');
+
 const MESSAGE_STORAGE_KEY = 'whatsapp_sender_message';
 const NAME_COLUMN_STORAGE_KEY = 'whatsapp_sender_name_column';
 const PHONE_COLUMN_STORAGE_KEY = 'whatsapp_sender_phone_column';
@@ -86,8 +92,13 @@ const storedColumnSelections = loadColumnSelectionsFromLocalStorage();
 
 
 navButton.addEventListener('click', function (event) {
+    // Get the target tab pane ID
+    const targetTabPaneId = event.target.getAttribute('data-bs-target').substring(1); // Remove the '#'
+    // Show loading spinner for the active tab
+    showLoadingSpinner(targetTabPaneId);
+
     isCheckedAllContacts(false);
-    renderContactLists(contacts); //Use the master list of contacts.
+    renderContactLists(contacts, targetTabPaneId); //Use the master list of contacts.
 });
 
 fileInput.addEventListener('change', async (event) => {
@@ -373,7 +384,41 @@ function renderContactList(contactList, container) {
     updateSendButtonState(); // Update button state after rendering
 }
 
-function renderContactLists(contactList) {
+// Helper function to get the correct container for a given tab
+function getContactListContainer(tabId) {
+    switch (tabId) {
+        case 'all':
+            return contactListDiv;
+        case 'new':
+            return contactListNewDiv;
+        case 'sent':
+            return contactListSentDiv;
+        case 'answered':
+            return contactListAnsweredDiv;
+        default:
+            console.warn('Unknown tab ID:', tabId);
+            return contactListDiv; // Default to 'all'
+    }
+}
+
+// Helper function to get the correct loading element for a given tab
+function getLoadingElement(tabId) {
+    switch (tabId) {
+        case 'all':
+            return loadingAll;
+        case 'new':
+            return loadingNew;
+        case 'sent':
+            return loadingSent;
+        case 'answered':
+            return loadingAnswered;
+        default:
+            console.warn('Unknown tab ID:', tabId);
+            return loadingAll; // Default to 'all'
+    }
+}
+
+function renderContactLists(contactList, tabId = 'all') {
     const searchTerm = searchInput.value.toLowerCase();
     const filteredContacts = contactList.filter(contact =>
         contact.fullName.toLowerCase().includes(searchTerm) ||
@@ -384,10 +429,11 @@ function renderContactLists(contactList) {
     const sentContacts = filteredContacts.filter(contact => contact.status === 'sent');
     const answeredContacts = filteredContacts.filter(contact => contact.status === 'answered');
 
-    renderContactList(filteredContacts, contactListDiv);
-    renderContactList(newContacts, contactListNewDiv);
-    renderContactList(sentContacts, contactListSentDiv);
-    renderContactList(answeredContacts, contactListAnsweredDiv);
+    renderContactList(filteredContacts, getContactListContainer('all'));
+    renderContactList(newContacts, getContactListContainer('new'));
+    renderContactList(sentContacts, getContactListContainer('sent'));
+    renderContactList(answeredContacts, getContactListContainer('answered'));
+    hideLoadingSpinner(tabId);
 }
 
 async function deleteContact(keyToDelete) {
@@ -677,8 +723,38 @@ socket.on('contacts_updated', (updatedContacts) => {
 
 // ... (rest of your code)
 
+// Function to add key to contact
+
+// Function to show loading spinner
+function showLoadingSpinner(tabId) {
+    const loadingElement = getLoadingElement(tabId);
+    const contactListContainer = getContactListContainer(tabId);
+    if (loadingElement && contactListContainer) {
+        loadingElement.style.display = 'block';
+        contactListContainer.innerHTML = '';
+    }
+}
+
+// Function to hide loading spinner
+function hideLoadingSpinner(tabId) {
+    const loadingElement = getLoadingElement(tabId);
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+    }
+}
+
 // Load contacts from the server on page load
 async function loadContactsFromServer() {
+    // Get the currently active tab
+    const activeTab = document.querySelector('.nav-link.active');
+    let activeTabId = 'all'; // Default value
+    if (activeTab) {
+        activeTabId = activeTab.getAttribute('data-bs-target').substring(1); // Remove the '#'
+    }
+
+    // Show loading spinner for the active tab
+    showLoadingSpinner(activeTabId);
+
     try {
         const response = await fetch('/update-contacts'); // Adjust the URL if needed
         if (!response.ok) {
@@ -690,13 +766,13 @@ async function loadContactsFromServer() {
         contacts.forEach(contact => {
             selectedContacts.set(contact.labelText, false);  // Initially, no contact is selected
         });
-        renderContactLists(contacts);
+        renderContactLists(contacts, activeTabId);
     } catch (error) {
         console.error('Failed to load contacts from server:', error);
         alert('Failed to load contacts from server. Check the console for details.');
         contacts = [];  // Ensure contacts is an empty array if loading fails
     } finally {
-        renderContactLists(contacts);  // Render even if loading fails (shows an empty list)
+        renderContactLists(contacts, activeTabId);  // Render even if loading fails (shows an empty list)
     }
 }
 
