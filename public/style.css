@@ -571,6 +571,7 @@ body {
     color:#333;
     width: 100%;
     margin-left: 10px;
+    margin-bottom: 0;
 }
 
 .contact-number {
@@ -614,4 +615,77 @@ body {
 .whatsapp-message-area-header h2 {
     display: flex;
     justify-content: space-between;
+}
+
+.contact-list-item {
+    display: flex;
+    flex-direction: column; /* Stack top-row and bottom-row vertically */
+    align-items: flex-start; /* Align items to the start */
+    justify-content: space-between;
+    padding: .75rem;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-bottom: .25rem;
+    background-color: #fff;
+    transition: background-color 0.15s ease-out;
+    user-select: none;
+}
+
+.top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Distribute items horizontally */
+    width: 100%;
+    margin-bottom: 0.25rem; /* Add spacing between top and bottom rows */
+}
+
+.bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Distribute items horizontally */
+    width: 100%;
+}
+
+.contact-name {
+    font-weight: bold;
+}
+
+.contact-number {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.last-message {
+    font-size: 0.8em;
+    color: #777;
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 70%; /* Take up remaining space */
+    margin-left: 35px;
+}
+
+.timestamp {
+    font-size: 0.7em;
+    color: #999;
+    white-space: nowrap;
+    margin-left: auto;
+    margin-right:20px;
+}
+
+.form-check-input {
+    margin-right: 0.5rem;
+}
+
+.deleteContactBtn {
+    margin-left: 0.5rem;
+}
+
+/* Ensure enough space for each item */
+.top-row>* {
+    margin-right: 10px;
 }

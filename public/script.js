@@ -364,86 +364,100 @@ function renderContactList(contactList, container) {
     const filteredContactList = contactList.filter(contact => contact.phoneNumber && contact.phoneNumber.length >= 9);
 
     filteredContactList.forEach((contact, index) => {
-        const contactId = `contact-${index}`; // ID único para cada contato
+        const contactId = `contact-${index}`;
 
         const label = document.createElement('label');
+        label.classList.add('contact-list-item');
+
+        // Top Row Div (checkbox, contactName, whatsappLink, statusIcon, deleteButton)
+        const topRowDiv = document.createElement('div');
+        topRowDiv.classList.add('top-row');
 
         const checkbox = document.createElement('input');
         checkbox.classList.add('form-check-input');
         checkbox.type = 'checkbox';
         checkbox.id = contactId;
+        topRowDiv.appendChild(checkbox);
 
         const contactName = document.createElement('span');
         contactName.classList.add('contact-name');
         contactName.textContent = contact.fullName;
+        topRowDiv.appendChild(contactName);
 
-        // Create the WhatsApp link
         const whatsappLink = document.createElement('a');
         whatsappLink.classList.add('contact-number');
         whatsappLink.href = `http://wa.me/${contact.phoneNumber}`;
-        whatsappLink.textContent = contact.phoneNumber; // Display the phone number
-        whatsappLink.target = '_blank'; // Open in a new tab
-        whatsappLink.rel = 'noopener noreferrer'; // Security best practice
+        whatsappLink.textContent = contact.phoneNumber;
+        whatsappLink.target = '_blank';
+        whatsappLink.rel = 'noopener noreferrer';
+        topRowDiv.appendChild(whatsappLink);
 
-        // Cria o elemento para o ícone de status
         const statusIcon = document.createElement('i');
-        statusIcon.classList.add('mdi'); // Adiciona a classe 'mdi'
-
+        statusIcon.classList.add('mdi');
         switch (contact.status) {
             case 'new':
-                statusIcon.classList.add('mdi-new-box'); // Ícone para 'new'
+                statusIcon.classList.add('mdi-new-box');
                 break;
             case 'sent':
-                statusIcon.classList.add('mdi-send'); // Ícone para 'sent'
+                statusIcon.classList.add('mdi-send');
                 break;
             case 'answered':
-                statusIcon.classList.add('mdi-check-circle'); // Ícone para 'answered'
+                statusIcon.classList.add('mdi-check-circle');
                 break;
             default:
-                statusIcon.classList.add('mdi-help-circle'); // Ícone padrão
+                statusIcon.classList.add('mdi-help-circle');
         }
+        topRowDiv.appendChild(statusIcon);
 
         const deleteButton = document.createElement('button');
         deleteButton.type = 'button';
         deleteButton.classList.add('btn', 'btn-sm', 'deleteContactBtn');
-        deleteButton.dataset.key = contact.key; // Store the contact's key here!!!
-
+        deleteButton.dataset.key = contact.key;
         const deleteIcon = document.createElement('i');
         deleteIcon.classList.add('mdi', 'mdi-delete');
-
-        deleteButton.appendChild(deleteIcon); // Adiciona o ícone ao botão
-        deleteButton.addEventListener('click', function () {  //Move o EventListener pra cá para não ficar no loop posterior.
-            const keyToDelete = this.dataset.key;  // Get the key from the button.
+        deleteButton.appendChild(deleteIcon);
+        deleteButton.addEventListener('click', function () {
+            const keyToDelete = this.dataset.key;
             deleteContact(keyToDelete);
         });
+        topRowDiv.appendChild(deleteButton);
 
-        label.appendChild(checkbox);
-        label.appendChild(contactName);
-        label.appendChild(whatsappLink); // Append the link, not the span
-        label.appendChild(statusIcon); // Adiciona o ícone ao label
-        label.appendChild(deleteButton);
+        // Bottom Row Div (lastMessageDiv and timestampSpan)
+        const bottomRowDiv = document.createElement('div');
+        bottomRowDiv.classList.add('bottom-row');
+
+        const lastMessageDiv = document.createElement('div');
+        lastMessageDiv.classList.add('last-message');
+        lastMessageDiv.textContent = contact.lastMessage;
+        bottomRowDiv.appendChild(lastMessageDiv);
+
+        // Format Timestamp (HH:mm)
+        const timestamp = new Date(contact.timestamp);
+        const formattedTime = `${timestamp.getHours().toString().padStart(2, '0')}:${timestamp.getMinutes().toString().padStart(2, '0')}`;
+
+        const timestampSpan = document.createElement('span');
+        timestampSpan.classList.add('timestamp');
+        timestampSpan.textContent = formattedTime;
+        bottomRowDiv.appendChild(timestampSpan);
+
+        label.appendChild(topRowDiv);
+        label.appendChild(bottomRowDiv);
 
         container.appendChild(label);
 
-        const labelText = label.textContent.trim(); // Pega o texto do label
-
-        const isChecked = selectedContacts.has(labelText) ? selectedContacts.get(labelText) : false; //Verifica o map
-        checkbox.checked = isChecked;  //seta o valor do checkbox
-
-        // Salva o texto do label no objeto do contato
+        const labelText = label.textContent.trim();
+        const isChecked = selectedContacts.has(labelText) ? selectedContacts.get(labelText) : false;
+        checkbox.checked = isChecked;
         contact.labelText = labelText;
 
-        // Adiciona um ouvinte de evento para cada checkbox
         checkbox.addEventListener('change', (event) => {
-            // Atualiza o Map com o estado do checkbox
             selectedContacts.set(labelText, event.target.checked);
-            updateSendButtonState();  // Update button state on change
+            updateSendButtonState();
         });
     });
 
-    updateSendButtonState(); // Update button state after rendering
+    updateSendButtonState();
 }
-
 // Helper function to get the correct container for a given tab
 function getContactListContainer(tabId) {
     switch (tabId) {

@@ -99,23 +99,45 @@ async function verifyAndFixContactStatuses() {
             const chat = await client.getChatById(chatId);
             const messages = await chat.fetchMessages({ limit: 1 }); // Get the last message
 
+            let lastMessageContent = "";
+
             if (messages && messages.length > 0) {
                 const lastMessage = messages[0];
                 const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString(); // Convert seconds to milliseconds and format
 
+                if (lastMessage.hasMedia) {
+                    if (lastMessage.type === 'image') {
+                        lastMessageContent = "📸 Image";
+                    } else if (lastMessage.type === 'video') {
+                        lastMessageContent = "📹 Video";
+                    } else if (lastMessage.type === 'audio') {
+                        lastMessageContent = "🎵 Audio";
+                    } else if (lastMessage.type === 'document') {
+                        lastMessageContent = "📄 Document";
+                    } else if (lastMessage.type === 'sticker') {
+                        lastMessageContent = "✨ Sticker";
+                    }
+                    else {
+                        lastMessageContent = "📎 Media";
+                    }
+                } else {
+                    lastMessageContent = lastMessage.body;
+                }
+
                 if (lastMessage.fromMe) {
                     if (contact.status !== 'sent' && contact.status !== 'answered') {
-                        await updateContactStatus(contact.phoneNumber, 'sent', messageTimestamp);
-                        console.log(`Updated status of ${contact.phoneNumber} to sent, timestamp: ${messageTimestamp}`);
+                        await updateContactStatus(contact.phoneNumber, 'sent', messageTimestamp, lastMessageContent);
+                        console.log(`Updated status of ${contact.phoneNumber} to sent, timestamp: ${messageTimestamp}, lastMessage: ${lastMessageContent}`);
                     }
                 } else {
                     if (contact.status !== 'answered') {
-                        await updateContactStatus(contact.phoneNumber, 'answered', messageTimestamp);
-                        console.log(`Updated status of ${contact.phoneNumber} to answered, timestamp: ${messageTimestamp}`);
+                        await updateContactStatus(contact.phoneNumber, 'answered', messageTimestamp, lastMessageContent);
+                        console.log(`Updated status of ${contact.phoneNumber} to answered, timestamp: ${messageTimestamp}, lastMessage: ${lastMessageContent}`);
                     }
                 }
             } else {
                 console.log(`No messages found for ${contact.phoneNumber}.`);
+                await updateContactStatus(contact.phoneNumber, contact.status, contact.timestamp, ""); //Keep the value on the server
             }
         } catch (error) {
             console.error(`Error processing chat for ${contact.phoneNumber}:`, error.message);
@@ -139,6 +161,10 @@ client.on('ready', async () => {
             if (!contact.timestamp) {
                 contact.timestamp = new Date().toISOString();
             }
+            if (!contact.lastMessage) {
+                contact.lastMessage = "";
+            }
+
             return contact;
         });
 
@@ -160,7 +186,26 @@ client.on('ready', async () => {
 client.on('message', async message => {
     const senderNumber = message.from.replace('@c.us', '');
     const messageTimestamp = new Date(message.timestamp * 1000).toISOString(); //Convert timestamp to readable date
-    await updateContactStatus(senderNumber, 'answered', messageTimestamp);
+    let lastMessageContent = "";
+    if (message.hasMedia) {
+        if (message.type === 'image') {
+            lastMessageContent = "📸 Image";
+        } else if (message.type === 'video') {
+            lastMessageContent = "📹 Video";
+        } else if (message.type === 'audio') {
+            lastMessageContent = "🎵 Audio";
+        } else if (message.type === 'document') {
+            lastMessageContent = "📄 Document";
+        } else if (message.type === 'sticker') {
+            lastMessageContent = "✨ Sticker";
+        } else {
+            lastMessageContent = "📎 Media";
+        }
+    } else {
+        lastMessageContent = message.body;
+    }
+
+    await updateContactStatus(senderNumber, 'answered', messageTimestamp, lastMessageContent);
 });
 
 client.initialize();
@@ -202,7 +247,8 @@ app.post('/upload', async (req, res) => {
 
                     // Update contact status to "sent" IMMEDIATELY after sending
                     const messageTimestamp = new Date().toISOString();
-                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp);
+
+                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp, personalizedMessage);
 
                 }
 
@@ -272,6 +318,11 @@ app.post('/update-contacts', async (req, res) => {
         if (!contact.timestamp) {
             contact.timestamp = new Date().toISOString();
         }
+
+        if (!contact.lastMessage) {
+            contact.lastMessage = "";
+        }
+
         return contact;
     });
 
@@ -308,18 +359,20 @@ app.get('/update-contacts', async (req, res) => {
     }
 });
 
-async function updateContactStatus(phoneNumber, newStatus, timestamp) {
+async function updateContactStatus(phoneNumber, newStatus, timestamp, lastMessage) {
     const contactToUpdate = contacts.find(contact => contact.phoneNumber === phoneNumber);
 
     if (contactToUpdate) {
         contactToUpdate.status = newStatus;
         contactToUpdate.timestamp = timestamp; // Update the timestamp
+        contactToUpdate.lastMessage = lastMessage; // Update the lastMessage
+
         await saveContactsToServer(contacts);
 
         // Emit event to all connected clients
         io.emit('contacts_updated', contacts);
 
-        console.log(`Contact ${phoneNumber} status updated to ${newStatus}, timestamp: ${timestamp}`);
+        console.log(`Contact ${phoneNumber} status updated to ${newStatus}, timestamp: ${timestamp}, lastMessage: ${lastMessage}`);
     } else {
         console.warn(`Contact with phone number ${phoneNumber} not found.`);
     }
