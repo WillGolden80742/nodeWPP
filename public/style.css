@@ -604,3 +604,8 @@ body {
 .modal-backdrop {
     z-index: 100;
 }
+
+.whatsapp-message-area-header h2 {
+    display: flex;
+    justify-content: space-between;
+}
