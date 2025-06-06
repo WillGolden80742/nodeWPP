@@ -369,7 +369,7 @@ function renderContactList(contactList, container) {
         const label = document.createElement('label');
         label.classList.add('contact-list-item');
 
-        // Top Row Div (checkbox, contactName, whatsappLink, statusIcon, deleteButton)
+        // Top Row Div
         const topRowDiv = document.createElement('div');
         topRowDiv.classList.add('top-row');
 
@@ -422,13 +422,46 @@ function renderContactList(contactList, container) {
         });
         topRowDiv.appendChild(deleteButton);
 
-        // Bottom Row Div (lastMessageDiv and timestampSpan)
+        // Bottom Row Div
         const bottomRowDiv = document.createElement('div');
         bottomRowDiv.classList.add('bottom-row');
 
+        let lastMessageContent = contact.lastMessage;
+        let mediaIcon = null;
+
+        if (contact.lastMessage === '📸 Image') {
+            mediaIcon = 'mdi-image';
+            lastMessageContent = '';
+        } else if (contact.lastMessage === '📹 Video') {
+            mediaIcon = 'mdi-video';
+            lastMessageContent = '';
+        } else if (contact.lastMessage === '🎵 Audio') {
+            mediaIcon = 'mdi-music';
+            lastMessageContent = '';
+        } else if (contact.lastMessage === '📄 Document') {
+            mediaIcon = 'mdi-file-document';
+            lastMessageContent = '';
+        } else if (contact.lastMessage === '✨ Sticker') {
+            mediaIcon = 'mdi-sticker';
+            lastMessageContent = '';
+        } else if (contact.lastMessage === '📎 Media') {
+            mediaIcon = 'mdi-paperclip';
+            lastMessageContent = '';
+        }
+
         const lastMessageDiv = document.createElement('div');
         lastMessageDiv.classList.add('last-message');
-        lastMessageDiv.textContent = contact.lastMessage;
+
+        if (mediaIcon) {
+            const mediaIconElement = document.createElement('i');
+            mediaIconElement.classList.add('mdi', mediaIcon);
+            lastMessageDiv.appendChild(mediaIconElement);
+        }
+
+        const lastMessageText = document.createElement('span');
+        lastMessageText.textContent = lastMessageContent;
+        lastMessageDiv.appendChild(lastMessageText);
+
         bottomRowDiv.appendChild(lastMessageDiv);
 
         // Format Timestamp (HH:mm)
@@ -458,6 +491,7 @@ function renderContactList(contactList, container) {
 
     updateSendButtonState();
 }
+
 // Helper function to get the correct container for a given tab
 function getContactListContainer(tabId) {
     switch (tabId) {

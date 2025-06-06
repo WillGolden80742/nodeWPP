@@ -689,3 +689,7 @@ body {
 .top-row>* {
     margin-right: 10px;
 }
+
+.last-message .mdi {
+    margin-right: 5px;  /* Add spacing between icon and text */
+}
