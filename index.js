@@ -101,16 +101,17 @@ async function verifyAndFixContactStatuses() {
 
             if (messages && messages.length > 0) {
                 const lastMessage = messages[0];
+                const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString(); // Convert seconds to milliseconds and format
 
                 if (lastMessage.fromMe) {
                     if (contact.status !== 'sent' && contact.status !== 'answered') {
-                        await updateContactStatus(contact.phoneNumber, 'sent');
-                        console.log(`Updated status of ${contact.phoneNumber} to sent`);
+                        await updateContactStatus(contact.phoneNumber, 'sent', messageTimestamp);
+                        console.log(`Updated status of ${contact.phoneNumber} to sent, timestamp: ${messageTimestamp}`);
                     }
                 } else {
                     if (contact.status !== 'answered') {
-                        await updateContactStatus(contact.phoneNumber, 'answered');
-                        console.log(`Updated status of ${contact.phoneNumber} to answered`);
+                        await updateContactStatus(contact.phoneNumber, 'answered', messageTimestamp);
+                        console.log(`Updated status of ${contact.phoneNumber} to answered, timestamp: ${messageTimestamp}`);
                     }
                 }
             } else {
@@ -132,6 +133,16 @@ client.on('ready', async () => {
     try {
         contacts = await loadContactsFromServer();
         console.log('Contacts loaded from server:', contacts.length, 'contacts.');
+
+        // Ensure all contacts have a timestamp.  If not, set it to now.
+        contacts = contacts.map(contact => {
+            if (!contact.timestamp) {
+                contact.timestamp = new Date().toISOString();
+            }
+            return contact;
+        });
+
+        await saveContactsToServer(contacts); // Save back with updated timestamp
     } catch (error) {
         console.error('Failed to load contacts on ready:', error);
     }
@@ -148,7 +159,8 @@ client.on('ready', async () => {
 // Listen for incoming messages and update status to 'answered'
 client.on('message', async message => {
     const senderNumber = message.from.replace('@c.us', '');
-    await updateContactStatus(senderNumber, 'answered');
+    const messageTimestamp = new Date(message.timestamp * 1000).toISOString(); //Convert timestamp to readable date
+    await updateContactStatus(senderNumber, 'answered', messageTimestamp);
 });
 
 client.initialize();
@@ -189,7 +201,8 @@ app.post('/upload', async (req, res) => {
                     await client.sendMessage(chatId, personalizedMessage);
 
                     // Update contact status to "sent" IMMEDIATELY after sending
-                    await updateContactStatus(cleanedNumber, "sent");
+                    const messageTimestamp = new Date().toISOString();
+                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp);
 
                 }
 
@@ -237,7 +250,7 @@ app.post('/update-contacts', async (req, res) => {
     // Função para normalizar número de telefone e remover zeros do início
     const normalizePhoneNumber = (phoneNumber) => {
         let cleanedNumber = phoneNumber.replace(/\D/g, '');
-        
+
         // Remove zeros do começo
         cleanedNumber = cleanedNumber.replace(/^0+/, '');
 
@@ -254,6 +267,10 @@ app.post('/update-contacts', async (req, res) => {
     updatedContacts = updatedContacts.map(contact => {
         if (contact.phoneNumber) {
             contact.phoneNumber = normalizePhoneNumber(contact.phoneNumber);
+        }
+        //If there is no timestamp, add it.
+        if (!contact.timestamp) {
+            contact.timestamp = new Date().toISOString();
         }
         return contact;
     });
@@ -291,17 +308,18 @@ app.get('/update-contacts', async (req, res) => {
     }
 });
 
-async function updateContactStatus(phoneNumber, newStatus) {
+async function updateContactStatus(phoneNumber, newStatus, timestamp) {
     const contactToUpdate = contacts.find(contact => contact.phoneNumber === phoneNumber);
 
     if (contactToUpdate) {
         contactToUpdate.status = newStatus;
+        contactToUpdate.timestamp = timestamp; // Update the timestamp
         await saveContactsToServer(contacts);
 
         // Emit event to all connected clients
         io.emit('contacts_updated', contacts);
 
-        console.log(`Contact ${phoneNumber} status updated to ${newStatus}`);
+        console.log(`Contact ${phoneNumber} status updated to ${newStatus}, timestamp: ${timestamp}`);
     } else {
         console.warn(`Contact with phone number ${phoneNumber} not found.`);
     }

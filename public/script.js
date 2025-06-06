@@ -200,6 +200,7 @@ async function loadContacts() {
         const isDuplicate = contacts.some(existingContact => existingContact.phoneNumber === newContact.phoneNumber);
         if (!isDuplicate) {
             newContact.status = "new";  // Set initial status
+            newContact.timestamp = new Date().toISOString();  // Initialize timestamp
             contacts.push(newContact);
         }
     });
@@ -286,7 +287,8 @@ function parseVcfContent(vcfContent) {
             let contact = {
                 fullName,
                 phoneNumber,
-                status: 'new' // Initialize status
+                status: 'new', // Initialize status
+                timestamp: new Date().toISOString() // Initialize timestamp
             };
             contact = addKeyToContact(contact);
             contacts.push(contact);
@@ -317,7 +319,8 @@ function parseCsvContent(csvContent, nameColumnIndex, phoneColumnIndex) {
             let contact = {
                 fullName,
                 phoneNumber,
-                status: 'new' // Initialize status
+                status: 'new', // Initialize status
+                timestamp: new Date().toISOString() // Initialize timestamp
             };
             contact = addKeyToContact(contact);
             contacts.push(contact);
@@ -327,8 +330,8 @@ function parseCsvContent(csvContent, nameColumnIndex, phoneColumnIndex) {
 }
 
 async function updateContactsOnServer(contacts) {
-    const defaultCountryCode = '55'; 
-    const defaultDdd = '11'; 
+    const defaultCountryCode = '55';
+    const defaultDdd = '11';
     const countryCode = localStorage.getItem('countryCode') || defaultCountryCode;
     const ddd = localStorage.getItem('ddd') || defaultDdd;
     try {
@@ -680,7 +683,8 @@ function addContact(name, phone) {
     const newContact = {
         fullName: name,
         phoneNumber: phone,
-        status: 'new'  // Initialize status
+        status: 'new',  // Initialize status
+        timestamp: new Date().toISOString() // Initialize timestamp
     };
 
     return addKeyToContact(newContact);
