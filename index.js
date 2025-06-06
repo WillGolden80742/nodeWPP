@@ -21,7 +21,7 @@ app.use(express.static('public'));
 app.use(express.json({ limit: '1024mb' }));
 
 const dataDir = path.join(__dirname, 'data');
-const contactsFilePath = path.join(dataDir, 'contacts.json'); // Changed to .json
+const contactsFilePath = path.join(dataDir, 'contacts.json');
 
 async function ensureDataDirectoryExists() {
     try {
@@ -60,7 +60,7 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', // Modify this path if needed
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     }
 });
@@ -77,6 +77,55 @@ client.on('authenticated', () => {
     console.log('Autenticado com sucesso!');
 });
 
+
+async function verifyAndFixContactStatuses() {
+    if (!whatsappReady) {
+        console.log("WhatsApp not ready, skipping contact status verification.");
+        return;
+    }
+
+    console.log("Verifying and fixing contact statuses...");
+
+    for (const contact of contacts) {
+        // Validação: o número deve conter apenas dígitos e ter entre 12 e 15 dígitos
+        if (!/^\d{12,15}$/.test(contact.phoneNumber)) {
+            console.warn(`Número inválido ignorado: ${contact.phoneNumber}`);
+            continue;
+        }
+
+        const chatId = `${contact.phoneNumber}@c.us`;
+
+        try {
+            const chat = await client.getChatById(chatId);
+            const messages = await chat.fetchMessages({ limit: 1 }); // Get the last message
+
+            if (messages && messages.length > 0) {
+                const lastMessage = messages[0];
+
+                if (lastMessage.fromMe) {
+                    if (contact.status !== 'sent' && contact.status !== 'answered') {
+                        await updateContactStatus(contact.phoneNumber, 'sent');
+                        console.log(`Updated status of ${contact.phoneNumber} to sent`);
+                    }
+                } else {
+                    if (contact.status !== 'answered') {
+                        await updateContactStatus(contact.phoneNumber, 'answered');
+                        console.log(`Updated status of ${contact.phoneNumber} to answered`);
+                    }
+                }
+            } else {
+                console.log(`No messages found for ${contact.phoneNumber}.`);
+            }
+        } catch (error) {
+            console.error(`Error processing chat for ${contact.phoneNumber}:`, error.message);
+        }
+    }
+
+    console.log("Contact status verification completed.");
+}
+
+
+
 client.on('ready', async () => {
     console.log('Cliente WhatsApp está pronto!');
     whatsappReady = true;
@@ -89,7 +138,12 @@ client.on('ready', async () => {
 
     // Send initial contact list to connected clients
     io.emit('contacts_updated', contacts);
+
+    // Initial status verification
+    await verifyAndFixContactStatuses();
+
 });
+
 
 // Listen for incoming messages and update status to 'answered'
 client.on('message', async message => {
@@ -180,9 +234,12 @@ app.post('/update-contacts', async (req, res) => {
         return res.status(400).json({ error: 'No contacts provided to update.' });
     }
 
-    // Function to normalize phone number
+    // Função para normalizar número de telefone e remover zeros do início
     const normalizePhoneNumber = (phoneNumber) => {
         let cleanedNumber = phoneNumber.replace(/\D/g, '');
+        
+        // Remove zeros do começo
+        cleanedNumber = cleanedNumber.replace(/^0+/, '');
 
         if (cleanedNumber.length === 8 || cleanedNumber.length === 9) {
             cleanedNumber = defaultCountryCode + defaultDdd + cleanedNumber;
@@ -193,7 +250,7 @@ app.post('/update-contacts', async (req, res) => {
         return cleanedNumber;
     };
 
-    // Normalize phone numbers
+    // Normaliza os números
     updatedContacts = updatedContacts.map(contact => {
         if (contact.phoneNumber) {
             contact.phoneNumber = normalizePhoneNumber(contact.phoneNumber);
@@ -201,22 +258,20 @@ app.post('/update-contacts', async (req, res) => {
         return contact;
     });
 
-    // Filter out contacts with phone numbers shorter than 12 digits (after normalization)
+    // Filtra contatos com número < 12 dígitos
     updatedContacts = updatedContacts.filter(contact => {
         if (contact.phoneNumber && contact.phoneNumber.length >= 12) {
-            return true; // Keep the contact
+            return true;
         } else {
             console.warn(`Contact ${contact.fullName} with phone number ${contact.phoneNumber} ignored due to length < 12.`);
-            return false; // Filter out the contact
+            return false;
         }
     });
-
 
     try {
         await saveContactsToServer(updatedContacts);
         contacts = updatedContacts;
 
-        // Emit event to all connected clients
         io.emit('contacts_updated', contacts);
 
         res.status(200).json({ message: 'Contacts updated successfully on the server.' });
