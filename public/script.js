@@ -39,6 +39,30 @@ let csvHeaders = [];  // Store CSV headers
 let fileType = null; // Store the file type (csv or vcf)
 let csvContent = null; // Store the CSV file content
 
+
+// Load settings from localStorage
+const loadSettings = () => {
+    const countryCode = localStorage.getItem('countryCode') || '';
+    const ddd = localStorage.getItem('ddd') || '';
+    document.getElementById('countryCode').value = countryCode;
+    document.getElementById('ddd').value = ddd;
+};
+
+// Save settings to localStorage
+const saveSettings = () => {
+    const countryCode = document.getElementById('countryCode').value;
+    const ddd = document.getElementById('ddd').value;
+    localStorage.setItem('countryCode', countryCode);
+    localStorage.setItem('ddd', ddd);
+    alert('Configurações salvas com sucesso!');
+};
+
+// Event listener for save settings button
+document.getElementById('saveSettings').addEventListener('click', saveSettings);
+
+// Load settings on page load
+loadSettings();
+
 // Function to save selected column indexes to localStorage
 function saveColumnSelectionsToLocalStorage(nameColumnIndex, phoneColumnIndex) {
     localStorage.setItem(NAME_COLUMN_STORAGE_KEY, nameColumnIndex);
@@ -303,13 +327,21 @@ function parseCsvContent(csvContent, nameColumnIndex, phoneColumnIndex) {
 }
 
 async function updateContactsOnServer(contacts) {
+    const defaultCountryCode = '55'; 
+    const defaultDdd = '11'; 
+    const countryCode = localStorage.getItem('countryCode') || defaultCountryCode;
+    const ddd = localStorage.getItem('ddd') || defaultDdd;
     try {
         const response = await fetch('/update-contacts', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ contacts: contacts })
+            body: JSON.stringify({
+                contacts: contacts,
+                countryCode: countryCode,
+                ddd: ddd
+            })
         });
 
         if (!response.ok) {

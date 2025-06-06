@@ -600,3 +600,7 @@ body {
         transform: rotate(360deg);
     }
 }
+
+.modal-backdrop {
+    z-index: 100;
+}
