@@ -556,7 +556,6 @@ body {
 }
 
 .mdi-new-box,
-.mdi-send,
 .mdi-check-circle {
     margin-left: 10px;
 }
@@ -575,9 +574,16 @@ body {
 }
 
 .contact-number {
+    text-decoration: none; /* Remove underline */
+    color: inherit;          /* Inherit text color from parent */
+    cursor: pointer;        /* Change cursor to a pointer */
     opacity:0.7;
     width: 200px;
     font-size:medium;
+}
+
+.contact-number:hover {
+    color: #25d366;        /* Change the color on hover (optional) */
 }
 
 /* Loading Spinner */

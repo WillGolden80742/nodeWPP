@@ -374,9 +374,13 @@ function renderContactList(contactList, container) {
         contactName.classList.add('contact-name');
         contactName.textContent = contact.fullName;
 
-        const contactNumber = document.createElement('span');
-        contactNumber.classList.add('contact-number');
-        contactNumber.textContent = contact.phoneNumber;
+        // Create the WhatsApp link
+        const whatsappLink = document.createElement('a');
+        whatsappLink.classList.add('contact-number');
+        whatsappLink.href = `http://wa.me/${contact.phoneNumber}`;
+        whatsappLink.textContent = contact.phoneNumber; // Display the phone number
+        whatsappLink.target = '_blank'; // Open in a new tab
+        whatsappLink.rel = 'noopener noreferrer'; // Security best practice
 
         // Cria o elemento para o ícone de status
         const statusIcon = document.createElement('i');
@@ -412,7 +416,7 @@ function renderContactList(contactList, container) {
 
         label.appendChild(checkbox);
         label.appendChild(contactName);
-        label.appendChild(contactNumber);
+        label.appendChild(whatsappLink); // Append the link, not the span
         label.appendChild(statusIcon); // Adiciona o ícone ao label
         label.appendChild(deleteButton);
 

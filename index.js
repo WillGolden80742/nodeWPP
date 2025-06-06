@@ -173,20 +173,44 @@ app.post('/update-contacts', async (req, res) => {
     console.log("Request body:", req.body);
 
     let updatedContacts = req.body.contacts;
+    const defaultCountryCode = req.body.countryCode;
+    const defaultDdd = req.body.ddd;
 
     if (!updatedContacts) {
         return res.status(400).json({ error: 'No contacts provided to update.' });
     }
 
-    // Filter out contacts with phone numbers shorter than 9 digits
+    // Function to normalize phone number
+    const normalizePhoneNumber = (phoneNumber) => {
+        let cleanedNumber = phoneNumber.replace(/\D/g, '');
+
+        if (cleanedNumber.length === 8 || cleanedNumber.length === 9) {
+            cleanedNumber = defaultCountryCode + defaultDdd + cleanedNumber;
+        } else if (cleanedNumber.length === 10 || cleanedNumber.length === 11) {
+            cleanedNumber = defaultCountryCode + cleanedNumber;
+        }
+
+        return cleanedNumber;
+    };
+
+    // Normalize phone numbers
+    updatedContacts = updatedContacts.map(contact => {
+        if (contact.phoneNumber) {
+            contact.phoneNumber = normalizePhoneNumber(contact.phoneNumber);
+        }
+        return contact;
+    });
+
+    // Filter out contacts with phone numbers shorter than 12 digits (after normalization)
     updatedContacts = updatedContacts.filter(contact => {
-        if (contact.phoneNumber && contact.phoneNumber.length >= 9) {
+        if (contact.phoneNumber && contact.phoneNumber.length >= 12) {
             return true; // Keep the contact
         } else {
-            console.warn(`Contact ${contact.fullName} with phone number ${contact.phoneNumber} ignored due to length < 9.`);
+            console.warn(`Contact ${contact.fullName} with phone number ${contact.phoneNumber} ignored due to length < 12.`);
             return false; // Filter out the contact
         }
     });
+
 
     try {
         await saveContactsToServer(updatedContacts);
