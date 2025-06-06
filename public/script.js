@@ -427,36 +427,9 @@ function renderContactList(contactList, container) {
         bottomRowDiv.classList.add('bottom-row');
 
         let lastMessageContent = contact.lastMessage;
-        let mediaIcon = null;
-
-        if (contact.lastMessage === '📸 Image') {
-            mediaIcon = 'mdi-image';
-            lastMessageContent = '';
-        } else if (contact.lastMessage === '📹 Video') {
-            mediaIcon = 'mdi-video';
-            lastMessageContent = '';
-        } else if (contact.lastMessage === '🎵 Audio') {
-            mediaIcon = 'mdi-music';
-            lastMessageContent = '';
-        } else if (contact.lastMessage === '📄 Document') {
-            mediaIcon = 'mdi-file-document';
-            lastMessageContent = '';
-        } else if (contact.lastMessage === '✨ Sticker') {
-            mediaIcon = 'mdi-sticker';
-            lastMessageContent = '';
-        } else if (contact.lastMessage === '📎 Media') {
-            mediaIcon = 'mdi-paperclip';
-            lastMessageContent = '';
-        }
 
         const lastMessageDiv = document.createElement('div');
         lastMessageDiv.classList.add('last-message');
-
-        if (mediaIcon) {
-            const mediaIconElement = document.createElement('i');
-            mediaIconElement.classList.add('mdi', mediaIcon);
-            lastMessageDiv.appendChild(mediaIconElement);
-        }
 
         const lastMessageText = document.createElement('span');
         lastMessageText.textContent = lastMessageContent;
@@ -464,13 +437,29 @@ function renderContactList(contactList, container) {
 
         bottomRowDiv.appendChild(lastMessageDiv);
 
-        // Format Timestamp (HH:mm)
+        // Format Timestamp
         const timestamp = new Date(contact.timestamp);
-        const formattedTime = `${timestamp.getHours().toString().padStart(2, '0')}:${timestamp.getMinutes().toString().padStart(2, '0')}`;
+        const today = new Date();
+
+        const isToday = (
+            timestamp.getFullYear() === today.getFullYear() &&
+            timestamp.getMonth() === today.getMonth() &&
+            timestamp.getDate() === today.getDate()
+        );
+
+        let formattedTimestamp = '';
+        if (isToday) {
+            formattedTimestamp = `${timestamp.getHours().toString().padStart(2, '0')}:${timestamp.getMinutes().toString().padStart(2, '0')}`;
+        } else {
+            const day = timestamp.getDate().toString().padStart(2, '0');
+            const month = (timestamp.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed
+            const year = timestamp.getFullYear();
+            formattedTimestamp = `${day}/${month}/${year}`;
+        }
 
         const timestampSpan = document.createElement('span');
         timestampSpan.classList.add('timestamp');
-        timestampSpan.textContent = formattedTime;
+        timestampSpan.textContent = formattedTimestamp;
         bottomRowDiv.appendChild(timestampSpan);
 
         label.appendChild(topRowDiv);
