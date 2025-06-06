@@ -31,6 +31,7 @@ const MESSAGE_STORAGE_KEY = 'whatsapp_sender_message';
 const NAME_COLUMN_STORAGE_KEY = 'whatsapp_sender_name_column';
 const PHONE_COLUMN_STORAGE_KEY = 'whatsapp_sender_phone_column';
 
+let currentTab = 'all';
 let latitude;
 let longitude;
 let contacts = [];
@@ -38,7 +39,6 @@ let selectedContacts = new Map();
 let csvHeaders = [];  // Store CSV headers
 let fileType = null; // Store the file type (csv or vcf)
 let csvContent = null; // Store the CSV file content
-
 
 // Load settings from localStorage
 const loadSettings = () => {
@@ -205,7 +205,7 @@ async function loadContacts() {
     });
 
     await updateContactsOnServer(contacts);  // Save to server
-    renderContactLists(contacts);
+    renderContactLists(contacts,currentTab);
 }
 
 // Function to generate contact key
@@ -476,31 +476,40 @@ function getLoadingElement(tabId) {
 }
 
 function renderContactLists(contactList, tabId = 'all') {
+    currentTab = tabId;
     const searchTerm = searchInput.value.toLowerCase();
     const filteredContacts = contactList.filter(contact =>
         contact.fullName.toLowerCase().includes(searchTerm) ||
         contact.phoneNumber.toLowerCase().includes(searchTerm)
     );
-
-    const newContacts = filteredContacts.filter(contact => contact.status === 'new');
-    const sentContacts = filteredContacts.filter(contact => contact.status === 'sent');
-    const answeredContacts = filteredContacts.filter(contact => contact.status === 'answered');
-
-    renderContactList(filteredContacts, getContactListContainer('all'));
-    renderContactList(newContacts, getContactListContainer('new'));
-    renderContactList(sentContacts, getContactListContainer('sent'));
-    renderContactList(answeredContacts, getContactListContainer('answered'));
+    let contactsToRender;
+    switch (tabId) {
+        case 'new':
+            contactsToRender = filteredContacts.filter(contact => contact.status === 'new');
+            break;
+        case 'sent':
+            contactsToRender = filteredContacts.filter(contact => contact.status === 'sent');
+            break;
+        case 'answered':
+            contactsToRender = filteredContacts.filter(contact => contact.status === 'answered');
+            break;
+        case 'all':
+        default:
+            contactsToRender = filteredContacts;
+            break;
+    }
+    renderContactList(contactsToRender, getContactListContainer(tabId));
     hideLoadingSpinner(tabId);
 }
 
 async function deleteContact(keyToDelete) {
     contacts = contacts.filter(contact => contact.key !== keyToDelete); // Filter by key
     await updateContactsOnServer(contacts);  // Save to server
-    renderContactLists(contacts); // Renderiza a lista atualizada
+    renderContactLists(contacts,currentTab); // Renderiza a lista atualizada
 }
 
 searchInput.addEventListener('input', () => {
-    renderContactLists(contacts); // Renderiza a lista filtrada
+    renderContactLists(contacts,currentTab); // Renderiza a lista filtrada
 });
 
 
@@ -516,7 +525,7 @@ function isCheckedAllContacts(b) {
     contacts.forEach((contact) => {
         selectedContacts.set(contact.labelText, b); // Define todos como não selecionados no Map
     });
-    renderContactLists(contacts); // Renderiza a lista com todos desmarcados
+    renderContactLists(contacts,currentTab); // Renderiza a lista com todos desmarcados
 }
 
 function getGreetings(languageCode) {
@@ -698,7 +707,7 @@ addContactBtn.addEventListener('click', async () => {
 
             contacts.push(newContact);
             await updateContactsOnServer(contacts);  // Save to server
-            renderContactLists(contacts);
+            renderContactLists(contacts,currentTab);
         } else {
             alert('Este número de telefone já está na lista.');
         }
@@ -747,7 +756,7 @@ socket.on('contacts_updated', (updatedContacts) => {
         contact.fullName.toLowerCase().includes(searchTerm) ||
         contact.phoneNumber.toLowerCase().includes(searchTerm)
     );
-    renderContactLists(filteredContacts); // Re-render the contact lists
+    renderContactLists(filteredContacts, currentTab); // Re-render the contact lists
 
     // Restore scroll positions *after* updating the DOM
     restoreScrollPositions(scrollPositions);
