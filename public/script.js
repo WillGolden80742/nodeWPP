@@ -501,6 +501,15 @@ function renderContactLists(contactList, tabId = 'all') {
             contactsToRender = filteredContacts;
             break;
     }
+    // Separate answered/sent contacts and new contacts
+    const answeredSentContacts = contactsToRender.filter(contact => contact.status === 'answered' || contact.status === 'sent');
+    const newContacts = contactsToRender.filter(contact => contact.status === 'new');
+    // Sort answered/sent contacts by timestamp (most recent first)
+    answeredSentContacts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    // Sort new contacts alphabetically
+    newContacts.sort((a, b) => a.fullName.localeCompare(b.fullName));
+    // Concatenate the sorted lists: answered/sent followed by new
+    contactsToRender = answeredSentContacts.concat(newContacts);
     renderContactList(contactsToRender, getContactListContainer(tabId));
     hideLoadingSpinner(tabId);
 }
