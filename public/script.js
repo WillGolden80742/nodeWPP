@@ -62,6 +62,8 @@ document.getElementById('saveSettings').addEventListener('click', saveSettings);
 
 // Load settings on page load
 loadSettings();
+// Update synchronization loading spinner
+updateSynchronizationLoadingSpinner();
 
 // Function to save selected column indexes to localStorage
 function saveColumnSelectionsToLocalStorage(nameColumnIndex, phoneColumnIndex) {
@@ -117,7 +119,6 @@ const storedColumnSelections = loadColumnSelectionsFromLocalStorage();
 
 
 navButton.addEventListener('click', function (event) {
-    // Get the target tab pane ID
     const targetTabPaneId = event.target.getAttribute('data-bs-target').substring(1); // Remove the '#'
     // Show loading spinner for the active tab
     showLoadingSpinner(targetTabPaneId);
@@ -808,6 +809,42 @@ socket.on('contacts_updated', (updatedContacts) => {
     // Restore scroll positions *after* updating the DOM
     restoreScrollPositions(scrollPositions);
 });
+
+
+socket.on('synchronization_finished', () => {
+    finishLoading();
+});
+
+async function checkSynchronizationStatus() {
+  try {
+    const response = await fetch('/synchronization-status'); // Replace with your actual URL if different
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.synchronizationFinished;
+  } catch (error) {
+    console.error('Error checking synchronization status:', error);
+    return false; // Return false in case of an error to avoid unexpected behavior
+  }
+}
+
+function updateSynchronizationLoadingSpinner() {
+   checkSynchronizationStatus().then(status => { 
+    synchronizationFinished = status;
+    if (synchronizationFinished) {
+        finishLoading();
+    }
+  });
+}
+
+function finishLoading () {
+    document.querySelector(".synchronization-loading-spinner").remove();
+    document.querySelector(".synchronization-label").textContent = "Todos";
+    document.querySelector("#new-tab").style.display = "block";
+    document.querySelector("#sent-tab").style.display = "block";
+    document.querySelector("#answered-tab").style.display = "block";
+}
 
 // Function to show loading spinner
 function showLoadingSpinner(tabId) {

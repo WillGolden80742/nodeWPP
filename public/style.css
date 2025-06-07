@@ -432,6 +432,9 @@ body {
 }
 
 .contact-tabs .nav-link {
+    display: flex;
+    gap: 10px;
+    align-items: center;
     font-size: 18px;
     color: #555;
 }
@@ -594,6 +597,17 @@ body {
     margin: 20px auto;
 }
 
+/* Loading Spinner */
+.synchronization-loading-spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #25d366;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    margin:0;
+}
+
 @keyframes spin {
     0% {
         transform: rotate(0deg);
@@ -697,4 +711,8 @@ body {
 
 .last-message .mdi {
     margin-right: 5px;  /* Add spacing between icon and text */
+}
+
+#new-tab, #sent-tab, #answered-tab {
+    display: none;
 }

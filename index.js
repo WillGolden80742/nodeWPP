@@ -7,9 +7,9 @@ const path = require('path');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const _ = require('lodash'); // Require lodash library
-
 const app = express();
 const port = 3000;
+let synchronizationFinished = false;
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {});
@@ -130,11 +130,11 @@ async function verifyAndFixContactStatuses() {
 
                 if (lastMessage.fromMe) {
                     if (contact.status !== 'sent') {
-                        await updateContactStatus(contact.phoneNumber, 'sent', messageTimestamp, lastMessageContent, false);
+                        await updateContactStatus(contact.phoneNumber, 'sent', messageTimestamp, lastMessageContent, true);
                     }
                 } else {
                     if (contact.status !== 'answered') {
-                        await updateContactStatus(contact.phoneNumber, 'answered', messageTimestamp, lastMessageContent, false);
+                        await updateContactStatus(contact.phoneNumber, 'answered', messageTimestamp, lastMessageContent, true);
                     }
                 }
             } else {
@@ -145,7 +145,11 @@ async function verifyAndFixContactStatuses() {
         }
     }
 
+    
     io.emit('contacts_updated', contacts);
+
+    io.emit('synchronization_finished');
+    synchronizationFinished = true;
 
     console.log("Contact status verification completed.");
 }
@@ -384,4 +388,8 @@ ensureDataDirectoryExists().then(() => {
     httpServer.listen(port, () => {
         console.log(`Server running on http://localhost:${port}`);
     });
+});
+
+app.get('/synchronization-status', (req, res) => {
+    res.json({ synchronizationFinished: synchronizationFinished });
 });
