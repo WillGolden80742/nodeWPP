@@ -447,14 +447,10 @@ body {
 .deleteContactBtn {
     background: 0 0;
     border: 0;
-    color: #333;
     cursor: pointer;
     margin-left: 5px;
 }
 
-.deleteContactBtn:hover {
-    color: #c82333;
-}
 
 /* Image and Message Formatting */
 .formattedImage {
@@ -638,6 +634,15 @@ body {
     justify-content: space-between; /* Distribute items horizontally */
     width: 100%;
     margin-bottom: 0.25rem; /* Add spacing between top and bottom rows */
+}
+
+.top-row i {
+    color:#6c757d;
+}
+
+
+.top-row .mdi-delete:hover {
+    color: #c82333;
 }
 
 .bottom-row {
