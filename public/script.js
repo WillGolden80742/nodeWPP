@@ -197,12 +197,9 @@ async function loadContacts() {
 
     // Adiciona os novos contatos, evitando duplicatas
     newContacts.forEach(newContact => {
-        const isDuplicate = contacts.some(existingContact => existingContact.phoneNumber === newContact.phoneNumber);
-        if (!isDuplicate) {
-            newContact.status = "new";  // Set initial status
-            newContact.timestamp = new Date().toISOString();  // Initialize timestamp
-            contacts.push(newContact);
-        }
+        newContact.status = "new";  // Set initial status
+        newContact.timestamp = new Date().toISOString();  // Initialize timestamp
+        contacts.push(newContact);
     });
 
     await updateContactsOnServer(contacts);  // Save to server
