@@ -119,7 +119,7 @@ const storedColumnSelections = loadColumnSelectionsFromLocalStorage();
 
 
 navButton.addEventListener('click', function (event) {
-    const targetTabPaneId = event.target.id.split('-')[0]; // Remove the '#'
+    const targetTabPaneId = event.target.id.split('-')[0]; 
     // Show loading spinner for the active tab
     showLoadingSpinner(targetTabPaneId);
 
