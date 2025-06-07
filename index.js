@@ -129,15 +129,16 @@ async function verifyAndFixContactStatuses() {
                 }
 
                 if (lastMessage.fromMe) {
-                    await updateContactStatus(contact.phoneNumber, 'sent', messageTimestamp, lastMessageContent, false);
-                    console.log(`Updated status of ${contact.phoneNumber} to sent, timestamp: ${messageTimestamp}, lastMessage: ${lastMessageContent}`);
+                    if (contact.status !== 'sent') {
+                        await updateContactStatus(contact.phoneNumber, 'sent', messageTimestamp, lastMessageContent, false);
+                    }
                 } else {
-                    await updateContactStatus(contact.phoneNumber, 'answered', messageTimestamp, lastMessageContent, false);
-                    console.log(`Updated status of ${contact.phoneNumber} to answered, timestamp: ${messageTimestamp}, lastMessage: ${lastMessageContent}`);
+                    if (contact.status !== 'answered') {
+                        await updateContactStatus(contact.phoneNumber, 'answered', messageTimestamp, lastMessageContent, false);
+                    }
                 }
             } else {
                 console.log(`No messages found for ${contact.phoneNumber}.`);
-                await updateContactStatus(contact.phoneNumber, contact.status, contact.timestamp, "", false);
             }
         } catch (error) {
             console.error(`Error processing chat for ${contact.phoneNumber}:`, error.message);
