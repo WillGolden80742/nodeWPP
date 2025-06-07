@@ -130,11 +130,11 @@ async function verifyAndFixContactStatuses() {
 
                 if (lastMessage.fromMe) {
                     if (contact.status !== 'sent') {
-                        await updateContactStatus(contact.phoneNumber, 'sent', messageTimestamp, lastMessageContent, true);
+                        await updateContactStatus(contact.phoneNumber, 'sent', messageTimestamp, lastMessageContent, false);
                     }
                 } else {
                     if (contact.status !== 'answered') {
-                        await updateContactStatus(contact.phoneNumber, 'answered', messageTimestamp, lastMessageContent, true);
+                        await updateContactStatus(contact.phoneNumber, 'answered', messageTimestamp, lastMessageContent, false);
                     }
                 }
             } else {
