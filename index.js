@@ -129,11 +129,11 @@ async function verifyAndFixContactStatuses() {
                 }
 
                 if (lastMessage.fromMe) {
-                    if (contact.status !== 'sent') {
+                    if (contact.timestamp !== messageTimestamp) {
                         await updateContactStatus(contact.phoneNumber, 'sent', messageTimestamp, lastMessageContent, false);
                     }
                 } else {
-                    if (contact.status !== 'answered') {
+                    if (contact.timestamp !== messageTimestamp) {
                         await updateContactStatus(contact.phoneNumber, 'answered', messageTimestamp, lastMessageContent, false);
                     }
                 }
@@ -152,6 +152,8 @@ async function verifyAndFixContactStatuses() {
     synchronizationFinished = true;
 
     console.log("Contact status verification completed.");
+
+    setInterval(checkSentMessagesAndSync, 3000);
 }
 
 client.on('ready', async () => {
@@ -353,6 +355,73 @@ app.get('/update-contacts', async (req, res) => {
         res.status(500).json({ error: 'Failed to load contacts from server.' });
     }
 });
+
+async function checkSentMessagesAndSync() {
+    if (!whatsappReady) {
+        console.log("WhatsApp not ready, skipping check for sent messages.");
+        return;
+    }
+
+    console.log("Checking for recently sent messages for the 5 most recent contacts...");
+
+    try {
+        const chats = await client.getChats();
+
+        // Sort chats by last activity (most recent first)
+        chats.sort((a, b) => b.timestamp - a.timestamp);
+
+        // Get the 5 most recent non-group chat contacts
+        const recentChats = chats
+            .filter(chat => !chat.isGroup)
+            .slice(0, 5);
+
+        for (const chat of recentChats) {
+            const phoneNumber = chat.id.user;
+            const contact = contacts.find(c => c.phoneNumber === phoneNumber);
+
+            if (!contact) {
+                console.warn(`Contact ${phoneNumber} not found in local contacts.`);
+                continue;
+            }
+
+            try {
+                const lastMessage = await chat.lastMessage; // Get the last message
+                if (lastMessage && lastMessage.fromMe) {
+                    const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString();
+                    let lastMessageContent = "";
+
+                    if (lastMessage.hasMedia) {
+                        if (lastMessage.type === 'image') {
+                            lastMessageContent = "📸 Image";
+                        } else if (lastMessage.type === 'video') {
+                            lastMessageContent = "📹 Video";
+                        } else if (lastMessage.type === 'audio') {
+                            lastMessageContent = "🎵 Audio";
+                        } else if (lastMessage.type === 'document') {
+                            lastMessageContent = "📄 Document";
+                        } else if (lastMessage.type === 'sticker') {
+                            lastMessageContent = "✨ Sticker";
+                        }
+                        else {
+                            lastMessageContent = "📎 Media";
+                        }
+                    } else {
+                        lastMessageContent = lastMessage.body;
+                    }
+
+                    // Check if the timestamp of the last message is different from the registered timestamp
+                    if (contact.timestamp !== messageTimestamp) {
+                        await updateContactStatus(phoneNumber, 'sent', messageTimestamp, lastMessageContent, true);
+                    }
+                }
+            } catch (error) {
+                console.error(`Error processing chat for ${phoneNumber}:`, error.message);
+            }
+        }
+    } catch (error) {
+        console.error("Error getting or processing chats:", error.message);
+    }
+}
 
 async function updateContactStatus(phoneNumber, newStatus, timestamp, lastMessage, sendSocket = true) {
     const contactToUpdate = contacts.find(contact => contact.phoneNumber === phoneNumber);
