@@ -569,12 +569,33 @@ deselectAllButton.addEventListener('click', () => {
 });
 
 function isCheckedAllContacts(b) {
-    contacts.forEach((contact) => {
-        selectedContacts.set(contact.labelText, b); // Define todos como não selecionados no Map
-    });
-    renderContactLists(contacts,currentTab); // Renderiza a lista com todos desmarcados
-}
+    const searchTerm = searchInput.value.toLowerCase();
+    const currentTab = this.currentTab || 'all'; // Use 'this' to access currentTab if available, otherwise default to 'all'
+    if (b) {
+        selectedContacts = new Map();
+        contacts.filter(contact => {
+            const matchesSearch = contact.fullName.toLowerCase().includes(searchTerm) ||
+                contact.phoneNumber.toLowerCase().includes(searchTerm);
 
+            let matchesTab = true; // Default to true for 'all' tab
+            if (currentTab === 'new') {
+                matchesTab = contact.status === 'new';
+            } else if (currentTab === 'sent') {
+                matchesTab = contact.status === 'sent';
+            } else if (currentTab === 'answered') {
+                matchesTab = contact.status === 'answered';
+            }
+
+            return matchesSearch && matchesTab;
+        }).forEach((contact) => {
+            selectedContacts.set(contact.labelText, b);
+        });
+    } else {
+        selectedContacts = new Map();
+    }
+
+    renderContactLists(contacts, currentTab); // Re-render the list with updated selections
+}
 function getGreetings(languageCode) {
     const now = new Date();
     const hour = now.getHours();
