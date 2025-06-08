@@ -124,6 +124,7 @@ navButton.addEventListener('click', function (event) {
     showLoadingSpinner(targetTabPaneId);
 
     isCheckedAllContacts(false);
+    currentTab = targetTabPaneId;
     renderContactLists(contacts, targetTabPaneId); //Use the master list of contacts.
 });
 
@@ -465,13 +466,13 @@ function renderContactList(contactList, container) {
 
         container.appendChild(label);
 
-        const labelText = label.textContent.trim();
-        const isChecked = selectedContacts.has(labelText) ? selectedContacts.get(labelText) : false;
+        const contactKey = generateContactKey(contact);
+        const isChecked = selectedContacts.has(contactKey) ? selectedContacts.get(contactKey) : false;
         checkbox.checked = isChecked;
-        contact.labelText = labelText;
+        contact.key = contactKey;
 
         checkbox.addEventListener('change', (event) => {
-            selectedContacts.set(labelText, event.target.checked);
+            selectedContacts.set(contactKey, event.target.checked);
             updateSendButtonState();
         });
     });
@@ -514,7 +515,6 @@ function getLoadingElement(tabId) {
 }
 
 function renderContactLists(contactList, tabId = 'all') {
-    currentTab = tabId;
     const searchTerm = searchInput.value.toLowerCase();
     const filteredContacts = contactList.filter(contact =>
         contact.fullName.toLowerCase().includes(searchTerm) ||
@@ -571,8 +571,8 @@ deselectAllButton.addEventListener('click', () => {
 function isCheckedAllContacts(b) {
     const searchTerm = searchInput.value.toLowerCase();
     const currentTab = this.currentTab || 'all'; // Use 'this' to access currentTab if available, otherwise default to 'all'
+    selectedContacts = new Map();
     if (b) {
-        selectedContacts = new Map();
         contacts.filter(contact => {
             const matchesSearch = contact.fullName.toLowerCase().includes(searchTerm) ||
                 contact.phoneNumber.toLowerCase().includes(searchTerm);
@@ -588,13 +588,18 @@ function isCheckedAllContacts(b) {
 
             return matchesSearch && matchesTab;
         }).forEach((contact) => {
-            selectedContacts.set(contact.labelText, b);
+            selectedContacts.set(contact.key, b);
+            document.querySelectorAll(".contact-list-item .form-check-input").forEach(checkbox => {
+                checkbox.checked = b;
+            });
+            sendMessageBtn.disabled = !b;
         });
     } else {
-        selectedContacts = new Map();
+        document.querySelectorAll(".contact-list-item .form-check-input").forEach(checkbox => {
+            checkbox.checked = b;
+        });
+        sendMessageBtn.disabled = !b;
     }
-
-    renderContactLists(contacts, currentTab); // Re-render the list with updated selections
 }
 function getGreetings(languageCode) {
     const now = new Date();
@@ -658,7 +663,7 @@ mainForm.addEventListener('submit', function (event) {
 
     const contactsToSend = [];
     contacts.forEach((contact) => {
-        if (selectedContacts.get(contact.labelText)) {
+        if (selectedContacts.get(contact.key)) {
             contactsToSend.push(contact);
         }
     });
@@ -906,7 +911,7 @@ async function loadContactsFromServer() {
         contacts = contacts.map(contact => addKeyToContact(contact));
         // Initialize selectedContacts Map
         contacts.forEach(contact => {
-            selectedContacts.set(contact.labelText, false);  // Initially, no contact is selected
+            selectedContacts.set(contact.key, false);  // Initially, no contact is selected
         });
         renderContactLists(contacts, activeTabId);
     } catch (error) {
