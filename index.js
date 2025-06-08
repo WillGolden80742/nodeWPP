@@ -385,6 +385,8 @@ async function checkSentMessagesAndSync() {
 
                     contacts.push(newContact); // Add to the local contacts array
 
+                    contacts = removeDuplicateContacts(contacts);
+
                     try {
                          // Update the contactStatus with default values.
                         await updateContactStatus(phoneNumber, 'new', new Date().toISOString(), "", false);
