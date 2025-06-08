@@ -83,6 +83,28 @@ client.on('authenticated', () => {
     console.log('Authenticated successfully!');
 });
 
+async function getMessageContent(lastMessage) {
+    let lastMessageContent = "";
+    if (lastMessage.hasMedia) {
+        if (lastMessage.type === 'image') {
+            lastMessageContent = "📸 Image";
+        } else if (lastMessage.type === 'video') {
+            lastMessageContent = "📹 Video";
+        } else if (lastMessage.type === 'audio') {
+            lastMessageContent = "🎵 Audio";
+        } else if (lastMessage.type === 'document') {
+            lastMessageContent = "📄 Document";
+        } else if (lastMessage.type === 'sticker') {
+            lastMessageContent = "✨ Sticker";
+        } else {
+            lastMessageContent = "📎 Media";
+        }
+    } else {
+        lastMessageContent = lastMessage.body;
+    }
+    return lastMessageContent;
+}
+
 async function verifyAndFixContactStatuses() {
     if (!whatsappReady) {
         console.log("WhatsApp not ready, skipping contact status verification.");
@@ -101,32 +123,11 @@ async function verifyAndFixContactStatuses() {
 
         try {
             const chat = await client.getChatById(chatId);
-            const messages = await chat.fetchMessages({ limit: 1 });
+            const lastMessage = await chat.lastMessage;
 
-            let lastMessageContent = "";
-
-            if (messages && messages.length > 0) {
-                const lastMessage = messages[0];
+            if (lastMessage) {
                 const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString();
-
-                if (lastMessage.hasMedia) {
-                    if (lastMessage.type === 'image') {
-                        lastMessageContent = "📸 Image";
-                    } else if (lastMessage.type === 'video') {
-                        lastMessageContent = "📹 Video";
-                    } else if (lastMessage.type === 'audio') {
-                        lastMessageContent = "🎵 Audio";
-                    } else if (lastMessage.type === 'document') {
-                        lastMessageContent = "📄 Document";
-                    } else if (lastMessage.type === 'sticker') {
-                        lastMessageContent = "✨ Sticker";
-                    }
-                    else {
-                        lastMessageContent = "📎 Media";
-                    }
-                } else {
-                    lastMessageContent = lastMessage.body;
-                }
+                const lastMessageContent = await getMessageContent(lastMessage);
 
                 if (lastMessage.fromMe) {
                     if (contact.timestamp !== messageTimestamp) {
@@ -145,7 +146,6 @@ async function verifyAndFixContactStatuses() {
         }
     }
 
-    
     io.emit('contacts_updated', contacts);
 
     io.emit('synchronization_finished');
@@ -187,24 +187,7 @@ client.on('ready', async () => {
 client.on('message', async message => {
     const senderNumber = message.from.replace('@c.us', '');
     const messageTimestamp = new Date(message.timestamp * 1000).toISOString();
-    let lastMessageContent = "";
-    if (message.hasMedia) {
-        if (message.type === 'image') {
-            lastMessageContent = "📸 Image";
-        } else if (message.type === 'video') {
-            lastMessageContent = "📹 Video";
-        } else if (message.type === 'audio') {
-            lastMessageContent = "🎵 Audio";
-        } else if (message.type === 'document') {
-            lastMessageContent = "📄 Document";
-        } else if (message.type === 'sticker') {
-            lastMessageContent = "✨ Sticker";
-        } else {
-            lastMessageContent = "📎 Media";
-        }
-    } else {
-        lastMessageContent = message.body;
-    }
+    const lastMessageContent = await getMessageContent(message);
 
     await updateContactStatus(senderNumber, 'answered', messageTimestamp, lastMessageContent);
 });
@@ -388,26 +371,7 @@ async function checkSentMessagesAndSync() {
                 const lastMessage = await chat.lastMessage; // Get the last message
                 if (lastMessage && lastMessage.fromMe) {
                     const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString();
-                    let lastMessageContent = "";
-
-                    if (lastMessage.hasMedia) {
-                        if (lastMessage.type === 'image') {
-                            lastMessageContent = "📸 Image";
-                        } else if (lastMessage.type === 'video') {
-                            lastMessageContent = "📹 Video";
-                        } else if (lastMessage.type === 'audio') {
-                            lastMessageContent = "🎵 Audio";
-                        } else if (lastMessage.type === 'document') {
-                            lastMessageContent = "📄 Document";
-                        } else if (lastMessage.type === 'sticker') {
-                            lastMessageContent = "✨ Sticker";
-                        }
-                        else {
-                            lastMessageContent = "📎 Media";
-                        }
-                    } else {
-                        lastMessageContent = lastMessage.body;
-                    }
+                    const lastMessageContent = await getMessageContent(lastMessage);
 
                     // Check if the timestamp of the last message is different from the registered timestamp
                     if (contact.timestamp !== messageTimestamp) {
