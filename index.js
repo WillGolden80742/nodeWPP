@@ -153,7 +153,7 @@ async function verifyAndFixContactStatuses() {
 
     console.log("Contact status verification completed.");
 
-    setInterval(checkSentMessagesAndSync, 3000);
+    setInterval(checkSentMessagesAndSync, 1000);
 }
 
 client.on('ready', async () => {
@@ -344,9 +344,7 @@ async function checkSentMessagesAndSync() {
         console.log("WhatsApp not ready, skipping check for sent messages.");
         return;
     }
-
-    console.log("Checking for recently sent messages for the 5 most recent contacts...");
-
+    
     try {
         const chats = await client.getChats();
 
@@ -360,16 +358,57 @@ async function checkSentMessagesAndSync() {
 
         for (const chat of recentChats) {
             const phoneNumber = chat.id.user;
-            const contact = contacts.find(c => c.phoneNumber === phoneNumber);
+            let contact = contacts.find(c => c.phoneNumber === phoneNumber);
+            let newContat = false
+            if (!contact || contacts[0].fullName.toLowerCase() === "Contact") {
+                console.warn(`Contact ${phoneNumber} not found in local contacts. Attempting to fetch contact name from API.`);
+                try {
+                    const remoteContact = await client.getContactById(chat.id._serialized);  // Use _serialized for the full ID
+                    let contactName = remoteContact.name || remoteContact.pushname; // Get name from API
 
-            if (!contact) {
-                console.warn(`Contact ${phoneNumber} not found in local contacts.`);
-                continue;
+                    if (!contactName) {
+                        contactName = phoneNumber; // Save as phone number if no name is available
+                        console.warn(`No contact name found for ${phoneNumber}. Saving as phone number.`);
+                    } else {
+                        console.log(`Saving contact with name: ${contactName}`);
+                    }
+
+                    // Create a new contact object with lastMessage property
+                    const newContact = {
+                        fullName: contactName,
+                        phoneNumber: phoneNumber,
+                        status: 'new', // Default status for new contact
+                        timestamp: new Date().toISOString(),
+                        key: `${contactName}-${phoneNumber}`, // Generate contact key
+                        lastMessage: "" // Initialize lastMessage
+                    };
+
+                    contacts.push(newContact); // Add to the local contacts array
+
+                    try {
+                         // Update the contactStatus with default values.
+                        await updateContactStatus(phoneNumber, 'new', new Date().toISOString(), "", false);
+
+                        // Persist contacts to file. This must be done or else the new contact will be lost on restart.
+                        await saveContactsToFile(contacts);
+
+                        //Emitting to socket
+                        io.emit('contacts_updated', contacts);
+                    } catch (serverUpdateError) {
+                        console.error("Error updating contacts on the server:", serverUpdateError.message);
+                    }
+
+                    contact = newContact; // Update the contact variable to the newly created contact
+                } catch (fetchError) {
+                    console.error(`Failed to fetch contact details for ${phoneNumber}:`, fetchError.message);
+                    continue; // Skip to the next chat
+                }
+                newContat = true;
             }
 
             try {
                 const lastMessage = await chat.lastMessage; // Get the last message
-                if (lastMessage && lastMessage.fromMe) {
+                if (lastMessage && lastMessage.fromMe || newContat) {
                     const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString();
                     const lastMessageContent = await getMessageContent(lastMessage);
 
@@ -386,7 +425,6 @@ async function checkSentMessagesAndSync() {
         console.error("Error getting or processing chats:", error.message);
     }
 }
-
 async function updateContactStatus(phoneNumber, newStatus, timestamp, lastMessage, sendSocket = true) {
     const contactToUpdate = contacts.find(contact => contact.phoneNumber === phoneNumber);
 

@@ -257,7 +257,7 @@ function parseVcfContent(vcfContent) {
     const vcards = vcfContent.split(/BEGIN:VCARD\r?\n/).filter(Boolean);
 
     for (const vcard of vcards) {
-        let fullName = 'Contato';
+        let fullName = 'Contact';
         let phoneNumber = null;
 
         const lines = vcard.split(/\r?\n/);
@@ -265,7 +265,7 @@ function parseVcfContent(vcfContent) {
         for (const line of lines) {
             if (line.startsWith('FN:')) {
                 fullName = line.substring(3).trim();
-            } else if (line.startsWith('N:') && fullName === 'Contato') {
+            } else if (line.startsWith('N:') && fullName === 'Contact') {
                 const nameParts = line.substring(2).split(';');
                 if (nameParts[1]) {
                     fullName = nameParts[1].trim();
@@ -303,7 +303,7 @@ function parseCsvContent(csvContent, nameColumnIndex, phoneColumnIndex) {
 
     for (let i = 1; i < lines.length; i++) {  // Skip the header line
         const values = lines[i].split(';'); // Using semicolon as delimiter
-        const fullName = values[nameColumnIndex] ? values[nameColumnIndex].trim() : 'Contato';
+        const fullName = values[nameColumnIndex] ? values[nameColumnIndex].trim() : 'Contact';
         let phoneNumber = values[phoneColumnIndex] ? values[phoneColumnIndex].trim() : null;
 
         if (phoneNumber) {
