@@ -102,6 +102,60 @@ async function getMessageContent(lastMessage) {
     return MEDIA_TYPE_MAP[mediaType] || "📎 Media";
 }
 
+async function fetchContactNameAndMaybeUpdate(phoneNumber, chatId) {
+    let contact = contacts.find(c => c.phoneNumber === phoneNumber);
+
+    if (!contact || contact.fullName.toLowerCase() === "contact") {
+        console.warn(`Contact ${phoneNumber} not found in local contacts or has generic name. Attempting to fetch contact name from API.`);
+        try {
+            const remoteContact = await client.getContactById(chatId);  // Use _serialized for the full ID
+            let contactName = remoteContact.name || remoteContact.pushname || phoneNumber; // Get name from API
+            console.log(`Saving contact with name: ${contactName}`);
+
+            // If contact exists, update its name; otherwise, create a new contact
+            if (contact) {
+                // Remove the old contact
+                contacts = contacts.filter(c => !(c.fullName === contact.fullName && c.phoneNumber === contact.phoneNumber));
+
+                // Create and add the new contact
+                const newContact = {
+                    fullName: contactName,
+                    phoneNumber: phoneNumber,
+                    status: contact.status, // Preserve status
+                    timestamp: contact.timestamp, // Preserve timestamp
+                    key: `${contactName}-${phoneNumber}`,
+                    lastMessage: contact.lastMessage //Preserve lastMessage
+                };
+                contacts.push(newContact);
+                console.log(`Replacing contact with name from API: ${contactName}`);
+                contact = newContact; // Update the 'contact' variable for the rest of the loop
+            } else {
+                contact = {
+                    fullName: contactName,
+                    phoneNumber: phoneNumber,
+                    status: 'new', // Default status for new contact
+                    timestamp: DEFAULT_TIME_STAMP,
+                    key: `${contactName}-${phoneNumber}`, // Generate contact key
+                    lastMessage: "" // Initialize lastMessage
+                };
+                contacts.push(contact); // Add to the local contacts array
+            }
+            try {
+                // Persist contacts to file. This must be done or else the new contact will be lost on restart.
+                await saveContactsToFile(contacts);
+                // Update the contactStatus with default values.
+                await updateContactStatus(phoneNumber, contact.status, contact.timestamp, contact.lastMessage, false);
+            } catch (serverUpdateError) {
+                console.error("Error updating contacts on the server:", serverUpdateError.message);
+            }
+        } catch (fetchError) {
+            console.error(`Failed to fetch contact details for ${phoneNumber}:`, fetchError.message);
+            return null; // Indicate failure to fetch and update contact name
+        }
+    }
+    return contact;
+}
+
 async function verifyAndFixContactStatuses() {
     if (!whatsappReady) {
         console.log("WhatsApp not ready, skipping contact status verification.");
@@ -119,6 +173,12 @@ async function verifyAndFixContactStatuses() {
         const chatId = `${contact.phoneNumber}@c.us`;
 
         try {
+            let currentContact = await fetchContactNameAndMaybeUpdate(contact.phoneNumber, chatId);
+            if (!currentContact) {
+                console.warn(`Skipping contact ${contact.phoneNumber} due to failure in fetching contact details.`);
+                continue;
+            }
+
             const chat = await client.getChatById(chatId);
             const lastMessage = await chat.lastMessage;
 
@@ -323,55 +383,11 @@ async function checkSentMessagesAndSync() {
             .slice(0, 10);
         for (const chat of recentChats) {
             const phoneNumber = chat.id.user;
-            let contact = contacts.find(c => c.phoneNumber === phoneNumber);
-            //  *-------------------*   //
-            // Check if the contact is missing or has a generic name
-            if (!contact || contact.fullName.toLowerCase() === "contact") {
-                console.warn(`Contact ${phoneNumber} not found in local contacts or has generic name. Attempting to fetch contact name from API.`);
-                try {
-                    const remoteContact = await client.getContactById(chat.id._serialized);  // Use _serialized for the full ID
-                    let contactName = remoteContact.name || remoteContact.pushname || phoneNumber; // Get name from API
-                    console.log(`Saving contact with name: ${contactName}`);
-                    // If contact exists, update its name; otherwise, create a new contact
-                    if (contact) {
-                        // Remove the old contact
-                        contacts = contacts.filter(c => !(c.fullName === contact.fullName && c.phoneNumber === contact.phoneNumber));
-                        // Create and add the new contact
-                        const newContact = {
-                            fullName: contactName,
-                            phoneNumber: phoneNumber,
-                            status: contact.status, // Preserve status
-                            timestamp: contact.timestamp, // Preserve timestamp
-                            key: `${contactName}-${phoneNumber}`,
-                            lastMessage: contact.lastMessage //Preserve lastMessage
-                        };
-                        contacts.push(newContact);
-                        console.log(`Replacing contact with name from API: ${contactName}`);
-                        contact = newContact; // Update the 'contact' variable for the rest of the loop
-                    } else {
-                        contact = {
-                            fullName: contactName,
-                            phoneNumber: phoneNumber,
-                            status: 'new', // Default status for new contact
-                            timestamp: DEFAULT_TIME_STAMP,
-                            key: `${contactName}-${phoneNumber}`, // Generate contact key
-                            lastMessage: "" // Initialize lastMessage
-                        };
-                        contacts.push(contact); // Add to the local contacts array
-                    }
-                    try {
-                        // Persist contacts to file. This must be done or else the new contact will be lost on restart.
-                        await saveContactsToFile(contacts);
-                        // Update the contactStatus with default values.
-                        await updateContactStatus(phoneNumber, contact.status, contact.timestamp, contact.lastMessage, false);
-                    } catch (serverUpdateError) {
-                        console.error("Error updating contacts on the server:", serverUpdateError.message);
-                    }
+            const chatId = chat.id._serialized; // Use _serialized for the full ID
 
-                } catch (fetchError) {
-                    console.error(`Failed to fetch contact details for ${phoneNumber}:`, fetchError.message);
-                    continue; // Skip to the next chat
-                }
+            let contact = await fetchContactNameAndMaybeUpdate(phoneNumber, chatId);
+            if(!contact){
+                continue;
             }
 
             try {
