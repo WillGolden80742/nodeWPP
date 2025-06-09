@@ -30,6 +30,7 @@ const loadingAnswered = document.getElementById('loadingAnswered');
 const MESSAGE_STORAGE_KEY = 'whatsapp_sender_message';
 const NAME_COLUMN_STORAGE_KEY = 'whatsapp_sender_name_column';
 const PHONE_COLUMN_STORAGE_KEY = 'whatsapp_sender_phone_column';
+const DEFAULT_TIME_STAMP = "2000-01-01T00:00:00.000Z"
 
 let currentTab = 'all';
 let latitude;
@@ -200,7 +201,7 @@ async function loadContacts() {
     // Adiciona os novos contatos, evitando duplicatas
     newContacts.forEach(newContact => {
         newContact.status = "new";  // Set initial status
-        newContact.timestamp = new Date().toISOString();  // Initialize timestamp
+        newContact.timestamp = DEFAULT_TIME_STAMP;  // Initialize timestamp
         contacts.push(newContact);
     });
 
@@ -287,7 +288,7 @@ function parseVcfContent(vcfContent) {
                 fullName,
                 phoneNumber,
                 status: 'new', // Initialize status
-                timestamp: new Date().toISOString() // Initialize timestamp
+                timestamp: DEFAULT_TIME_STAMP // Initialize timestamp
             };
             contact = addKeyToContact(contact);
             contacts.push(contact);
@@ -319,7 +320,7 @@ function parseCsvContent(csvContent, nameColumnIndex, phoneColumnIndex) {
                 fullName,
                 phoneNumber,
                 status: 'new', // Initialize status
-                timestamp: new Date().toISOString() // Initialize timestamp
+                timestamp: DEFAULT_TIME_STAMP// Initialize timestamp
             };
             contact = addKeyToContact(contact);
             contacts.push(contact);
@@ -456,10 +457,12 @@ function renderContactList(contactList, container) {
             formattedTimestamp = `${day}/${month}/${year}`;
         }
 
-        const timestampSpan = document.createElement('span');
-        timestampSpan.classList.add('timestamp');
-        timestampSpan.textContent = formattedTimestamp;
-        bottomRowDiv.appendChild(timestampSpan);
+        if (contact.timestamp !== DEFAULT_TIME_STAMP) {
+            const timestampSpan = document.createElement('span');
+            timestampSpan.classList.add('timestamp');
+            timestampSpan.textContent = formattedTimestamp;
+            bottomRowDiv.appendChild(timestampSpan);
+        }
 
         label.appendChild(topRowDiv);
         label.appendChild(bottomRowDiv);
@@ -754,7 +757,7 @@ function addContact(name, phone) {
         fullName: name,
         phoneNumber: phone,
         status: 'new',  // Initialize status
-        timestamp: new Date().toISOString() // Initialize timestamp
+        timestamp: DEFAULT_TIME_STAMP // Initialize timestamp
     };
 
     return addKeyToContact(newContact);

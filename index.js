@@ -10,6 +10,7 @@ const _ = require('lodash'); // Require lodash library
 const app = express();
 const port = 3000;
 let synchronizationFinished = false;
+const DEFAULT_TIME_STAMP = "2000-01-01T00:00:00.000Z";
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {});
@@ -153,7 +154,7 @@ async function verifyAndFixContactStatuses() {
 
     console.log("Contact status verification completed.");
 
-    setInterval(checkSentMessagesAndSync, 1000);
+    setInterval(checkSentMessagesAndSync, 2000);
 }
 
 client.on('ready', async () => {
@@ -351,16 +352,16 @@ async function checkSentMessagesAndSync() {
         // Sort chats by last activity (most recent first)
         chats.sort((a, b) => b.timestamp - a.timestamp);
 
-        // Get the 5 most recent non-group chat contacts
+        // Get the 10 most recent non-group chat contacts
         const recentChats = chats
             .filter(chat => !chat.isGroup)
-            .slice(0, 5);
-
+            .slice(0, 10);
         for (const chat of recentChats) {
             const phoneNumber = chat.id.user;
+            const lastMessage = await chat.lastMessage;
             let contact = contacts.find(c => c.phoneNumber === phoneNumber);
-            let newContat = false
-            if (!contact || contacts[0].fullName.toLowerCase() === "Contact") {
+            let newContat = false;
+            if (!contact) {
                 console.warn(`Contact ${phoneNumber} not found in local contacts. Attempting to fetch contact name from API.`);
                 try {
                     const remoteContact = await client.getContactById(chat.id._serialized);  // Use _serialized for the full ID
@@ -378,24 +379,21 @@ async function checkSentMessagesAndSync() {
                         fullName: contactName,
                         phoneNumber: phoneNumber,
                         status: 'new', // Default status for new contact
-                        timestamp: new Date().toISOString(),
+                        timestamp: DEFAULT_TIME_STAMP,
                         key: `${contactName}-${phoneNumber}`, // Generate contact key
                         lastMessage: "" // Initialize lastMessage
                     };
 
                     contacts.push(newContact); // Add to the local contacts array
 
-                    contacts = removeDuplicateContacts(contacts);
+                    contacts = removeDuplicateContacts(contacts); // Remove duplicates
 
                     try {
-                         // Update the contactStatus with default values.
-                        await updateContactStatus(phoneNumber, 'new', new Date().toISOString(), "", false);
-
+                        
                         // Persist contacts to file. This must be done or else the new contact will be lost on restart.
                         await saveContactsToFile(contacts);
-
-                        //Emitting to socket
-                        io.emit('contacts_updated', contacts);
+                         // Update the contactStatus with default values.
+                        await updateContactStatus(phoneNumber, 'new',DEFAULT_TIME_STAMP, "", false);
                     } catch (serverUpdateError) {
                         console.error("Error updating contacts on the server:", serverUpdateError.message);
                     }
@@ -413,10 +411,10 @@ async function checkSentMessagesAndSync() {
                 if (lastMessage && lastMessage.fromMe || newContat) {
                     const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString();
                     const lastMessageContent = await getMessageContent(lastMessage);
-
                     // Check if the timestamp of the last message is different from the registered timestamp
-                    if (contact.timestamp !== messageTimestamp) {
-                        await updateContactStatus(phoneNumber, 'sent', messageTimestamp, lastMessageContent, true);
+                    if (contact.timestamp < messageTimestamp ||  contact.timestamp === DEFAULT_TIME_STAMP) {
+                        const newStatus = lastMessage.fromMe ? 'sent' : 'answered';
+                        await updateContactStatus(phoneNumber, newStatus, messageTimestamp, lastMessageContent, true);
                     }
                 }
             } catch (error) {
