@@ -281,19 +281,6 @@ fileInput.addEventListener('change', async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            latitude = position.coords.latitude;
-            longitude = position.coords.longitude;
-            console.log("Latitude:", latitude);
-            console.log("Longitude:", longitude);
-        });
-    } else {
-        alert("Aceite Geocalização para continuar.");
-        location.href.reload();
-        return;
-    }
-
     const fileName = file.name.toLowerCase();
 
 
@@ -701,7 +688,6 @@ function renderContactLists(contactList, tabId = 'all') {
     renderContactList(contactsToRender, getContactListContainer(tabId));
     hideLoadingSpinner(tabId);
 }
-
 async function deleteContact(keyToDelete) {
     const contactToUpdateIndex = contacts.findIndex(contact => contact.key === keyToDelete);
 

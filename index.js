@@ -62,7 +62,23 @@ async function saveContactsToFile(contacts) {
 
 // Function to remove duplicate contacts based on phone number
 function removeDuplicateContacts(contacts) {
-    return _.uniqBy(contacts, 'phoneNumber');
+    const groupedContacts = _.groupBy(contacts, 'phoneNumber');
+    const uniqueContacts = Object.values(groupedContacts).map(group => {
+        if (group.length > 1) {
+            // If duplicates exist, prioritize the one with 'deleted: false'
+            const notDeletedContact = group.find(contact => !contact.deleted);
+            if (notDeletedContact) {
+                return notDeletedContact;
+            } else {
+                // If all are 'deleted: true', return the first one (arbitrary choice)
+                return group[0];
+            }
+        } else {
+            return group[0];
+        }
+    });
+
+    return uniqueContacts;
 }
 
 const client = new Client({
@@ -127,6 +143,7 @@ async function fetchContactNameAndMaybeUpdate(phoneNumber, chatId) {
                     status: contact.status, // Preserve status
                     timestamp: contact.timestamp, // Preserve timestamp
                     key: `${contactName}-${phoneNumber}`,
+                    deleted: contact.deleted,
                     lastMessage: contact.lastMessage //Preserve lastMessage
                 };
                 contacts.push(newContact);
@@ -139,6 +156,7 @@ async function fetchContactNameAndMaybeUpdate(phoneNumber, chatId) {
                     status: 'new', // Default status for new contact
                     timestamp: DEFAULT_TIME_STAMP,
                     key: `${contactName}-${phoneNumber}`, // Generate contact key
+                    deleted: false,
                     lastMessage: "" // Initialize lastMessage
                 };
                 contacts.push(contact); // Add to the local contacts array
@@ -388,26 +406,24 @@ async function checkSentMessagesAndSync() {
             const phoneNumber = chat.id.user;
             const chatId = chat.id._serialized; // Use _serialized for the full ID
 
-            if (!contact.deleted) {
-                let contact = await fetchContactNameAndMaybeUpdate(phoneNumber, chatId);
-                if(!contact){
-                    continue;
-                }
+            let contact = await fetchContactNameAndMaybeUpdate(phoneNumber, chatId);
+            if(!contact){
+                continue;
+            }
 
-                try {
-                    const lastMessage = await chat.lastMessage; // Get the last message
-                    if (lastMessage) {
-                        const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString();
-                        const lastMessageContent = await getMessageContent(lastMessage);
-                        // Check if the timestamp of the last message is different from the registered timestamp
-                        if (contact.timestamp < messageTimestamp || contact.timestamp === DEFAULT_TIME_STAMP) {
-                            const newStatus = lastMessage.fromMe ? 'sent' : 'answered';
-                            await updateContactStatus(phoneNumber, newStatus, messageTimestamp, lastMessageContent, true);
-                        }
+            try {
+                const lastMessage = await chat.lastMessage; // Get the last message
+                if (lastMessage) {
+                    const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString();
+                    const lastMessageContent = await getMessageContent(lastMessage);
+                    // Check if the timestamp of the last message is different from the registered timestamp
+                    if (contact.timestamp < messageTimestamp || contact.timestamp === DEFAULT_TIME_STAMP) {
+                        const newStatus = lastMessage.fromMe ? 'sent' : 'answered';
+                        await updateContactStatus(phoneNumber, newStatus, messageTimestamp, lastMessageContent, true);
                     }
-                } catch (error) {
-                    console.error(`Error processing chat for ${phoneNumber}:`, error.message);
                 }
+            } catch (error) {
+                console.error(`Error processing chat for ${phoneNumber}:`, error.message);
             }
         }
     } catch (error) {
@@ -418,20 +434,23 @@ async function checkSentMessagesAndSync() {
 async function updateContactStatus(phoneNumber, newStatus, timestamp, lastMessage, sendSocket = true) {
     const contactToUpdate = contacts.find(contact => contact.phoneNumber === phoneNumber);
 
-    if (contactToUpdate) {
-        contactToUpdate.status = newStatus;
-        contactToUpdate.timestamp = timestamp;
-        contactToUpdate.lastMessage = lastMessage;
+    if (!contactToUpdate.deleted) {
 
-        await saveContactsToFile(contacts);
+        if (contactToUpdate) {
+            contactToUpdate.status = newStatus;
+            contactToUpdate.timestamp = timestamp;
+            contactToUpdate.lastMessage = lastMessage;
 
-        if (sendSocket) {
-            io.emit('contacts_updated', contacts);
+            await saveContactsToFile(contacts);
+
+            if (sendSocket) {
+                io.emit('contacts_updated', contacts);
+            }
+
+            console.log(`Contact ${phoneNumber} status updated to ${newStatus}, timestamp: ${timestamp}, lastMessage: ${lastMessage}`);
+        } else {
+            console.warn(`Contact with phone number ${phoneNumber} not found.`);
         }
-
-        console.log(`Contact ${phoneNumber} status updated to ${newStatus}, timestamp: ${timestamp}, lastMessage: ${lastMessage}`);
-    } else {
-        console.warn(`Contact with phone number ${phoneNumber} not found.`);
     }
 }
 
