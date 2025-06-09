@@ -1,47 +1,47 @@
-# WhatsApp Marketing Automation Tool - Streamline Your Outreach
+# WhatsApp Marketing Automation Tool - Empower Your Outreach
 
-A powerful and user-centric web application, built using Node.js and WhatsApp Web.js, designed to enhance your marketing capabilities through personalized WhatsApp messaging.
+A user-friendly web application engineered with Node.js and WhatsApp Web.js, designed to elevate your marketing efforts through personalized WhatsApp messaging campaigns.
 
-## Key Features
+## Core Features
 
-*   **Comprehensive Contact Management System:**
-    *   **Effortless CSV & VCF Import:** Seamlessly integrate your contact lists from CSV or VCF files, maintaining data integrity and organization.
-    *   **Manual Contact Addition:** Quickly add individual contacts directly within the application, ensuring flexibility and ease of use.
-    *   **Dynamic Contact Categorization:** Contacts are intelligently sorted into "All," "New," "Sent," and "Answered" categories, optimizing your workflow and message targeting.
-    *   **Advanced Search and Filtering:** Easily find contacts by name or phone number using the integrated search and filtering functionalities.
-    *   **Streamlined Bulk Selection:** Select or deselect all contacts with a single click for efficient message targeting and management.
-    *   **Simplified Contact Removal:** Maintain a clean and up-to-date contact list by effortlessly removing unwanted contacts.
-*   **Robust Messaging Platform:**
-    *   **Personalized Message Templating:** Create highly engaging and customized messages using placeholders for greetings (`[greeting]`) and contact names (`[name]`).
-    *   **Safe Testing Environment:** Refine your message templates using the "Test Mode" to simulate message delivery without sending actual messages, guaranteeing accuracy and preventing errors.
-    *   **Real-time Delivery Confirmation:** Monitor the status of each sent message (success/error) with detailed information, including contact name and the specific message delivered.
-*   **Real-Time Contact Synchronization:**
-    *   **Socket.IO Integration:** Utilize Socket.IO for instant contact status updates and list modifications, ensuring your information is always current and accurate.
-*   **Reliable Data Storage:**
-    *   **JSON Data Storage:** Contacts are securely stored in a JSON file on the server for persistent and reliable data retention.
-    *   **Local Message Drafts:** Message content is automatically saved to your browser's local storage, preventing data loss and allowing you to resume editing at any time.
-*   **Intuitive User Experience:**
-    *   **Modern and User-Friendly UI:** Employs a contemporary and intuitive user interface, inspired by WhatsApp's familiar design, ensuring ease of navigation and efficient use.
+*   **Advanced Contact Management:**
+    *   **Seamless CSV & VCF Import:** Integrate contact lists from CSV and VCF files effortlessly, ensuring organized data.
+    *   **Direct Contact Addition:** Add individual contacts directly within the application.
+    *   **Intelligent Contact Categorization:** Contacts are automatically categorized into "All," "New," "Sent," and "Answered" based on their interaction status.
+    *   **Enhanced Search & Filtering:** Easily locate contacts using name or phone number search.
+    *   **Efficient Bulk Selection:** Select or deselect all contacts with a single click.
+    *   **Simplified Contact Deletion:** Remove contacts to maintain a current contact list.
+*   **Powerful Messaging Capabilities:**
+    *   **Personalized Message Templates:** Craft custom messages using placeholders like `[greeting]` and `[name]`.
+    *   **Secure Test Mode:** Simulate message sending with "Test Mode" without sending real messages, ensuring accuracy.
+    *   **Real-Time Delivery Tracking:** Monitor the status of each message delivery (success/error), including contact and message information.
+*   **Live Contact Synchronization:**
+    *   **Socket.IO Integration:** Benefit from real-time updates to contact status and modifications using Socket.IO.
+*   **Robust Data Storage:**
+    *   **JSON Data Storage:** Securely store contacts in a JSON file for persistence.
+    *   **Local Message Drafts:** Automatically save message drafts to local storage for easy editing.
+*   **Intuitive User Interface:**
+    *   **WhatsApp-Inspired UI:** Leverage a modern, easy-to-use interface reminiscent of WhatsApp.
 
-## Technologies Used
+## Tech Stack
 
 *   **Backend:**
-    *   **Node.js:**  The runtime environment for server-side JavaScript execution.
+    *   **Node.js:**  The runtime environment for server-side JavaScript.
     *   **Express.js:** A fast and minimalist web application framework for Node.js.
-    *   **WhatsApp Web.js:** An API that allows interaction with WhatsApp Web, providing messaging functionalities.
-    *   **Socket.IO:** A library for enabling real-time, bidirectional, and event-based communication between web clients and servers.
-    *   **express-fileupload:** Middleware to facilitate the handling of file uploads.
-    *   **lodash:** A utility library providing helpful functions for common programming tasks, enhancing code efficiency.
+    *   **WhatsApp Web.js:** An API for interacting with WhatsApp Web.
+    *   **Socket.IO:** A library for real-time, bidirectional communication.
+    *   **express-fileupload:** Middleware for handling file uploads.
+    *   **lodash:** A utility library for common programming tasks.
 *   **Frontend:**
-    *   **HTML:** The foundation of the web application structure.
-    *   **CSS:** Stylesheet language used to define the presentation and visual layout of the web pages.
-    *   **JavaScript:** The programming language for implementing client-side interactivity and dynamic behavior.
-    *   **Bootstrap:** A front-end framework to create responsive and visually appealing interfaces.
-    *   **Material Design Icons:** A comprehensive set of icons to enhance the user interface with a polished design.
+    *   **HTML:** The structure of the web application.
+    *   **CSS:** Stylesheet language to define the presentation and visual layout.
+    *   **JavaScript:** The programming language for implementing client-side interactivity.
+    *   **Bootstrap:** A front-end framework to create responsive interfaces.
+    *   **Material Design Icons:** Icons to enhance the user interface.
 *   **Utilities:**
     *   **qrcode-terminal:**  Displays QR codes in the terminal for easy WhatsApp Web authentication.
 
-## Quick Start Guide
+## Get Started
 
 1.  **Clone the Repository:**
 
@@ -58,7 +58,7 @@ A powerful and user-centric web application, built using Node.js and WhatsApp We
 
 3.  **Configure Chrome Executable Path:**
 
-    *   **Important:**  You need to specify the path to the Chrome executable. Open `index.js` and update the `executablePath` configuration in the `puppeteer` settings.  **This step is mandatory** for the application to function correctly.
+    *   **Important:**  Update the `executablePath` in `index.js` to point to your Chrome executable.
 
         ```javascript
         const client = new Client({
@@ -71,9 +71,9 @@ A powerful and user-centric web application, built using Node.js and WhatsApp We
         });
         ```
 
-    *   **Path Verification:**  Ensure the path points to the Chrome executable on your system.  An incorrect path will prevent the application from working.
+    *   **Path Verification:**  Verify the path is correct; otherwise, the application will not function.
 
-4.  **Start the Application:**
+4.  **Run the Application:**
 
     ```bash
     npm start
@@ -81,51 +81,51 @@ A powerful and user-centric web application, built using Node.js and WhatsApp We
 
 5.  **Access the Web Interface:**
 
-    *   Open your web browser and go to `http://localhost:3000`.
+    *   Open your web browser and navigate to `http://localhost:3000`.
 
 6.  **Authenticate with WhatsApp:**
 
-    *   A QR code will be displayed in your terminal. Scan this code using the WhatsApp application on your mobile phone to authenticate.
+    *   Scan the QR code displayed in your terminal using the WhatsApp application.
 
-## Usage Instructions
+## Instructions for Use
 
 1.  **Importing Contacts:**
-    *   Click the "Selecione o arquivo" button to upload a CSV or VCF file.
-    *   **For CSV Files:**  Select the columns corresponding to "Nome" (Name) and "Telefone" (Phone Number) from the dropdown menus.
+    *   Upload a CSV or VCF file using the "Selecione o arquivo" button.
+    *   **For CSV:**  Select the appropriate "Nome" (Name) and "Telefone" (Phone Number) columns.
 
 2.  **Adding Contacts Manually:**
-    *   Use the "Adicionar Contato" section. Enter the contact's name and phone number, then click the "+" button.
+    *   Use the "Adicionar Contato" section to input contact details.
 
 3.  **Composing Messages:**
-    *   Use the message text area to write your message. Use the `[greeting]` placeholder for personalized greetings and `[name]` for the contact's name.
+    *   Craft your message in the text area, utilizing `[greeting]` and `[name]` placeholders.
 
         *   **Example:** `Olá [name], [greeting]!  We have an exclusive offer for you.`
 
 4.  **Selecting Recipients:**
-    *   Select contacts to send the message to by checking the checkboxes in the contact list.
-    *   Use "Selecionar Todos" and "Desmarcar Todos" to quickly select or deselect all contacts.
+    *   Check the checkboxes in the contact list to choose recipients.
+    *   Use "Selecionar Todos" and "Desmarcar Todos" for quick selections.
 
 5.  **Sending Messages:**
-    *   Ensure "Modo de Teste" is checked for simulated sending.
-    *   Click the "Enviar Mensagem" button.
+    *   Enable "Modo de Teste" for simulated sending.
+    *   Click "Enviar Mensagem."
 
 6.  **Reviewing Results:**
-    *   A modal window will display the status (success/error), contact name, and sent message for each contact.
+    *   The modal window will display the status, contact, and message for each contact.
 
-## Important Considerations and Best Practices
+## Important Notes and Guidelines
 
-*   **WhatsApp Web.js is Unofficial:** This project uses an unofficial API. Use it responsibly and in compliance with WhatsApp's terms of service. WhatsApp may change its policies or API structure, potentially affecting the functionality of this application.
-*   **Correct Chrome Executable Path:** The `executablePath` setting in `index.js` must accurately point to your Chrome installation.
-*   **Avoid Spamming:** Do not send mass messages in a short period. This could lead to your account being flagged or banned. Implement delays or throttling mechanisms.
-*   **Use Test Mode:** Always test messages in "Modo de Teste" to avoid errors.
-*   **CSV Encoding:** Ensure CSV files are properly encoded (UTF-8 or ISO-8859-1) to prevent character encoding issues. The application uses ISO-8859-1 by default.
-*   **Phone Number Cleaning:**  The application removes non-numeric characters from phone numbers. Adjust the cleaning logic if needed.
+*   **Unofficial API:**  Use this application responsibly and within WhatsApp's terms of service, as it relies on an unofficial API.
+*   **Accurate Chrome Path:** Ensure the `executablePath` in `index.js` is correctly configured.
+*   **Avoid Spam:** Do not send messages in bulk rapidly. Implement delays to prevent your account from being flagged.
+*   **Test Mode:** Always test messages using "Modo de Teste."
+*   **CSV Encoding:** Use proper CSV encoding (UTF-8 or ISO-8859-1). The app defaults to ISO-8859-1.
+*   **Phone Number Sanitization:** The application removes non-numeric characters from phone numbers.
 
-## Future Development
+## Planned Enhancements
 
 *   Multimedia Messaging (Images, Videos, Documents).
 *   Scheduled Message Delivery.
-*   Enhanced Error Logging and Handling.
-*   Advanced Contact Segmentation (Tagging, Grouping).
-*   Support for Multiple Messaging Platforms.
-*   UI/UX Improvements and Enhanced User Feedback.
+*   Improved Error Handling and Logging.
+*   Advanced Contact Segmentation.
+*   Multi-Platform Support.
+*   Enhanced User Interface and Feedback Mechanisms.
