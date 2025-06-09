@@ -42,7 +42,10 @@
             <ul class="nav nav-tabs contact-tabs" id="contactTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all"
-                        type="button" role="tab" aria-controls="all" aria-selected="true"><span class="synchronization-label">Sincronizando</span><div class="synchronization-loading-spinner"></div></button>
+                        type="button" role="tab" aria-controls="all" aria-selected="false">
+                        <span class="synchronization-label">Sincronizando</span>
+                        <div class="synchronization-loading-spinner"></div>
+                    </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="new-tab" data-bs-toggle="tab" data-bs-target="#new" type="button"
@@ -55,6 +58,12 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="answered-tab" data-bs-toggle="tab" data-bs-target="#answered"
                         type="button" role="tab" aria-controls="answered" aria-selected="false">Respondidos</button>
+                </li>
+
+                <li class="nav-item ms-auto" role="presentation">
+                    <button class="nav-link" id="delete-select-contacts" type="button" title="Apagar todos contatos selecionados">
+                        <i class="mdi mdi-delete"></i>
+                    </button>
                 </li>
             </ul>
 
@@ -94,6 +103,8 @@
                     </button>
                 </h2>
             </div>
+
+
             <form action="/upload" method="post" enctype="multipart/form-data" id="mainForm">
                 <div class="mb-3 form-check">
                     <input type="checkbox" class="form-check-input" id="testMode" name="testMode" checked>
@@ -143,6 +154,35 @@
                         </div>
                     </div>
                 </div>
+
+
+
+             <!-- Script Selection/Creation -->
+             <div class="script-selector-container">
+                <label for="scriptSelect" class="form-label"><i class="mdi mdi-script"></i> Selecionar Script:</label>
+                <div class="input-group">
+                    <select class="form-select" id="scriptSelect">
+                        <option value="newScript">Novo Script</option>
+                    </select>
+                    <button class="btn btn-outline-secondary" type="button" id="editScriptBtn" disabled>
+                        <i class="mdi mdi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger" type="button" id="deleteScriptBtn" disabled>
+                        <i class="mdi mdi-delete"></i>
+                    </button>
+                </div>
+                <div id="newScriptInputContainer" style="display: none;">
+                    <div class="input-group mt-2">
+                        <input type="text" class="form-control" id="newScriptName" placeholder="Nome do Novo Script">
+                        <button class="btn btn-success" type="button" id="saveNewScriptBtn">
+                            <i class="mdi mdi-content-save"></i> Salvar Script
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- End Script Selection/Creation -->
+
+
 
                 <div class="message-input-area whatsapp-message-input-area">
                     <textarea class="form-control whatsapp-textarea" id="message" name="message" rows="4" required

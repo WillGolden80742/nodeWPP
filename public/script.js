@@ -1,4 +1,4 @@
-// script.js
+// C:\Users\willi\OneDrive\Desktop\nodeWPP\public\script.js
 const fileInput = document.getElementById('fileInput');
 const contactListDiv = document.getElementById('contactList');
 const contactListNewDiv = document.getElementById('contactListNew');
@@ -11,6 +11,12 @@ const deselectAllButton = document.getElementById('deselectAll');
 const messageModal = document.getElementById('messageModal');
 const messageModalContent = document.getElementById('messageModalContent');
 const messageText = document.getElementById('messageText');
+const scriptSelect = document.getElementById('scriptSelect');
+const editScriptBtn = document.getElementById('editScriptBtn');
+const deleteScriptBtn = document.getElementById('deleteScriptBtn');
+const newScriptInputContainer = document.getElementById('newScriptInputContainer');
+const newScriptNameInput = document.getElementById('newScriptName');
+const saveNewScriptBtn = document.getElementById('saveNewScriptBtn');
 const messageTextarea = document.getElementById('message');
 const newContactNameInput = document.getElementById('newContactName');
 const newContactPhoneInput = document.getElementById('newContactPhone');
@@ -40,6 +46,32 @@ let selectedContacts = new Map();
 let csvHeaders = [];  // Store CSV headers
 let fileType = null; // Store the file type (csv or vcf)
 let csvContent = null; // Store the CSV file content
+
+const deleteSelectionContacts = document.getElementById('delete-select-contacts');
+
+deleteSelectionContacts.addEventListener('click', async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    // Obter a lista de contatos selecionados
+    const selectedContactKeys = Array.from(selectedContacts.entries())
+        .filter(([key, value]) => value === true)
+        .map(([key, value]) => key);
+
+    if (selectedContactKeys.length === 0) {
+        alert('Nenhum contato selecionado.');
+        return;
+    }
+    const confirmation = confirm('Tem certeza que deseja marcar os contatos selecionados como apagados?');
+    if (confirmation) {
+        // Marca os contatos selecionados como apagados
+        contacts.forEach(contact => {
+            if (selectedContactKeys.includes(contact.key)) {
+                contact.deleted = true;
+            }
+        });
+        await updateContactsOnServer(contacts);
+    }
+});
 
 // Load settings from localStorage
 const loadSettings = () => {
@@ -95,23 +127,123 @@ window.onclick = function (event) {
     }
 }
 
-// Function to save message to localStorage
-function saveMessageToLocalStorage(message) {
-    localStorage.setItem(MESSAGE_STORAGE_KEY, message);
+
+const MESSAGE_STORAGE_KEY_PREFIX = 'whatsapp_sender_message'; // Use a prefix
+let currentScriptKey = ''; // Store the key of the currently selected script
+
+function generateTimestampHash() {
+    return btoa(Date.now().toString()).substring(0, 12); // Base64 encode timestamp
+}
+function getCurrentTimestamp() {
+    return Date.now();
+}
+// Load scripts and populate the select
+function loadScripts() {
+    scriptSelect.innerHTML = '<option value="newScript">Novo Script</option>'; // Reset options
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith(MESSAGE_STORAGE_KEY_PREFIX)) {
+            const scriptName = key.substring(MESSAGE_STORAGE_KEY_PREFIX.length + 1); // Extract script name
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = scriptName;
+            scriptSelect.appendChild(option);
+        }
+    }
 }
 
-// Function to load message from localStorage
-function loadMessageFromLocalStorage() {
-    return localStorage.getItem(MESSAGE_STORAGE_KEY) || "";
+// Load message for selected script
+function loadMessageForScript(scriptKey) {
+    return localStorage.getItem(scriptKey) || "";
 }
 
-// Load the message from localStorage and set the textarea value
-messageTextarea.value = loadMessageFromLocalStorage();
+// Save message for script
+function saveMessageForScript(scriptKey, message) {
+    localStorage.setItem(scriptKey, message);
+}
+
+// Handle script selection
+scriptSelect.addEventListener('change', () => {
+    const selectedValue = scriptSelect.value;
+
+    if (selectedValue === 'newScript') {
+        currentScriptKey = '';
+        newScriptInputContainer.style.display = 'block';
+        editScriptBtn.disabled = true;
+        deleteScriptBtn.disabled = true;
+        messageTextarea.value = ""; // Clear textarea for new script
+    } else {
+        currentScriptKey = selectedValue;
+        newScriptInputContainer.style.display = 'none';
+        editScriptBtn.disabled = false;
+        deleteScriptBtn.disabled = false;
+        messageTextarea.value = loadMessageForScript(selectedValue);
+    }
+});
+
+// Save new script
+saveNewScriptBtn.addEventListener('click', () => {
+    const scriptName = newScriptNameInput.value.trim();
+    if (scriptName) {
+        const timestamp = getCurrentTimestamp();
+        const newScriptKey = `${MESSAGE_STORAGE_KEY_PREFIX}-${scriptName}-${timestamp}`;
+        saveMessageForScript(newScriptKey, messageTextarea.value); // Save empty script
+        loadScripts(); // Reload script list
+        scriptSelect.value = newScriptKey; // Select the new script
+        scriptSelect.dispatchEvent(new Event('change')); // Trigger change event
+        newScriptNameInput.value = '';
+        newScriptInputContainer.style.display = 'none';
+
+         // Optionally, provide visual feedback to the user
+         alert(`Script "${scriptName}" criado com sucesso!`);
+    } else {
+        alert('Por favor, insira um nome para o script.');
+    }
+});
+
+// Edit script
+editScriptBtn.addEventListener('click', () => {
+    const currentScriptName = currentScriptKey.substring(MESSAGE_STORAGE_KEY_PREFIX.length + 1);
+    const newScriptName = prompt('Novo nome para o script:', currentScriptName);
+    if (newScriptName && newScriptName.trim() !== currentScriptName) {
+        const message = loadMessageForScript(currentScriptKey); // Get the old message
+        localStorage.removeItem(currentScriptKey); // Delete the old key
+         const timestamp = getCurrentTimestamp();
+        const newScriptKey = `${MESSAGE_STORAGE_KEY_PREFIX}-${newScriptName.trim()}-${timestamp}`
+        saveMessageForScript(newScriptKey, message); // Save with the new name
+        loadScripts();
+        scriptSelect.value = newScriptKey; // Select the new script
+        scriptSelect.dispatchEvent(new Event('change')); // Trigger change event
+         // Optionally, provide visual feedback to the user
+         alert(`Script "${currentScriptName}" editado para "${newScriptName.trim()}"!`);
+    }
+});
+
+// Delete script
+deleteScriptBtn.addEventListener('click', () => {
+    if (confirm('Tem certeza que deseja excluir este script?')) {
+        localStorage.removeItem(currentScriptKey);
+        loadScripts();
+        scriptSelect.value = 'newScript'; // Select 'New Script'
+        scriptSelect.dispatchEvent(new Event('change')); // Trigger change event
+        // Optionally, provide visual feedback to the user
+        alert("Script deletado com sucesso!");
+
+    }
+});
 
 // Save message when it changes
 messageTextarea.addEventListener('input', () => {
-    saveMessageToLocalStorage(messageTextarea.value);
+    if (currentScriptKey) {
+        saveMessageForScript(currentScriptKey, messageTextarea.value);
+    } 
 });
+
+// Initial load
+loadScripts();
+// Initialize with "New Script" selected
+scriptSelect.value = 'newScript';
+scriptSelect.dispatchEvent(new Event('change'));
 
 // Initial state of the send button (disabled)
 sendMessageBtn.disabled = true;
@@ -120,13 +252,28 @@ const storedColumnSelections = loadColumnSelectionsFromLocalStorage();
 
 
 navButton.addEventListener('click', function (event) {
-    const targetTabPaneId = event.target.id.split('-')[0]; 
+    const targetTabPaneId = (event.target.getAttribute('data-bs-target')  || '#all').replace("#", "");
     // Show loading spinner for the active tab
     showLoadingSpinner(targetTabPaneId);
-
     isCheckedAllContacts(false);
     currentTab = targetTabPaneId;
     renderContactLists(contacts, targetTabPaneId); //Use the master list of contacts.
+    // Load the last used script for the new tab
+    const lastScriptKey = localStorage.getItem(`lastScript-${targetTabPaneId}`);
+    if (lastScriptKey) {
+        //If already have script on targetTabPaneId
+        scriptSelect.value = lastScriptKey;
+    } else{
+        scriptSelect.value = 'newScript'; // Select 'New Script' by default
+    }
+    scriptSelect.dispatchEvent(new Event('change')); // Trigger change event to load the script and populate the textarea
+});
+
+sendMessageBtn.addEventListener('click', function() {
+    //Save the script name on the local storage, if script and tab had any name
+    if (currentTab && currentScriptKey){
+        localStorage.setItem(`lastScript-${currentTab}`, currentScriptKey);
+    }
 });
 
 fileInput.addEventListener('change', async (event) => {
@@ -202,6 +349,7 @@ async function loadContacts() {
     newContacts.forEach(newContact => {
         newContact.status = "new";  // Set initial status
         newContact.timestamp = DEFAULT_TIME_STAMP;  // Initialize timestamp
+        newContact.deleted = false;  // Initialize deleted flag
         contacts.push(newContact);
     });
 
@@ -756,12 +904,13 @@ function addContact(name, phone) {
     const newContact = {
         fullName: name,
         phoneNumber: phone,
-        status: 'new',  // Initialize status
-        timestamp: DEFAULT_TIME_STAMP // Initialize timestamp
+        status: 'new',
+        timestamp: DEFAULT_TIME_STAMP,
+        deleted: false // Novo atributo
     };
-
     return addKeyToContact(newContact);
 }
+
 
 // Adicionar contato individualmente
 addContactBtn.addEventListener('click', async () => {
