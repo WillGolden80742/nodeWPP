@@ -84,26 +84,21 @@ client.on('authenticated', () => {
     console.log('Authenticated successfully!');
 });
 
+const MEDIA_TYPE_MAP = {
+    image: "📸 Image",
+    video: "📹 Video",
+    audio: "🎵 Audio",
+    document: "📄 Document",
+    sticker: "✨ Sticker",
+}
+
 async function getMessageContent(lastMessage) {
-    let lastMessageContent = "";
-    if (lastMessage.hasMedia) {
-        if (lastMessage.type === 'image') {
-            lastMessageContent = "📸 Image";
-        } else if (lastMessage.type === 'video') {
-            lastMessageContent = "📹 Video";
-        } else if (lastMessage.type === 'audio') {
-            lastMessageContent = "🎵 Audio";
-        } else if (lastMessage.type === 'document') {
-            lastMessageContent = "📄 Document";
-        } else if (lastMessage.type === 'sticker') {
-            lastMessageContent = "✨ Sticker";
-        } else {
-            lastMessageContent = "📎 Media";
-        }
-    } else {
-        lastMessageContent = lastMessage.body;
+    if (!lastMessage.hasMedia) {
+        return lastMessage.body;
     }
-    return lastMessageContent;
+
+    const mediaType = lastMessage.type;
+    return MEDIA_TYPE_MAP[mediaType] || "📎 Media";
 }
 
 async function verifyAndFixContactStatuses() {
@@ -130,14 +125,9 @@ async function verifyAndFixContactStatuses() {
                 const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString();
                 const lastMessageContent = await getMessageContent(lastMessage);
 
-                if (lastMessage.fromMe) {
-                    if (contact.timestamp !== messageTimestamp) {
-                        await updateContactStatus(contact.phoneNumber, 'sent', messageTimestamp, lastMessageContent, false);
-                    }
-                } else {
-                    if (contact.timestamp !== messageTimestamp) {
-                        await updateContactStatus(contact.phoneNumber, 'answered', messageTimestamp, lastMessageContent, false);
-                    }
+                const expectedStatus = lastMessage.fromMe ? 'sent' : 'answered';
+                if (contact.timestamp !== messageTimestamp) {
+                    await updateContactStatus(contact.phoneNumber, expectedStatus, messageTimestamp, lastMessageContent, false);
                 }
             } else {
                 console.log(`No messages found for ${contact.phoneNumber}.`);
@@ -164,16 +154,11 @@ client.on('ready', async () => {
         contacts = await loadContactsFromFile();
         console.log('Contacts loaded from file:', contacts.length, 'contacts.');
 
-        contacts = contacts.map(contact => {
-            if (!contact.timestamp) {
-                contact.timestamp = new Date().toISOString();
-            }
-            if (!contact.lastMessage) {
-                contact.lastMessage = "";
-            }
-
-            return contact;
-        });
+        contacts = contacts.map(contact => ({
+            ...contact,
+            timestamp: contact.timestamp || new Date().toISOString(),
+            lastMessage: contact.lastMessage || ""
+        }));
 
         await saveContactsToFile(contacts);
     } catch (error) {
@@ -202,9 +187,7 @@ app.post('/upload', async (req, res) => {
         return res.status(503).send('WhatsApp not ready. Try again in a few seconds.');
     }
 
-    const contactsToSend = req.body.contacts;
-    const messageTemplate = req.body.message;
-    const testMode = req.body.testMode || false;
+    const { contacts: contactsToSend, message: messageTemplate, testMode = false } = req.body;
 
     if (!contactsToSend || contactsToSend.length === 0) {
         return res.status(400).send('No contacts selected.');
@@ -213,26 +196,23 @@ app.post('/upload', async (req, res) => {
     console.log(`Starting message sending to ${contactsToSend.length} contacts...`);
     console.log(`Test Mode: ${testMode}`);
 
-    async function sendMessages() {
+    const sendMessages = async () => {
         const results = [];
         let successCount = 0;
         let errorCount = 0;
 
         for (const contact of contactsToSend) {
-            const fullName = contact.fullName;
-            const cleanedNumber = contact.phoneNumber;
+            const { fullName, phoneNumber: cleanedNumber } = contact;
             const chatId = `${cleanedNumber}@c.us`;
             const personalizedMessage = messageTemplate.replace(/\[name\]/gi, fullName);
 
             try {
                 if (!testMode) {
                     await client.sendMessage(chatId, personalizedMessage);
-
-                    const messageTimestamp = new Date().toISOString();
-
-                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp, personalizedMessage);
-
                 }
+
+                const messageTimestamp = new Date().toISOString();
+                await updateContactStatus(cleanedNumber, "sent", messageTimestamp, personalizedMessage);
 
                 console.log(`Message ${testMode ? '(TEST) ' : ''}sent to ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);
                 results.push({ contact: fullName, status: 'success', message: personalizedMessage });
@@ -246,27 +226,21 @@ app.post('/upload', async (req, res) => {
 
         console.log('\nMessage sending completed.');
         return { results, successCount, errorCount };
-    }
+    };
 
-    sendMessages()
-        .then(async ({ results, successCount, errorCount }) => {
-            res.json({
-                results: results,
-                successCount: successCount,
-                errorCount: errorCount
-            });
-        })
-        .catch(error => {
-            console.error('Error during message sending:', error);
-            res.status(500).json({ error: 'An error occurred during message sending.' });
-        });
+    try {
+        const { results, successCount, errorCount } = await sendMessages();
+        res.json({ results, successCount, errorCount });
+    } catch (error) {
+        console.error('Error during message sending:', error);
+        res.status(500).json({ error: 'An error occurred during message sending.' });
+    }
 });
 
 const normalizePhoneNumber = (phoneNumber, defaultCountryCode, defaultDdd) => {
     if (!phoneNumber) return null;
 
-    let cleanedNumber = phoneNumber.replace(/\D/g, '');
-    cleanedNumber = cleanedNumber.replace(/^0+/, '');
+    let cleanedNumber = phoneNumber.replace(/\D/g, '').replace(/^0+/, '');
 
     if (cleanedNumber.length === 8 || cleanedNumber.length === 9) {
         cleanedNumber = defaultCountryCode + defaultDdd + cleanedNumber;
@@ -290,19 +264,13 @@ app.post('/update-contacts', async (req, res) => {
     }
 
     updatedContacts = updatedContacts.map(contact => {
-        if (contact.phoneNumber) {
-            contact.phoneNumber = normalizePhoneNumber(contact.phoneNumber, defaultCountryCode, defaultDdd);
-        }
-
-        if (!contact.timestamp) {
-            contact.timestamp = new Date().toISOString();
-        }
-
-        if (!contact.lastMessage) {
-            contact.lastMessage = "";
-        }
-
-        return contact;
+        const normalizedNumber = normalizePhoneNumber(contact.phoneNumber, defaultCountryCode, defaultDdd);
+        return {
+            ...contact,
+            phoneNumber: normalizedNumber,
+            timestamp: contact.timestamp || new Date().toISOString(),
+            lastMessage: contact.lastMessage || ""
+        };
     });
 
     updatedContacts = updatedContacts.filter(contact => {
@@ -345,7 +313,7 @@ async function checkSentMessagesAndSync() {
         console.log("WhatsApp not ready, skipping check for sent messages.");
         return;
     }
-    
+
     try {
         const chats = await client.getChats();
 
@@ -356,26 +324,21 @@ async function checkSentMessagesAndSync() {
         const recentChats = chats
             .filter(chat => !chat.isGroup)
             .slice(0, 10);
+
         for (const chat of recentChats) {
             const phoneNumber = chat.id.user;
-            const lastMessage = await chat.lastMessage;
             let contact = contacts.find(c => c.phoneNumber === phoneNumber);
-            let newContat = false;
+
             if (!contact) {
                 console.warn(`Contact ${phoneNumber} not found in local contacts. Attempting to fetch contact name from API.`);
                 try {
                     const remoteContact = await client.getContactById(chat.id._serialized);  // Use _serialized for the full ID
-                    let contactName = remoteContact.name || remoteContact.pushname; // Get name from API
+                    let contactName = remoteContact.name || remoteContact.pushname || phoneNumber; // Get name from API
 
-                    if (!contactName) {
-                        contactName = phoneNumber; // Save as phone number if no name is available
-                        console.warn(`No contact name found for ${phoneNumber}. Saving as phone number.`);
-                    } else {
-                        console.log(`Saving contact with name: ${contactName}`);
-                    }
+                    console.log(`Saving contact with name: ${contactName}`);
 
                     // Create a new contact object with lastMessage property
-                    const newContact = {
+                    contact = {
                         fullName: contactName,
                         phoneNumber: phoneNumber,
                         status: 'new', // Default status for new contact
@@ -384,35 +347,30 @@ async function checkSentMessagesAndSync() {
                         lastMessage: "" // Initialize lastMessage
                     };
 
-                    contacts.push(newContact); // Add to the local contacts array
-
+                    contacts.push(contact); // Add to the local contacts array
                     contacts = removeDuplicateContacts(contacts); // Remove duplicates
 
                     try {
-                        
                         // Persist contacts to file. This must be done or else the new contact will be lost on restart.
                         await saveContactsToFile(contacts);
-                         // Update the contactStatus with default values.
-                        await updateContactStatus(phoneNumber, 'new',DEFAULT_TIME_STAMP, "", false);
+                        // Update the contactStatus with default values.
+                        await updateContactStatus(phoneNumber, 'new', DEFAULT_TIME_STAMP, "", false);
                     } catch (serverUpdateError) {
                         console.error("Error updating contacts on the server:", serverUpdateError.message);
                     }
-
-                    contact = newContact; // Update the contact variable to the newly created contact
                 } catch (fetchError) {
                     console.error(`Failed to fetch contact details for ${phoneNumber}:`, fetchError.message);
                     continue; // Skip to the next chat
                 }
-                newContat = true;
             }
 
             try {
                 const lastMessage = await chat.lastMessage; // Get the last message
-                if (lastMessage && lastMessage.fromMe || newContat) {
+                if (lastMessage) {
                     const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString();
                     const lastMessageContent = await getMessageContent(lastMessage);
                     // Check if the timestamp of the last message is different from the registered timestamp
-                    if (contact.timestamp < messageTimestamp ||  contact.timestamp === DEFAULT_TIME_STAMP) {
+                    if (contact.timestamp < messageTimestamp || contact.timestamp === DEFAULT_TIME_STAMP) {
                         const newStatus = lastMessage.fromMe ? 'sent' : 'answered';
                         await updateContactStatus(phoneNumber, newStatus, messageTimestamp, lastMessageContent, true);
                     }
