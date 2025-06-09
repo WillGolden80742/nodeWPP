@@ -35,7 +35,10 @@ async function ensureDataDirectoryExists() {
 async function loadContactsFromFile() {
     try {
         const data = await fs.readFile(contactsFilePath, 'utf8');
-        return JSON.parse(data);
+        let contacts = JSON.parse(data);
+        // Filter out contacts with deleted: true
+        contacts = contacts.filter(contact => !contact.deleted);
+        return contacts;
     } catch (error) {
         if (error.code === 'ENOENT') {
             console.warn('Contacts file not found, returning empty list.');
@@ -385,24 +388,26 @@ async function checkSentMessagesAndSync() {
             const phoneNumber = chat.id.user;
             const chatId = chat.id._serialized; // Use _serialized for the full ID
 
-            let contact = await fetchContactNameAndMaybeUpdate(phoneNumber, chatId);
-            if(!contact){
-                continue;
-            }
-
-            try {
-                const lastMessage = await chat.lastMessage; // Get the last message
-                if (lastMessage) {
-                    const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString();
-                    const lastMessageContent = await getMessageContent(lastMessage);
-                    // Check if the timestamp of the last message is different from the registered timestamp
-                    if (contact.timestamp < messageTimestamp || contact.timestamp === DEFAULT_TIME_STAMP) {
-                        const newStatus = lastMessage.fromMe ? 'sent' : 'answered';
-                        await updateContactStatus(phoneNumber, newStatus, messageTimestamp, lastMessageContent, true);
-                    }
+            if (!contact.deleted) {
+                let contact = await fetchContactNameAndMaybeUpdate(phoneNumber, chatId);
+                if(!contact){
+                    continue;
                 }
-            } catch (error) {
-                console.error(`Error processing chat for ${phoneNumber}:`, error.message);
+
+                try {
+                    const lastMessage = await chat.lastMessage; // Get the last message
+                    if (lastMessage) {
+                        const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString();
+                        const lastMessageContent = await getMessageContent(lastMessage);
+                        // Check if the timestamp of the last message is different from the registered timestamp
+                        if (contact.timestamp < messageTimestamp || contact.timestamp === DEFAULT_TIME_STAMP) {
+                            const newStatus = lastMessage.fromMe ? 'sent' : 'answered';
+                            await updateContactStatus(phoneNumber, newStatus, messageTimestamp, lastMessageContent, true);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error processing chat for ${phoneNumber}:`, error.message);
+                }
             }
         }
     } catch (error) {

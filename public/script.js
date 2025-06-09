@@ -70,6 +70,7 @@ deleteSelectionContacts.addEventListener('click', async (event) => {
             }
         });
         await updateContactsOnServer(contacts);
+        renderContactLists(contacts,currentTab);
     }
 });
 
@@ -668,8 +669,9 @@ function getLoadingElement(tabId) {
 function renderContactLists(contactList, tabId = 'all') {
     const searchTerm = searchInput.value.toLowerCase();
     const filteredContacts = contactList.filter(contact =>
-        contact.fullName.toLowerCase().includes(searchTerm) ||
+        contact.fullName.toLowerCase().includes(searchTerm) && !contact.deleted||
         contact.phoneNumber.toLowerCase().includes(searchTerm)
+        && !contact.deleted
     );
     let contactsToRender;
     switch (tabId) {
@@ -701,9 +703,17 @@ function renderContactLists(contactList, tabId = 'all') {
 }
 
 async function deleteContact(keyToDelete) {
-    contacts = contacts.filter(contact => contact.key !== keyToDelete); // Filter by key
-    await updateContactsOnServer(contacts);  // Save to server
-    renderContactLists(contacts,currentTab); // Renderiza a lista atualizada
+    const contactToUpdateIndex = contacts.findIndex(contact => contact.key === keyToDelete);
+
+    if (contactToUpdateIndex !== -1) {
+        contacts[contactToUpdateIndex] = {
+            ...contacts[contactToUpdateIndex],
+            deleted: true
+        };
+
+        await updateContactsOnServer(contacts);
+        renderContactLists(contacts, currentTab);
+    }
 }
 
 searchInput.addEventListener('input', () => {
