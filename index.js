@@ -1,3 +1,4 @@
+// C:\Users\willi\OneDrive\Desktop\nodeWPP\index.js
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const express = require('express');
@@ -209,11 +210,9 @@ app.post('/upload', async (req, res) => {
             try {
                 if (!testMode) {
                     await client.sendMessage(chatId, personalizedMessage);
+                    const messageTimestamp = new Date().toISOString();
+                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp, personalizedMessage);
                 }
-
-                const messageTimestamp = new Date().toISOString();
-                await updateContactStatus(cleanedNumber, "sent", messageTimestamp, personalizedMessage);
-
                 console.log(`Message ${testMode ? '(TEST) ' : ''}sent to ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);
                 results.push({ contact: fullName, status: 'success', message: personalizedMessage });
                 successCount++;
@@ -316,48 +315,59 @@ async function checkSentMessagesAndSync() {
 
     try {
         const chats = await client.getChats();
-
         // Sort chats by last activity (most recent first)
         chats.sort((a, b) => b.timestamp - a.timestamp);
-
         // Get the 10 most recent non-group chat contacts
         const recentChats = chats
             .filter(chat => !chat.isGroup)
             .slice(0, 10);
-
         for (const chat of recentChats) {
             const phoneNumber = chat.id.user;
             let contact = contacts.find(c => c.phoneNumber === phoneNumber);
-
-            if (!contact) {
-                console.warn(`Contact ${phoneNumber} not found in local contacts. Attempting to fetch contact name from API.`);
+            //  *-------------------*   //
+            // Check if the contact is missing or has a generic name
+            if (!contact || contact.fullName.toLowerCase() === "contact") {
+                console.warn(`Contact ${phoneNumber} not found in local contacts or has generic name. Attempting to fetch contact name from API.`);
                 try {
                     const remoteContact = await client.getContactById(chat.id._serialized);  // Use _serialized for the full ID
                     let contactName = remoteContact.name || remoteContact.pushname || phoneNumber; // Get name from API
-
                     console.log(`Saving contact with name: ${contactName}`);
-
-                    // Create a new contact object with lastMessage property
-                    contact = {
-                        fullName: contactName,
-                        phoneNumber: phoneNumber,
-                        status: 'new', // Default status for new contact
-                        timestamp: DEFAULT_TIME_STAMP,
-                        key: `${contactName}-${phoneNumber}`, // Generate contact key
-                        lastMessage: "" // Initialize lastMessage
-                    };
-
-                    contacts.push(contact); // Add to the local contacts array
-                    contacts = removeDuplicateContacts(contacts); // Remove duplicates
-
+                    // If contact exists, update its name; otherwise, create a new contact
+                    if (contact) {
+                        // Remove the old contact
+                        contacts = contacts.filter(c => !(c.fullName === contact.fullName && c.phoneNumber === contact.phoneNumber));
+                        // Create and add the new contact
+                        const newContact = {
+                            fullName: contactName,
+                            phoneNumber: phoneNumber,
+                            status: contact.status, // Preserve status
+                            timestamp: contact.timestamp, // Preserve timestamp
+                            key: `${contactName}-${phoneNumber}`,
+                            lastMessage: contact.lastMessage //Preserve lastMessage
+                        };
+                        contacts.push(newContact);
+                        console.log(`Replacing contact with name from API: ${contactName}`);
+                        contact = newContact; // Update the 'contact' variable for the rest of the loop
+                    } else {
+                        contact = {
+                            fullName: contactName,
+                            phoneNumber: phoneNumber,
+                            status: 'new', // Default status for new contact
+                            timestamp: DEFAULT_TIME_STAMP,
+                            key: `${contactName}-${phoneNumber}`, // Generate contact key
+                            lastMessage: "" // Initialize lastMessage
+                        };
+                        contacts.push(contact); // Add to the local contacts array
+                    }
                     try {
                         // Persist contacts to file. This must be done or else the new contact will be lost on restart.
                         await saveContactsToFile(contacts);
                         // Update the contactStatus with default values.
-                        await updateContactStatus(phoneNumber, 'new', DEFAULT_TIME_STAMP, "", false);
+                        await updateContactStatus(phoneNumber, contact.status, contact.timestamp, contact.lastMessage, false);
                     } catch (serverUpdateError) {
                         console.error("Error updating contacts on the server:", serverUpdateError.message);
                     }
+
                 } catch (fetchError) {
                     console.error(`Failed to fetch contact details for ${phoneNumber}:`, fetchError.message);
                     continue; // Skip to the next chat
@@ -383,6 +393,7 @@ async function checkSentMessagesAndSync() {
         console.error("Error getting or processing chats:", error.message);
     }
 }
+
 async function updateContactStatus(phoneNumber, newStatus, timestamp, lastMessage, sendSocket = true) {
     const contactToUpdate = contacts.find(contact => contact.phoneNumber === phoneNumber);
 
