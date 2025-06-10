@@ -754,8 +754,6 @@ function renderContactLists(contactList, tabId = 'all') {
         contact.phoneNumber.toLowerCase().includes(searchTerm)
         && !contact.deleted
     );
-    contacts = contacts.filter(contact => !contact.deleted
-    );
     let contactsToRender;
     switch (tabId) {
         case 'new':
