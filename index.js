@@ -1,4 +1,3 @@
-// C:\Users\willi\OneDrive\Desktop\nodeWPP\index.js
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const express = require('express');
@@ -165,7 +164,7 @@ async function fetchContactNameAndMaybeUpdate(phoneNumber, chatId) {
                 // Persist contacts to file. This must be done or else the new contact will be lost on restart.
                 await saveContactsToFile(contacts);
                 // Update the contactStatus with default values.
-                await updateContactStatus(phoneNumber, contact.status, contact.timestamp, contact.lastMessage, false);
+                await updateContactStatus(phoneNumber, contact.status, contact.timestamp,contact.deleted, contact.lastMessage, false);
             } catch (serverUpdateError) {
                 console.error("Error updating contacts on the server:", serverUpdateError.message);
             }
@@ -209,7 +208,7 @@ async function verifyAndFixContactStatuses() {
 
                 const expectedStatus = lastMessage.fromMe ? 'sent' : 'answered';
                 if (contact.timestamp !== messageTimestamp) {
-                    await updateContactStatus(contact.phoneNumber, expectedStatus, messageTimestamp, lastMessageContent, false);
+                    await updateContactStatus(contact.phoneNumber, expectedStatus, messageTimestamp, contact.deleted, lastMessageContent, false);
                 }
             } else {
                 console.log(`No messages found for ${contact.phoneNumber}.`);
@@ -257,7 +256,7 @@ client.on('message', async message => {
     const messageTimestamp = new Date(message.timestamp * 1000).toISOString();
     const lastMessageContent = await getMessageContent(message);
 
-    await updateContactStatus(senderNumber, 'answered', messageTimestamp, lastMessageContent);
+    await updateContactStatus(senderNumber, 'answered', messageTimestamp, false, lastMessageContent);
 });
 
 app.get('/', (req, res) => {
@@ -292,7 +291,7 @@ app.post('/upload', async (req, res) => {
                 if (!testMode) {
                     await client.sendMessage(chatId, personalizedMessage);
                     const messageTimestamp = new Date().toISOString();
-                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp, personalizedMessage);
+                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp, contact.deleted, personalizedMessage);
                 }
                 console.log(`Message ${testMode ? '(TEST) ' : ''}sent to ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);
                 results.push({ contact: fullName, status: 'success', message: personalizedMessage });
@@ -419,7 +418,7 @@ async function checkSentMessagesAndSync() {
                     // Check if the timestamp of the last message is different from the registered timestamp
                     if (contact.timestamp < messageTimestamp || contact.timestamp === DEFAULT_TIME_STAMP) {
                         const newStatus = lastMessage.fromMe ? 'sent' : 'answered';
-                        await updateContactStatus(phoneNumber, newStatus, messageTimestamp, lastMessageContent, true);
+                        await updateContactStatus(phoneNumber, newStatus, messageTimestamp, contact.deleted, lastMessageContent, true);
                     }
                 }
             } catch (error) {
@@ -431,7 +430,7 @@ async function checkSentMessagesAndSync() {
     }
 }
 
-async function updateContactStatus(phoneNumber, newStatus, timestamp, lastMessage, sendSocket = true) {
+async function updateContactStatus(phoneNumber, newStatus, timestamp, deleted, lastMessage, sendSocket = true) {
     const contactToUpdate = contacts.find(contact => contact.phoneNumber === phoneNumber);
 
     // Check if contactToUpdate exists before accessing its properties
@@ -440,6 +439,7 @@ async function updateContactStatus(phoneNumber, newStatus, timestamp, lastMessag
 
             contactToUpdate.status = newStatus;
             contactToUpdate.timestamp = timestamp;
+            contactToUpdate.deleted = deleted;
             contactToUpdate.lastMessage = lastMessage;
 
             await saveContactsToFile(contacts);
@@ -448,7 +448,7 @@ async function updateContactStatus(phoneNumber, newStatus, timestamp, lastMessag
                 io.emit('contacts_updated', contacts);
             }
 
-            console.log(`Contact ${phoneNumber} status updated to ${newStatus}, timestamp: ${timestamp}, lastMessage: ${lastMessage}`);
+            console.log(`Contact ${phoneNumber} status updated to ${newStatus}, timestamp: ${timestamp}, deleted: ${deleted}, lastMessage: ${lastMessage}`);
         }
     } else {
         console.warn(`Contact with phone number ${phoneNumber} not found.`);
