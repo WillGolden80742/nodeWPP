@@ -21,6 +21,7 @@ app.use(express.json({ limit: '1024mb' }));
 
 const dataDir = path.join(__dirname, 'data');
 const contactsFilePath = path.join(dataDir, 'contacts.json');
+const deletedContactsFilePath = path.join(dataDir, 'deleted_contacts.json');
 
 async function ensureDataDirectoryExists() {
     try {
@@ -47,8 +48,26 @@ async function loadContactsFromFile() {
     }
 }
 
+async function loadDeletedContactsFromFile() {
+    try {
+        const data = await fs.readFile(deletedContactsFilePath, 'utf8');
+        let deletedContacts = JSON.parse(data);
+        return deletedContacts;
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            console.warn('Deleted contacts file not found, returning empty list.');
+            return [];
+        } else {
+            console.error('Error reading deleted contacts file:', error);
+            return [];
+        }
+    }
+}
+
 async function saveContactsToFile(contacts) {
     try {
+        saveDeletedContactsToFile(contacts);
+        contacts = contacts.filter(contact => !contact.deleted); // Remove deleted contacts
         const jsonData = JSON.stringify(contacts, null, 2);
         await fs.writeFile(contactsFilePath, jsonData);
         console.log('Contacts saved to file.');
@@ -56,6 +75,18 @@ async function saveContactsToFile(contacts) {
         console.error('Error writing contacts file:', error);
     }
 }
+
+async function saveDeletedContactsToFile(contacts) {
+    try {
+        const jsonData = JSON.stringify(contacts.filter(contact => contact.deleted), null, 2);
+        await fs.writeFile(deletedContactsFilePath, jsonData);
+        console.log('Contacts saved to file.');
+    } catch (error) {
+        console.error('Error writing contacts file:', error);
+    }
+}
+
+        
 
 // Function to remove duplicate contacts based on phone number
 function removeDuplicateContacts(contacts) {
@@ -89,6 +120,8 @@ const client = new Client({
 
 let whatsappReady = false;
 let contacts = [];
+let deletedContacts = [];
+
 
 client.initialize();
 
@@ -119,11 +152,17 @@ async function getMessageContent(lastMessage) {
 }
 
 async function fetchContactNameAndMaybeUpdate(phoneNumber, chatId) {
+    // Primeiro, verifica se o contato está na lista de contatos deletados.
+    let deletedContact = deletedContacts.find(c => c.phoneNumber === phoneNumber);
+    if (deletedContact) {
+        return null; // Não retorna nada se o contato estiver na lista de deletados.
+    }
+
     let contact = contacts.find(c => c.phoneNumber === phoneNumber);
 
-    if (contact) {
-        if (contact.deleted) {
-            return;
+    if (deletedContact) {
+        if (deletedContact.deleted) {
+            return null; // Não retorna nada se o contato estiver como deletado.
         }
     }
 
@@ -236,7 +275,10 @@ client.on('ready', async () => {
     whatsappReady = true;
     try {
         contacts = await loadContactsFromFile();
+        deletedContacts = await loadDeletedContactsFromFile();
         console.log('Contacts loaded from file:', contacts.length, 'contacts.');
+        console.log('Deleted contacts loaded from file:', deletedContacts.length, 'deleted contacts.');
+
 
         contacts = contacts.map(contact => ({
             ...contact,
