@@ -138,9 +138,20 @@ function generateTimestampHash() {
 function getCurrentTimestamp() {
     return Date.now();
 }
+
 // Load scripts and populate the select
 function loadScripts() {
-    scriptSelect.innerHTML = '<option value="newScript">Novo Script</option>'; // Reset options
+    // Remove existing options
+    while (scriptSelect.firstChild) {
+        scriptSelect.removeChild(scriptSelect.firstChild);
+    }
+
+    // Create and append "Novo Script" option
+    const newScriptOption = document.createElement('option');
+    newScriptOption.value = 'newScript';
+    newScriptOption.textContent = 'Novo Script';
+    scriptSelect.appendChild(newScriptOption);
+
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key.startsWith(MESSAGE_STORAGE_KEY_PREFIX)) {
@@ -152,7 +163,6 @@ function loadScripts() {
         }
     }
 }
-
 // Load message for selected script
 function loadMessageForScript(scriptKey) {
     return localStorage.getItem(scriptKey) || "";
@@ -181,6 +191,7 @@ scriptSelect.addEventListener('change', () => {
         messageTextarea.value = loadMessageForScript(selectedValue);
     }
 });
+
 
 // Save new script
 saveNewScriptBtn.addEventListener('click', () => {
@@ -242,6 +253,7 @@ messageTextarea.addEventListener('input', () => {
 
 // Initial load
 loadScripts();
+
 // Initialize with "New Script" selected
 scriptSelect.value = 'newScript';
 scriptSelect.dispatchEvent(new Event('change'));
@@ -763,6 +775,8 @@ function renderContactLists(contactList, tabId = 'all') {
         contact.phoneNumber.toLowerCase().includes(searchTerm)
         && !contact.deleted
     );
+    contacts = contacts.filter(contact => !contact.deleted
+    );
     let contactsToRender;
     switch (tabId) {
         case 'new':
@@ -1121,6 +1135,7 @@ function finishLoading () {
     document.querySelector("#new-tab").style.display = "block";
     document.querySelector("#sent-tab").style.display = "block";
     document.querySelector("#answered-tab").style.display = "block";
+    document.querySelector("#all-tab").click();
 }
 
 // Function to show loading spinner
