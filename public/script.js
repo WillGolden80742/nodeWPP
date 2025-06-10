@@ -515,10 +515,113 @@ function renderContactList(contactList, container) {
         checkbox.id = contactId;
         topRowDiv.appendChild(checkbox);
 
-        const contactName = document.createElement('span');
-        contactName.classList.add('contact-name');
-        contactName.textContent = contact.fullName;
-        topRowDiv.appendChild(contactName);
+        // Contact Name Span/Input (Initially Span)
+        let contactNameElement = document.createElement('span');
+        contactNameElement.classList.add('contact-name');
+        contactNameElement.textContent = contact.fullName;
+        topRowDiv.appendChild(contactNameElement);
+
+
+        // Function to switch to input mode
+        function switchToInputMode() {
+            // Create input element
+            const inputElement = document.createElement('input');
+            inputElement.type = 'text';
+            inputElement.classList.add('form-control', 'contact-name-input');
+            inputElement.value = contact.fullName;  // Set initial value
+
+            // Create save button
+            const saveButton = document.createElement('button');
+            saveButton.type = 'button';
+            saveButton.classList.add('btn', 'btn-sm', 'btn-success');
+            saveButton.innerHTML = '<i class="mdi mdi-check"></i>';
+
+            // Create cancel button
+            const cancelButton = document.createElement('button');
+            cancelButton.type = 'button';
+            cancelButton.classList.add('btn', 'btn-sm', 'btn-secondary');
+            cancelButton.innerHTML = '<i class="mdi mdi-close"></i>';
+
+            // Replace the span with the input
+            contactNameElement.replaceWith(inputElement);
+
+            //Add Buttons
+            topRowDiv.appendChild(saveButton);
+            topRowDiv.appendChild(cancelButton);
+
+            // Focus the input
+            inputElement.focus();
+
+            // Save action
+            saveButton.addEventListener('click', async () => {
+                const newName = inputElement.value.trim();
+                if (newName && newName !== contact.fullName) {
+                    contact.fullName = newName;
+                    contact.key = generateContactKey(contact); // Update key
+                    await updateContactsOnServer(contacts); // Update server
+                    renderContactLists(contacts, currentTab); // Re-render
+                } else {
+                    switchToSpanMode(); // Revert if no change
+                }
+            });
+
+            // Cancel action
+            cancelButton.addEventListener('click', () => {
+                switchToSpanMode(); // Revert to span
+            });
+
+            //Handle Enter to update
+            inputElement.addEventListener("keyup", function(event) {
+                if (event.key === "Enter") {
+                    saveButton.click();
+                }
+            });
+        }
+
+        // Function to switch back to span mode
+        function switchToSpanMode() {
+            const newContactNameElement = document.createElement('span');
+            newContactNameElement.classList.add('contact-name');
+            newContactNameElement.textContent = contact.fullName;
+            //Replace with Span
+            let el = topRowDiv.querySelector('.contact-name-input');
+            el.replaceWith(newContactNameElement);
+
+            //Remove buttons
+            let sb = topRowDiv.querySelector('.btn-success');
+            if (sb){
+                sb.remove();
+            }
+            let cb = topRowDiv.querySelector('.btn-secondary');
+             if (cb){
+                cb.remove();
+            }
+
+            contactNameElement = newContactNameElement; // Update the outer variable
+
+             contactNameElement.addEventListener('mouseover', () => {
+                 contactNameElement.style.cursor = 'pointer';
+             });
+             contactNameElement.addEventListener('mouseout', () => {
+                 contactNameElement.style.cursor = 'default';
+             });
+             contactNameElement.addEventListener('click', switchToInputMode);
+        }
+
+
+        // Event listener to switch to input mode on hover
+        contactNameElement.addEventListener('mouseover', () => {
+            contactNameElement.style.cursor = 'pointer';
+        });
+
+        // Event listener to remove pointer on mouseout
+        contactNameElement.addEventListener('mouseout', () => {
+            contactNameElement.style.cursor = 'default';
+        });
+
+        //Add click to span
+        contactNameElement.addEventListener('click', switchToInputMode);
+
 
         const whatsappLink = document.createElement('a');
         whatsappLink.classList.add('contact-number');

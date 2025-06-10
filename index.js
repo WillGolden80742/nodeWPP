@@ -434,9 +434,10 @@ async function checkSentMessagesAndSync() {
 async function updateContactStatus(phoneNumber, newStatus, timestamp, lastMessage, sendSocket = true) {
     const contactToUpdate = contacts.find(contact => contact.phoneNumber === phoneNumber);
 
-    if (!contactToUpdate.deleted) {
+    // Check if contactToUpdate exists before accessing its properties
+    if (contactToUpdate) {
+        if (!contactToUpdate.deleted) {
 
-        if (contactToUpdate) {
             contactToUpdate.status = newStatus;
             contactToUpdate.timestamp = timestamp;
             contactToUpdate.lastMessage = lastMessage;
@@ -448,9 +449,9 @@ async function updateContactStatus(phoneNumber, newStatus, timestamp, lastMessag
             }
 
             console.log(`Contact ${phoneNumber} status updated to ${newStatus}, timestamp: ${timestamp}, lastMessage: ${lastMessage}`);
-        } else {
-            console.warn(`Contact with phone number ${phoneNumber} not found.`);
         }
+    } else {
+        console.warn(`Contact with phone number ${phoneNumber} not found.`);
     }
 }
 
