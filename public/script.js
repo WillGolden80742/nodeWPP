@@ -1017,17 +1017,10 @@ addContactBtn.addEventListener('click', async () => {
             return;
         }
 
-        const isDuplicate = contacts.some(existingContact => existingContact.phoneNumber === phone);
-        if (!isDuplicate) {
-            const newContact = addContact(name, phone);
-
-            contacts.push(newContact);
-            await updateContactsOnServer(contacts);  // Save to server
-            renderContactLists(contacts,currentTab);
-        } else {
-            alert('Este número de telefone já está na lista.');
-        }
-
+        const newContact = addContact(name, phone);
+        contacts.push(newContact);
+        await updateContactsOnServer(contacts);  // Save to server
+        renderContactLists(contacts,currentTab);
         // Limpa os campos do formulário
         newContactNameInput.value = '';
         newContactPhoneInput.value = '';

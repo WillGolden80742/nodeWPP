@@ -35,8 +35,6 @@ async function loadContactsFromFile() {
     try {
         const data = await fs.readFile(contactsFilePath, 'utf8');
         let contacts = JSON.parse(data);
-        // Filter out contacts with deleted: true
-        contacts = contacts.filter(contact => !contact.deleted);
         return contacts;
     } catch (error) {
         if (error.code === 'ENOENT') {
@@ -122,6 +120,12 @@ async function getMessageContent(lastMessage) {
 
 async function fetchContactNameAndMaybeUpdate(phoneNumber, chatId) {
     let contact = contacts.find(c => c.phoneNumber === phoneNumber);
+
+    if (contact) {
+        if (contact.deleted) {
+            return;
+        }
+    }
 
     if (!contact || contact.fullName.toLowerCase() === "contact") {
         console.warn(`Contact ${phoneNumber} not found in local contacts or has generic name. Attempting to fetch contact name from API.`);
