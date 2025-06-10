@@ -78,7 +78,10 @@ async function saveContactsToFile(contacts) {
 
 async function saveDeletedContactsToFile(contacts) {
     try {
-        const jsonData = JSON.stringify(contacts.filter(contact => contact.deleted), null, 2);
+        const currentDeletedContacts = await loadDeletedContactsFromFile();
+        const deletedContacts = contacts.filter(contact => contact.deleted);
+        currentDeletedContacts.push(...deletedContacts);
+        const jsonData = JSON.stringify(_.uniqBy(currentDeletedContacts, 'phoneNumber'),null, 2);
         await fs.writeFile(deletedContactsFilePath, jsonData);
         console.log('Contacts saved to file.');
     } catch (error) {
