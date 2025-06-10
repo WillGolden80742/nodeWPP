@@ -775,3 +775,24 @@ body {
 .btn-success .mdi-check, .btn-secondary .mdi-close {
     color: #fff;
 }
+
+.whatsapp-message-area-main {
+    display: none;
+}
+
+.whatsapp-logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Added this line */
+    height: 100%; /*  Ensure it takes full height (adjust as needed) */
+}
+
+.whatsapp-logo-container i {
+    font-size: 256px;
+    text-align: center; /* Redundant but included for clarity */
+    margin: 0; /* Reset any default margins */
+}
+
+.whatsapp-sidebar {
+    pointer-events: none;
+}

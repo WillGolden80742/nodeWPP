@@ -96,104 +96,106 @@
         </div>
 
         <div class="message-area whatsapp-message-area">
-            <div class="message-area-header whatsapp-message-area-header">
-                <h2>Enviar Mensagem
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="openSettingsModal" data-bs-toggle="modal" data-bs-target="#settingsModal">
-                        <i class="mdi mdi-cog"></i> Configurações
-                    </button>
-                </h2>
-            </div>
-
-
-            <form action="/upload" method="post" enctype="multipart/form-data" id="mainForm">
-                <div class="mb-3 form-check">
-                    <input type="checkbox" class="form-check-input" id="testMode" name="testMode" checked>
-                    <label class="form-check-label" for="testMode">
-                        <i class="mdi mdi-test-tube" aria-hidden="true"></i> Modo de Teste (Não envia mensagens reais)
-                    </label>
+            <div class="whatsapp-logo-container">
+                <i class="mdi mdi-whatsapp whatsapp-logo"></i>
+            </div>    
+            <div class="whatsapp-message-area-main">
+                <div class="message-area-header whatsapp-message-area-header">
+                    <h2>Enviar Mensagem
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="openSettingsModal" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                            <i class="mdi mdi-cog"></i> Configurações
+                        </button>
+                    </h2>
                 </div>
 
-                
-                <div class="file-upload-container">
-                    <label for="fileInput" class="file-upload-label">
-                        <i class="mdi mdi-upload" aria-hidden="true"></i> Selecione o arquivo
-                    </label>
-                    <input type="file" class="form-control file-upload-input" id="fileInput" name="fileInput"
-                        accept=".csv,.vcf">
-                </div>
 
-                <!-- CSV Column Select & Add Contact (Moved Here) -->
-                <div class="csv-contact-options">
-                    <div id="csvColumnSelect" style="display: none;">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="mdi mdi-table-column" aria-hidden="true"></i> Selecione as colunas do CSV:</label>
-                            <div class="row g-2">
-                                <div class="col-md">
-                                    <label for="nameColumn" class="form-label">Coluna do Nome:</label>
-                                    <select class="form-select" id="nameColumn" name="nameColumn"></select>
+                <form action="/upload" method="post" enctype="multipart/form-data" id="mainForm">
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="testMode" name="testMode" checked>
+                        <label class="form-check-label" for="testMode">
+                            <i class="mdi mdi-test-tube" aria-hidden="true"></i> Modo de Teste (Não envia mensagens reais)
+                        </label>
+                    </div>
+
+                    
+                    <div class="file-upload-container">
+                        <label for="fileInput" class="file-upload-label">
+                            <i class="mdi mdi-upload" aria-hidden="true"></i> Selecione o arquivo
+                        </label>
+                        <input type="file" class="form-control file-upload-input" id="fileInput" name="fileInput"
+                            accept=".csv,.vcf">
+                    </div>
+
+                    <!-- CSV Column Select & Add Contact (Moved Here) -->
+                    <div class="csv-contact-options">
+                        <div id="csvColumnSelect" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label"><i class="mdi mdi-table-column" aria-hidden="true"></i> Selecione as colunas do CSV:</label>
+                                <div class="row g-2">
+                                    <div class="col-md">
+                                        <label for="nameColumn" class="form-label">Coluna do Nome:</label>
+                                        <select class="form-select" id="nameColumn" name="nameColumn"></select>
+                                    </div>
+                                    <div class="col-md">
+                                        <label for="phoneColumn" class="form-label">Coluna do Telefone:</label>
+                                        <select class="form-select" id="phoneColumn" name="phoneColumn"></select>
+                                    </div>
                                 </div>
-                                <div class="col-md">
-                                    <label for="phoneColumn" class="form-label">Coluna do Telefone:</label>
-                                    <select class="form-select" id="phoneColumn" name="phoneColumn"></select>
-                                </div>
+                                <button type="button" class="btn btn-primary" id="loadContactsBtn"><i
+                                        class="mdi mdi-upload" aria-hidden="true"></i> Carregar Contatos</button>
                             </div>
-                            <button type="button" class="btn btn-primary" id="loadContactsBtn"><i
-                                    class="mdi mdi-upload" aria-hidden="true"></i> Carregar Contatos</button>
+                        </div>
+
+                        <div class="add-contact-container">
+                            <label class="form-label"><i class="mdi mdi-account-plus" aria-hidden="true"></i> Adicionar Contato</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="newContactName" placeholder="Nome">
+                                <input type="tel" class="form-control" id="newContactPhone" placeholder="Telefone"
+                                    type="number">
+                                <button class="btn btn-success" type="button" id="addContactBtn">
+                                    <i class="mdi mdi-plus" aria-hidden="true"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="add-contact-container">
-                        <label class="form-label"><i class="mdi mdi-account-plus" aria-hidden="true"></i> Adicionar Contato</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="newContactName" placeholder="Nome">
-                            <input type="tel" class="form-control" id="newContactPhone" placeholder="Telefone"
-                                type="number">
-                            <button class="btn btn-success" type="button" id="addContactBtn">
-                                <i class="mdi mdi-plus" aria-hidden="true"></i>
+
+
+                <!-- Script Selection/Creation -->
+                <div class="script-selector-container">
+                    <label for="scriptSelect" class="form-label"><i class="mdi mdi-script"></i> Selecionar Script:</label>
+                    <div class="input-group">
+                        <select class="form-select" id="scriptSelect">
+                            <option value="newScript">Novo Script</option>
+                        </select>
+                        <button class="btn btn-outline-danger" type="button" id="deleteScriptBtn" disabled>
+                            <i class="mdi mdi-delete"></i>
+                        </button>
+                    </div>
+                    <div id="newScriptInputContainer" style="display: none;">
+                        <div class="input-group mt-2">
+                            <input type="text" class="form-control" id="newScriptName" placeholder="Nome do Novo Script">
+                            <button class="btn btn-success" type="button" id="saveNewScriptBtn">
+                                <i class="mdi mdi-content-save"></i> Salvar Script
                             </button>
                         </div>
                     </div>
                 </div>
+                <!-- End Script Selection/Creation -->
 
 
 
-             <!-- Script Selection/Creation -->
-             <div class="script-selector-container">
-                <label for="scriptSelect" class="form-label"><i class="mdi mdi-script"></i> Selecionar Script:</label>
-                <div class="input-group">
-                    <select class="form-select" id="scriptSelect">
-                        <option value="newScript">Novo Script</option>
-                    </select>
-                    <button class="btn btn-outline-secondary" type="button" id="editScriptBtn" disabled>
-                        <i class="mdi mdi-pencil"></i>
-                    </button>
-                    <button class="btn btn-outline-danger" type="button" id="deleteScriptBtn" disabled>
-                        <i class="mdi mdi-delete"></i>
-                    </button>
-                </div>
-                <div id="newScriptInputContainer" style="display: none;">
-                    <div class="input-group mt-2">
-                        <input type="text" class="form-control" id="newScriptName" placeholder="Nome do Novo Script">
-                        <button class="btn btn-success" type="button" id="saveNewScriptBtn">
-                            <i class="mdi mdi-content-save"></i> Salvar Script
-                        </button>
+                    <div class="message-input-area whatsapp-message-input-area">
+                        <textarea class="form-control whatsapp-textarea" id="message" name="message" rows="4" required
+                            placeholder="Use [greeting] para uma saudação personalizada e [name] para o nome do contato."></textarea>
+                        <div class="message-actions">
+                            <button type="submit" class="send-button whatsapp-send-button" id="sendMessageBtn">
+                                <i class="mdi mdi-send" aria-hidden="true"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
-            <!-- End Script Selection/Creation -->
-
-
-
-                <div class="message-input-area whatsapp-message-input-area">
-                    <textarea class="form-control whatsapp-textarea" id="message" name="message" rows="4" required
-                        placeholder="Use [greeting] para uma saudação personalizada e [name] para o nome do contato."></textarea>
-                    <div class="message-actions">
-                        <button type="submit" class="send-button whatsapp-send-button" id="sendMessageBtn">
-                            <i class="mdi mdi-send" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </div>
-            </form>
         </div>
     </div>
 

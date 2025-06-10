@@ -12,7 +12,6 @@ const messageModal = document.getElementById('messageModal');
 const messageModalContent = document.getElementById('messageModalContent');
 const messageText = document.getElementById('messageText');
 const scriptSelect = document.getElementById('scriptSelect');
-const editScriptBtn = document.getElementById('editScriptBtn');
 const deleteScriptBtn = document.getElementById('deleteScriptBtn');
 const newScriptInputContainer = document.getElementById('newScriptInputContainer');
 const newScriptNameInput = document.getElementById('newScriptName');
@@ -180,13 +179,11 @@ scriptSelect.addEventListener('change', () => {
     if (selectedValue === 'newScript') {
         currentScriptKey = '';
         newScriptInputContainer.style.display = 'block';
-        editScriptBtn.disabled = true;
         deleteScriptBtn.disabled = true;
         messageTextarea.value = ""; // Clear textarea for new script
     } else {
         currentScriptKey = selectedValue;
         newScriptInputContainer.style.display = 'none';
-        editScriptBtn.disabled = false;
         deleteScriptBtn.disabled = false;
         messageTextarea.value = loadMessageForScript(selectedValue);
     }
@@ -197,7 +194,7 @@ scriptSelect.addEventListener('change', () => {
 saveNewScriptBtn.addEventListener('click', () => {
     const scriptName = newScriptNameInput.value.trim();
     if (scriptName) {
-        const timestamp = getCurrentTimestamp();
+        const timestamp = generateTimestampHash();
         const newScriptKey = `${MESSAGE_STORAGE_KEY_PREFIX}-${scriptName}-${timestamp}`;
         saveMessageForScript(newScriptKey, messageTextarea.value); // Save empty script
         loadScripts(); // Reload script list
@@ -210,24 +207,6 @@ saveNewScriptBtn.addEventListener('click', () => {
          alert(`Script "${scriptName}" criado com sucesso!`);
     } else {
         alert('Por favor, insira um nome para o script.');
-    }
-});
-
-// Edit script
-editScriptBtn.addEventListener('click', () => {
-    const currentScriptName = currentScriptKey.substring(MESSAGE_STORAGE_KEY_PREFIX.length + 1);
-    const newScriptName = prompt('Novo nome para o script:', currentScriptName);
-    if (newScriptName && newScriptName.trim() !== currentScriptName) {
-        const message = loadMessageForScript(currentScriptKey); // Get the old message
-        localStorage.removeItem(currentScriptKey); // Delete the old key
-         const timestamp = getCurrentTimestamp();
-        const newScriptKey = `${MESSAGE_STORAGE_KEY_PREFIX}-${newScriptName.trim()}-${timestamp}`
-        saveMessageForScript(newScriptKey, message); // Save with the new name
-        loadScripts();
-        scriptSelect.value = newScriptKey; // Select the new script
-        scriptSelect.dispatchEvent(new Event('change')); // Trigger change event
-         // Optionally, provide visual feedback to the user
-         alert(`Script "${currentScriptName}" editado para "${newScriptName.trim()}"!`);
     }
 });
 
@@ -1129,14 +1108,30 @@ function updateSynchronizationLoadingSpinner() {
   });
 }
 
-function finishLoading () {
-    document.querySelector(".synchronization-loading-spinner").remove();
-    document.querySelector(".synchronization-label").textContent = "Todos";
-    document.querySelector("#new-tab").style.display = "block";
-    document.querySelector("#sent-tab").style.display = "block";
-    document.querySelector("#answered-tab").style.display = "block";
-    document.querySelector("#all-tab").click();
+function finishLoading() {
+    const spinner = document.querySelector(".synchronization-loading-spinner");
+    const label = document.querySelector(".synchronization-label");
+    const newTab = document.querySelector("#new-tab");
+    const sentTab = document.querySelector("#sent-tab");
+    const answeredTab = document.querySelector("#answered-tab");
+    const allTab = document.querySelector("#all-tab");
+    const messageArea = document.querySelector(".whatsapp-message-area-main");
+    const logoContainer = document.querySelector(".whatsapp-logo-container");
+    const sidebar = document.querySelector(".whatsapp-sidebar");
+
+    if (spinner) spinner.remove();
+    if (label) label.textContent = "Todos";
+
+    if (newTab) newTab.style.display = "block";
+    if (sentTab) sentTab.style.display = "block";
+    if (answeredTab) answeredTab.style.display = "block";
+
+    if (allTab) allTab.click();
+    if (messageArea) messageArea.style.display = "block";
+    if (logoContainer) logoContainer.style.display = "none";
+    if (sidebar) sidebar.style.pointerEvents = "auto";
 }
+
 
 // Function to show loading spinner
 function showLoadingSpinner(tabId) {
