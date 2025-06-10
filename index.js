@@ -199,7 +199,6 @@ async function verifyAndFixContactStatuses() {
         try {
             let currentContact = await fetchContactNameAndMaybeUpdate(contact.phoneNumber, chatId);
             if (!currentContact) {
-                console.warn(`Skipping contact ${contact.phoneNumber} due to failure in fetching contact details.`);
                 continue;
             }
 
