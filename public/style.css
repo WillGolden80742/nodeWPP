@@ -791,9 +791,11 @@ body {
     font-size: 256px;
     text-align: center; /* Redundant but included for clarity */
     margin: 0; /* Reset any default margins */
+    color:#075e54;
 }
 
 .whatsapp-sidebar {
+    display: none;
     pointer-events: none;
 }
 
@@ -835,4 +837,57 @@ body {
     right: 10px;
     font-size: 20px;
     cursor: pointer;
+}
+
+.whatsapp-logo-container {
+    display: flex;
+    flex-direction: column; /* Align items vertically */
+    align-items: center;
+    justify-content: center; /* Center items horizontally */
+    height: 100%;
+    text-align: center; /* Center text */
+}
+
+.whatsapp-logo {
+    font-size: 128px; /* Reduced icon size */
+    margin-bottom: 10px; /* Added some space below the icon */
+}
+
+.app-info {
+    display: flex;
+    flex-direction: column; /* Stack app name and sync status */
+    align-items: center;
+}
+
+.app-info span {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px; /* Spacing between app name and sync status */
+    color: #075e54; /* Changed color for better readability */
+}
+
+.synchronization-status {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center the label and spinner */
+    gap: 5px; /* Spacing between label and spinner */
+}
+
+.synchronization-label {
+    font-size: 16px;
+    color: #777; /* Muted color for the status label */
+}
+
+.synchronization-loading-spinner {
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-top: 2px solid #075e54;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

@@ -1,4 +1,12 @@
 // C:\Users\willi\OneDrive\Desktop\nodeWPP\public\script.js
+
+// Constants
+const MESSAGE_STORAGE_KEY_PREFIX = 'whatsapp_sender_message';
+const NAME_COLUMN_STORAGE_KEY = 'whatsapp_sender_name_column';
+const PHONE_COLUMN_STORAGE_KEY = 'whatsapp_sender_phone_column';
+const DEFAULT_TIME_STAMP = "2000-01-01T00:00:00.000Z";
+
+// DOM Elements
 const fileInput = document.getElementById('fileInput');
 const contactListDiv = document.getElementById('contactList');
 const contactListNewDiv = document.getElementById('contactListNew');
@@ -26,85 +34,106 @@ const phoneColumnSelect = document.getElementById('phoneColumn');
 const loadContactsBtn = document.getElementById('loadContactsBtn');
 const sendMessageBtn = document.getElementById('sendMessageBtn');
 const mainForm = document.getElementById('mainForm');
+const deleteSelectionContacts = document.getElementById('delete-select-contacts');
+
 // Get loading spinners
 const loadingAll = document.getElementById('loadingAll');
 const loadingNew = document.getElementById('loadingNew');
 const loadingSent = document.getElementById('loadingSent');
 const loadingAnswered = document.getElementById('loadingAnswered');
 
-const MESSAGE_STORAGE_KEY = 'whatsapp_sender_message';
-const NAME_COLUMN_STORAGE_KEY = 'whatsapp_sender_name_column';
-const PHONE_COLUMN_STORAGE_KEY = 'whatsapp_sender_phone_column';
-const DEFAULT_TIME_STAMP = "2000-01-01T00:00:00.000Z"
-
+// State Variables
 let currentTab = 'all';
-let latitude;
-let longitude;
 let contacts = [];
 let selectedContacts = new Map();
-let csvHeaders = [];  // Store CSV headers
-let fileType = null; // Store the file type (csv or vcf)
-let csvContent = null; // Store the CSV file content
+let csvHeaders = [];
+let fileType = null;
+let csvContent = null;
+let currentScriptKey = '';
 
-const deleteSelectionContacts = document.getElementById('delete-select-contacts');
+// ========================= Utility Functions =========================
 
-deleteSelectionContacts.addEventListener('click', async (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    // Obter a lista de contatos selecionados
-    const selectedContactKeys = Array.from(selectedContacts.entries())
-        .filter(([key, value]) => value === true)
-        .map(([key, value]) => key);
+/**
+ * Generates a timestamp hash for script keys.
+ * @returns {string} A unique hash based on the current timestamp.
+ */
+function generateTimestampHash() {
+    return btoa(Date.now().toString()).substring(0, 12);
+}
 
-    if (selectedContactKeys.length === 0) {
-        alert('Nenhum contato selecionado.');
-        return;
-    }
-    const confirmation = confirm('Tem certeza que deseja marcar os contatos selecionados como apagados?');
-    if (confirmation) {
-        // Marca os contatos selecionados como apagados
-        contacts.forEach(contact => {
-            if (selectedContactKeys.includes(contact.key)) {
-                contact.isDeleted = true;
-            }
-        });
-        await updateContactsOnServer(contacts);
-        renderContactLists(contacts,currentTab);
-    }
-});
+/**
+ * Generates a unique contact key based on the contact's full name and phone number.
+ * @param {object} contact - The contact object.
+ * @returns {string} A unique key for the contact.
+ */
+function generateContactKey(contact) {
+    return `${contact.fullName}-${contact.phoneNumber}`;
+}
 
-// Load settings from localStorage
-const loadSettings = () => {
-    const countryCode = localStorage.getItem('countryCode') || '';
-    const ddd = localStorage.getItem('ddd') || '';
-    document.getElementById('countryCode').value = countryCode;
-    document.getElementById('ddd').value = ddd;
-};
+/**
+ * Adds a unique key to the contact object.
+ * @param {object} contact - The contact object.
+ * @returns {object} The contact object with the added key.
+ */
+function addKeyToContact(contact) {
+    contact.key = generateContactKey(contact);
+    return contact;
+}
 
-// Save settings to localStorage
-const saveSettings = () => {
+/**
+ * Displays an alert message.
+ * @param {string} message - The message to display.
+ */
+function showAlert(message) {
+    alert(message);
+}
+
+/**
+ * Displays a confirmation dialog.
+ * @param {string} message - The message to display in the confirmation dialog.
+ * @returns {boolean} True if the user confirms, false otherwise.
+ */
+function showConfirmation(message) {
+    return confirm(message);
+}
+
+// ========================= Local Storage Management =========================
+
+/**
+ * Saves settings (country code and DDD) to localStorage.
+ */
+function saveSettingsToLocalStorage() {
     const countryCode = document.getElementById('countryCode').value;
     const ddd = document.getElementById('ddd').value;
     localStorage.setItem('countryCode', countryCode);
     localStorage.setItem('ddd', ddd);
-    alert('Configurações salvas com sucesso!');
-};
+    showAlert('Configurações salvas com sucesso!');
+}
 
-// Event listener for save settings button
-document.getElementById('saveSettings').addEventListener('click', saveSettings);
+/**
+ * Loads settings (country code and DDD) from localStorage.
+ */
+function loadSettingsFromLocalStorage() {
+    const countryCode = localStorage.getItem('countryCode') || '';
+    const ddd = localStorage.getItem('ddd') || '';
+    document.getElementById('countryCode').value = countryCode;
+    document.getElementById('ddd').value = ddd;
+}
 
-// Load settings on page load
-loadSettings();
-// Update synchronization loading spinner
-updateSynchronizationLoadingSpinner();
-
-// Function to save selected column indexes to localStorage
+/**
+ * Saves selected column indexes (name and phone) to localStorage.
+ * @param {number} nameColumnIndex - The index of the name column.
+ * @param {number} phoneColumnIndex - The index of the phone column.
+ */
 function saveColumnSelectionsToLocalStorage(nameColumnIndex, phoneColumnIndex) {
     localStorage.setItem(NAME_COLUMN_STORAGE_KEY, nameColumnIndex);
     localStorage.setItem(PHONE_COLUMN_STORAGE_KEY, phoneColumnIndex);
 }
 
-// Function to load selected column indexes from localStorage
+/**
+ * Loads selected column indexes (name and phone) from localStorage.
+ * @returns {object} An object containing the nameColumnIndex and phoneColumnIndex, or null if not found.
+ */
 function loadColumnSelectionsFromLocalStorage() {
     const storedNameColumnIndex = localStorage.getItem(NAME_COLUMN_STORAGE_KEY);
     const storedPhoneColumnIndex = localStorage.getItem(PHONE_COLUMN_STORAGE_KEY);
@@ -115,42 +144,59 @@ function loadColumnSelectionsFromLocalStorage() {
     };
 }
 
-// Função para fechar a janela flutuante
-document.querySelector('.close').addEventListener('click', function () {
+/**
+ * Loads a message for a given script key from localStorage.
+ * @param {string} scriptKey - The key of the script.
+ * @returns {string} The message associated with the script key, or an empty string if not found.
+ */
+function loadMessageForScript(scriptKey) {
+    return localStorage.getItem(scriptKey) || "";
+}
+
+/**
+ * Saves a message for a given script key to localStorage.
+ * @param {string} scriptKey - The key of the script.
+ * @param {string} message - The message to save.
+ */
+function saveMessageForScript(scriptKey, message) {
+    localStorage.setItem(scriptKey, message);
+}
+
+// ========================= Modal Management =========================
+
+/**
+ * Closes the message modal.
+ */
+function closeMessageModal() {
     messageModal.style.display = "none";
-});
+}
 
-// Fecha a janela se o usuário clicar fora dela
-window.onclick = function (event) {
-    if (event.target == messageModal) {
-        messageModal.style.display = "none";
+/**
+ * Handles clicks outside the message modal to close it.
+ * @param {Event} event - The click event.
+ */
+function handleOutsideClick(event) {
+    if (event.target === messageModal) {
+        closeMessageModal();
     }
 }
 
+// ========================= Script Management =========================
 
-const MESSAGE_STORAGE_KEY_PREFIX = 'whatsapp_sender_message'; // Use a prefix
-let currentScriptKey = ''; // Store the key of the currently selected script
-
-function generateTimestampHash() {
-    return btoa(Date.now().toString()).substring(0, 12); // Base64 encode timestamp
-}
-function getCurrentTimestamp() {
-    return Date.now();
-}
-
-// Load scripts and populate the select
+/**
+ * Loads scripts from localStorage and populates the script select element.
+ */
 function loadScripts() {
-    // Remove existing options
-    while (scriptSelect.firstChild) {
-        scriptSelect.removeChild(scriptSelect.firstChild);
-    }
+    // Clear existing options
+    scriptSelect.innerHTML = '';
 
-    // Create and append "Novo Script" option
+    // Add "New Script" option
     const newScriptOption = document.createElement('option');
     newScriptOption.value = 'newScript';
     newScriptOption.textContent = 'Novo Script';
     scriptSelect.appendChild(newScriptOption);
 
+    // Add existing scripts from localStorage
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key.startsWith(MESSAGE_STORAGE_KEY_PREFIX)) {
@@ -162,118 +208,70 @@ function loadScripts() {
         }
     }
 }
-// Load message for selected script
-function loadMessageForScript(scriptKey) {
-    return localStorage.getItem(scriptKey) || "";
-}
 
-// Save message for script
-function saveMessageForScript(scriptKey, message) {
-    localStorage.setItem(scriptKey, message);
-}
-
-// Handle script selection
-scriptSelect.addEventListener('change', () => {
+/**
+ * Handles script selection changes in the script select element.
+ */
+function handleScriptSelectionChange() {
     const selectedValue = scriptSelect.value;
 
     if (selectedValue === 'newScript') {
         currentScriptKey = '';
         newScriptInputContainer.style.display = 'block';
         deleteScriptBtn.disabled = true;
-        messageTextarea.value = ""; // Clear textarea for new script
+        messageTextarea.value = "";
     } else {
         currentScriptKey = selectedValue;
         newScriptInputContainer.style.display = 'none';
         deleteScriptBtn.disabled = false;
         messageTextarea.value = loadMessageForScript(selectedValue);
     }
-});
+}
 
-
-// Save new script
-saveNewScriptBtn.addEventListener('click', () => {
+/**
+ * Saves a new script with the given name and message.
+ */
+function saveNewScript() {
     const scriptName = newScriptNameInput.value.trim();
     if (scriptName) {
         const timestamp = generateTimestampHash();
         const newScriptKey = `${MESSAGE_STORAGE_KEY_PREFIX}-${scriptName}-${timestamp}`;
-        saveMessageForScript(newScriptKey, messageTextarea.value); // Save empty script
-        loadScripts(); // Reload script list
-        scriptSelect.value = newScriptKey; // Select the new script
-        scriptSelect.dispatchEvent(new Event('change')); // Trigger change event
+        saveMessageForScript(newScriptKey, messageTextarea.value);
+        loadScripts();
+        scriptSelect.value = newScriptKey;
+        scriptSelect.dispatchEvent(new Event('change'));
         newScriptNameInput.value = '';
         newScriptInputContainer.style.display = 'none';
-
-         // Optionally, provide visual feedback to the user
-         alert(`Script "${scriptName}" criado com sucesso!`);
+        showAlert(`Script "${scriptName}" criado com sucesso!`);
     } else {
-        alert('Por favor, insira um nome para o script.');
+        showAlert('Por favor, insira um nome para o script.');
     }
-});
+}
 
-// Delete script
-deleteScriptBtn.addEventListener('click', () => {
-    if (confirm('Tem certeza que deseja excluir este script?')) {
+/**
+ * Deletes the currently selected script from localStorage.
+ */
+function deleteScript() {
+    if (showConfirmation('Tem certeza que deseja excluir este script?')) {
         localStorage.removeItem(currentScriptKey);
         loadScripts();
-        scriptSelect.value = 'newScript'; // Select 'New Script'
-        scriptSelect.dispatchEvent(new Event('change')); // Trigger change event
-        // Optionally, provide visual feedback to the user
-        alert("Script deletado com sucesso!");
-
+        scriptSelect.value = 'newScript';
+        scriptSelect.dispatchEvent(new Event('change'));
+        showAlert("Script deletado com sucesso!");
     }
-});
+}
 
-// Save message when it changes
-messageTextarea.addEventListener('input', () => {
-    if (currentScriptKey) {
-        saveMessageForScript(currentScriptKey, messageTextarea.value);
-    } 
-});
+// ========================= File Processing =========================
 
-// Initial load
-loadScripts();
-
-// Initialize with "New Script" selected
-scriptSelect.value = 'newScript';
-scriptSelect.dispatchEvent(new Event('change'));
-
-// Initial state of the send button (disabled)
-sendMessageBtn.disabled = true;
-
-const storedColumnSelections = loadColumnSelectionsFromLocalStorage();
-
-
-navButton.addEventListener('click', function (event) {
-    const targetTabPaneId = (event.target.getAttribute('data-bs-target')  || '#all').replace("#", "");
-    // Show loading spinner for the active tab
-    showLoadingSpinner(targetTabPaneId);
-    isCheckedAllContacts(false);
-    currentTab = targetTabPaneId;
-    renderContactLists(contacts, targetTabPaneId); //Use the master list of contacts.
-    // Load the last used script for the new tab
-    const lastScriptKey = localStorage.getItem(`lastScript-${targetTabPaneId}`);
-    if (lastScriptKey) {
-        //If already have script on targetTabPaneId
-        scriptSelect.value = lastScriptKey;
-    } else{
-        scriptSelect.value = 'newScript'; // Select 'New Script' by default
-    }
-    scriptSelect.dispatchEvent(new Event('change')); // Trigger change event to load the script and populate the textarea
-});
-
-sendMessageBtn.addEventListener('click', function() {
-    //Save the script name on the local storage, if script and tab had any name
-    if (currentTab && currentScriptKey){
-        localStorage.setItem(`lastScript-${currentTab}`, currentScriptKey);
-    }
-});
-
-fileInput.addEventListener('change', async (event) => {
+/**
+ * Handles file input changes, processing CSV or VCF files.
+ * @param {Event} event - The file input change event.
+ */
+async function handleFileInputChange(event) {
     const file = event.target.files[0];
     if (!file) return;
 
     const fileName = file.name.toLowerCase();
-
 
     if (fileName.endsWith('.csv')) {
         fileType = 'csv';
@@ -282,105 +280,57 @@ fileInput.addEventListener('change', async (event) => {
         fileType = 'vcf';
         csvColumnSelectDiv.style.display = 'none';
     } else {
-        alert('Tipo de arquivo não suportado. Por favor, selecione um arquivo .csv ou .vcf.');
+        showAlert('Tipo de arquivo não suportado. Por favor, selecione um arquivo .csv ou .vcf.');
         return;
     }
 
     const reader = new FileReader();
     reader.onload = async (e) => {
-        csvContent = e.target.result;  //Store the content locally.
+        csvContent = e.target.result;
 
         if (fileType === 'csv') {
             csvHeaders = await getCsvHeaders(csvContent);
             populateColumnSelects(csvHeaders);
         } else {
-            //If is VCF then load contacts.
             await loadContacts();
         }
     };
 
     if (fileType === 'csv') {
-        reader.readAsText(file, 'ISO-8859-1');  // For CSV, specify encoding.  This might need to change.
+        reader.readAsText(file, 'ISO-8859-1');
     } else {
         reader.readAsText(file);
     }
-});
+}
 
-// Add event listener for the "Carregar Contatos" button
-loadContactsBtn.addEventListener('click', async () => {
-    // Save the selected column indexes to localStorage
-    saveColumnSelectionsToLocalStorage(nameColumnSelect.value, phoneColumnSelect.value);
-
-    await loadContacts();
-    csvColumnSelectDiv.style.display = 'none';
-});
-
+/**
+ * Loads contacts from the selected file (CSV or VCF).
+ */
 async function loadContacts() {
     let newContacts = [];
 
     if (fileType === 'vcf') {
-        newContacts = parseVcfContent(csvContent); //Use locally stored value
+        newContacts = parseVcfContent(csvContent);
     } else if (fileType === 'csv') {
         newContacts = parseCsvContent(csvContent, nameColumnSelect.value, phoneColumnSelect.value);
     }
 
-    // Adiciona os novos contatos, evitando duplicatas
     newContacts.forEach(newContact => {
-        newContact.status = "new";  // Set initial status
-        newContact.timestamp = DEFAULT_TIME_STAMP;  // Initialize timestamp
-        newContact.isDeleted = false;  // Initialize deleted flag
+        newContact.status = "new";
+        newContact.timestamp = DEFAULT_TIME_STAMP;
+        newContact.isDeleted = false;
         contacts.push(newContact);
     });
 
-    await updateContactsOnServer(contacts);  // Save to server
-    renderContactLists(contacts,currentTab);
+    await updateContactsOnServer(contacts);
+    renderContactLists(contacts, currentTab);
 }
 
-// Function to generate contact key
-function generateContactKey(contact) {
-    return `${contact.fullName}-${contact.phoneNumber}`;
-}
-
-// Function to add key to contact
-function addKeyToContact(contact) {
-    contact.key = generateContactKey(contact);
-    return contact;
-}
-
-
-// Function to get CSV headers
-async function getCsvHeaders(csvContent) {
-    const lines = csvContent.split(/\r?\n/).filter(Boolean);
-    if (lines.length > 0) {
-        return lines[0].split(';'); // Using semicolon as delimiter
-
-    }
-    return [];
-}
-
-// Function to populate the select elements with column names
-function populateColumnSelects(headers) {
-    nameColumnSelect.innerHTML = '';
-    phoneColumnSelect.innerHTML = '';
-
-    headers.forEach((header, index) => {
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = header;
-        nameColumnSelect.appendChild(option.cloneNode(true)); // Clone to avoid moving the option
-        phoneColumnSelect.appendChild(option);
-    });
-
-    // Select stored column indexes if available
-    if (storedColumnSelections.nameColumnIndex !== null) {
-        nameColumnSelect.value = storedColumnSelections.nameColumnIndex;
-    }
-    if (storedColumnSelections.phoneColumnIndex !== null) {
-        phoneColumnSelect.value = storedColumnSelections.phoneColumnIndex;
-    }
-}
-
-
+/**
+ * Parses VCF content and extracts contact information.
+ * @param {string} vcfContent - The VCF file content.
+ * @returns {array} An array of contact objects.
+ */
 function parseVcfContent(vcfContent) {
     const contacts = [];
     const vcards = vcfContent.split(/BEGIN:VCARD\r?\n/).filter(Boolean);
@@ -414,8 +364,8 @@ function parseVcfContent(vcfContent) {
             let contact = {
                 fullName,
                 phoneNumber,
-                status: 'new', // Initialize status
-                timestamp: DEFAULT_TIME_STAMP // Initialize timestamp
+                status: 'new',
+                timestamp: DEFAULT_TIME_STAMP
             };
             contact = addKeyToContact(contact);
             contacts.push(contact);
@@ -424,30 +374,36 @@ function parseVcfContent(vcfContent) {
     return contacts;
 }
 
+/**
+ * Parses CSV content and extracts contact information based on the selected column indexes.
+ * @param {string} csvContent - The CSV file content.
+ * @param {number} nameColumnIndex - The index of the name column.
+ * @param {number} phoneColumnIndex - The index of the phone column.
+ * @returns {array} An array of contact objects.
+ */
 function parseCsvContent(csvContent, nameColumnIndex, phoneColumnIndex) {
     const contacts = [];
     const lines = csvContent.split(/\r?\n/).filter(Boolean);
 
-    if (lines.length <= 1) return [];  //Need headers *and* data
+    if (lines.length <= 1) return [];
 
-    for (let i = 1; i < lines.length; i++) {  // Skip the header line
-        const values = lines[i].split(';'); // Using semicolon as delimiter
+    for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(';');
         const fullName = values[nameColumnIndex] ? values[nameColumnIndex].trim() : 'Contact';
         let phoneNumber = values[phoneColumnIndex] ? values[phoneColumnIndex].trim() : null;
 
         if (phoneNumber) {
-            phoneNumber = phoneNumber.replace(/\D/g, '');  // Remove non-digit characters
+            phoneNumber = phoneNumber.replace(/\D/g, '');
 
-            //Check if phonenumber is a number.
             if (!/^\d+$/.test(phoneNumber)) {
                 console.warn(`Número de telefone inválido encontrado: ${phoneNumber}. Ignorando.`);
-                continue; // Skip this contact if phone number is invalid
+                continue;
             }
             let contact = {
                 fullName,
                 phoneNumber,
-                status: 'new', // Initialize status
-                timestamp: DEFAULT_TIME_STAMP// Initialize timestamp
+                status: 'new',
+                timestamp: DEFAULT_TIME_STAMP
             };
             contact = addKeyToContact(contact);
             contacts.push(contact);
@@ -456,11 +412,56 @@ function parseCsvContent(csvContent, nameColumnIndex, phoneColumnIndex) {
     return contacts;
 }
 
+/**
+ * Retrieves CSV headers from the CSV content.
+ * @param {string} csvContent - The CSV file content.
+ * @returns {array} An array of CSV headers.
+ */
+async function getCsvHeaders(csvContent) {
+    const lines = csvContent.split(/\r?\n/).filter(Boolean);
+    if (lines.length > 0) {
+        return lines[0].split(';'); // Using semicolon as delimiter
+    }
+    return [];
+}
+
+/**
+ * Populates the name and phone column select elements with the given headers.
+ * @param {array} headers - An array of column headers.
+ */
+function populateColumnSelects(headers) {
+    nameColumnSelect.innerHTML = '';
+    phoneColumnSelect.innerHTML = '';
+
+    headers.forEach((header, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = header;
+        nameColumnSelect.appendChild(option.cloneNode(true));
+        phoneColumnSelect.appendChild(option);
+    });
+
+    const storedColumnSelections = loadColumnSelectionsFromLocalStorage();
+    if (storedColumnSelections.nameColumnIndex !== null) {
+        nameColumnSelect.value = storedColumnSelections.nameColumnIndex;
+    }
+    if (storedColumnSelections.phoneColumnIndex !== null) {
+        phoneColumnSelect.value = storedColumnSelections.phoneColumnIndex;
+    }
+}
+
+// ========================= Server Communication =========================
+
+/**
+ * Updates contacts on the server.
+ * @param {array} contacts - An array of contact objects to update on the server.
+ */
 async function updateContactsOnServer(contacts) {
     const defaultCountryCode = '55';
     const defaultDdd = '11';
     const countryCode = localStorage.getItem('countryCode') || defaultCountryCode;
     const ddd = localStorage.getItem('ddd') || defaultDdd;
+
     try {
         const response = await fetch('/update-contacts', {
             method: 'POST',
@@ -476,244 +477,319 @@ async function updateContactsOnServer(contacts) {
 
         if (!response.ok) {
             console.error('Failed to update contacts on the server:', response.status, response.statusText);
-            alert('Failed to update contacts on the server.');
+            showAlert('Failed to update contacts on the server.');
         } else {
             console.log('Contacts updated on the server.');
         }
     } catch (error) {
         console.error('Error updating contacts on the server:', error);
-        alert('Error updating contacts on the server.');
+        showAlert('Error updating contacts on the server.');
     }
 }
 
+/**
+ * Checks the synchronization status on the server.
+ * @returns {Promise<boolean>} A promise that resolves to true if synchronization is finished, false otherwise.
+ */
+async function checkSynchronizationStatus() {
+    try {
+        const response = await fetch('/synchronization-status');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.synchronizationFinished;
+    } catch (error) {
+        console.error('Error checking synchronization status:', error);
+        return false;
+    }
+}
+
+/**
+ * Loads contacts from the server.
+ * @returns {Promise<Array>} A promise that resolves to an array of contacts fetched from the server.
+ */
+async function loadContactsFromServer() {
+    const activeTab = document.querySelector('.nav-link.active');
+    let activeTabId = 'all';
+    if (activeTab) {
+        activeTabId = activeTab.getAttribute('data-bs-target').substring(1);
+    }
+
+    showLoadingSpinner(activeTabId);
+
+    try {
+        const response = await fetch('/update-contacts');
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        contacts = await response.json();
+        contacts = contacts.map(contact => addKeyToContact(contact));
+
+        contacts.forEach(contact => {
+            selectedContacts.set(contact.key, false);
+        });
+
+        return contacts;
+    } catch (error) {
+        console.error('Failed to load contacts from server:', error);
+        showAlert('Failed to load contacts from server. Check the console for details.');
+        return [];
+    } finally {
+       renderContactLists(contacts, activeTabId);
+    }
+}
+
+// ========================= Contact List Rendering =========================
+
+/**
+ * Creates a contact list item element.
+ * @param {object} contact - The contact object to render.
+ * @param {number} index - The index of the contact in the list.
+ * @returns {HTMLLabelElement} The contact list item element.
+ */
+function createContactListItem(contact, index) {
+    const contactId = `contact-${index}`;
+
+    const label = document.createElement('label');
+    label.classList.add('contact-list-item');
+
+    // Top Row Div
+    const topRowDiv = document.createElement('div');
+    topRowDiv.classList.add('top-row');
+
+    const checkbox = document.createElement('input');
+    checkbox.classList.add('form-check-input');
+    checkbox.type = 'checkbox';
+    checkbox.id = contactId;
+    topRowDiv.appendChild(checkbox);
+
+    // Contact Name Span/Input (Initially Span)
+    let contactNameElement = document.createElement('span');
+    contactNameElement.classList.add('contact-name');
+    contactNameElement.textContent = contact.fullName;
+    topRowDiv.appendChild(contactNameElement);
+
+
+    // Function to switch to input mode
+    function switchToInputMode() {
+        // Create input element
+        const inputElement = document.createElement('input');
+        inputElement.type = 'text';
+        inputElement.classList.add('form-control', 'contact-name-input');
+        inputElement.value = contact.fullName;  // Set initial value
+
+        // Create save button
+        const saveButton = document.createElement('button');
+        saveButton.type = 'button';
+        saveButton.classList.add('btn', 'btn-sm', 'btn-success');
+        saveButton.innerHTML = '<i class="mdi mdi-check"></i>';
+
+        // Create cancel button
+        const cancelButton = document.createElement('button');
+        cancelButton.type = 'button';
+        cancelButton.classList.add('btn', 'btn-sm', 'btn-secondary');
+        cancelButton.innerHTML = '<i class="mdi mdi-close"></i>';
+
+        // Replace the span with the input
+        contactNameElement.replaceWith(inputElement);
+
+        //Add Buttons
+        topRowDiv.appendChild(saveButton);
+        topRowDiv.appendChild(cancelButton);
+
+        // Focus the input
+        inputElement.focus();
+
+        // Save action
+        saveButton.addEventListener('click', async () => {
+            const newName = inputElement.value.trim();
+            if (newName && newName !== contact.fullName) {
+                contact.fullName = newName;
+                contact.key = generateContactKey(contact); // Update key
+                await updateContactsOnServer(contacts); // Update server
+                renderContactLists(contacts, currentTab); // Re-render
+            } else {
+                switchToSpanMode(); // Revert if no change
+            }
+        });
+
+        // Cancel action
+        cancelButton.addEventListener('click', () => {
+            switchToSpanMode(); // Revert to span
+        });
+
+        //Handle Enter to update
+        inputElement.addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                saveButton.click();
+            }
+        });
+    }
+
+    // Function to switch back to span mode
+    function switchToSpanMode() {
+        const newContactNameElement = document.createElement('span');
+        newContactNameElement.classList.add('contact-name');
+        newContactNameElement.textContent = contact.fullName;
+        //Replace with Span
+        let el = topRowDiv.querySelector('.contact-name-input');
+        el.replaceWith(newContactNameElement);
+
+        //Remove buttons
+        let sb = topRowDiv.querySelector('.btn-success');
+        if (sb){
+            sb.remove();
+        }
+        let cb = topRowDiv.querySelector('.btn-secondary');
+        if (cb){
+            cb.remove();
+        }
+
+        contactNameElement = newContactNameElement; // Update the outer variable
+
+        contactNameElement.addEventListener('mouseover', () => {
+            contactNameElement.style.cursor = 'pointer';
+        });
+        contactNameElement.addEventListener('mouseout', () => {
+            contactNameElement.style.cursor = 'default';
+        });
+        contactNameElement.addEventListener('click', switchToInputMode);
+    }
+
+
+    // Event listener to switch to input mode on hover
+    contactNameElement.addEventListener('mouseover', () => {
+        contactNameElement.style.cursor = 'pointer';
+    });
+
+    // Event listener to remove pointer on mouseout
+    contactNameElement.addEventListener('mouseout', () => {
+        contactNameElement.style.cursor = 'default';
+    });
+
+    //Add click to span
+    contactNameElement.addEventListener('click', switchToInputMode);
+
+
+    const whatsappLink = document.createElement('a');
+    whatsappLink.classList.add('contact-number');
+    whatsappLink.href = `http://wa.me/${contact.phoneNumber}`;
+    whatsappLink.textContent = contact.phoneNumber;
+    whatsappLink.target = '_blank';
+    whatsappLink.rel = 'noopener noreferrer';
+    topRowDiv.appendChild(whatsappLink);
+
+    const statusIcon = document.createElement('i');
+    statusIcon.classList.add('mdi');
+    switch (contact.status) {
+        case 'new':
+            statusIcon.classList.add('mdi-new-box');
+            break;
+        case 'sent':
+            statusIcon.classList.add('mdi-send');
+            break;
+        case 'answered':
+            statusIcon.classList.add('mdi-check-circle');
+            break;
+        default:
+            statusIcon.classList.add('mdi-help-circle');
+    }
+    topRowDiv.appendChild(statusIcon);
+
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.classList.add('btn', 'btn-sm', 'deleteContactBtn');
+    deleteButton.dataset.key = contact.key;
+    const deleteIcon = document.createElement('i');
+    deleteIcon.classList.add('mdi', 'mdi-delete');
+    deleteButton.appendChild(deleteIcon);
+    deleteButton.addEventListener('click', function () {
+        const keyToDelete = this.dataset.key;
+        deleteContact(keyToDelete);
+    });
+    topRowDiv.appendChild(deleteButton);
+
+    // Bottom Row Div
+    const bottomRowDiv = document.createElement('div');
+    bottomRowDiv.classList.add('bottom-row');
+
+    let lastMessageContent = contact.lastMessage;
+
+    const lastMessageDiv = document.createElement('div');
+    lastMessageDiv.classList.add('last-message');
+
+    const lastMessageText = document.createElement('span');
+    lastMessageText.textContent = lastMessageContent;
+    lastMessageDiv.appendChild(lastMessageText);
+
+    bottomRowDiv.appendChild(lastMessageDiv);
+
+    // Format Timestamp
+    const timestamp = new Date(contact.timestamp);
+    const today = new Date();
+
+    const isToday = (
+        timestamp.getFullYear() === today.getFullYear() &&
+        timestamp.getMonth() === today.getMonth() &&
+        timestamp.getDate() === today.getDate()
+    );
+
+    let formattedTimestamp = '';
+    if (isToday) {
+        formattedTimestamp = `${timestamp.getHours().toString().padStart(2, '0')}:${timestamp.getMinutes().toString().padStart(2, '0')}`;
+    } else {
+        const day = timestamp.getDate().toString().padStart(2, '0');
+        const month = (timestamp.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed
+        const year = timestamp.getFullYear();
+        formattedTimestamp = `${day}/${month}/${year}`;
+    }
+
+    if (contact.timestamp !== DEFAULT_TIME_STAMP) {
+        const timestampSpan = document.createElement('span');
+        timestampSpan.classList.add('timestamp');
+        timestampSpan.textContent = formattedTimestamp;
+        bottomRowDiv.appendChild(timestampSpan);
+    }
+
+    label.appendChild(topRowDiv);
+    label.appendChild(bottomRowDiv);
+
+    const contactKey = generateContactKey(contact);
+    const isChecked = selectedContacts.has(contactKey) ? selectedContacts.get(contactKey) : false;
+    checkbox.checked = isChecked;
+    contact.key = contactKey;
+
+    checkbox.addEventListener('change', (event) => {
+        selectedContacts.set(contactKey, event.target.checked);
+        updateSendButtonState();
+    });
+
+    return label;
+}
+
+/**
+ * Renders a list of contacts into the specified container.
+ * @param {array} contactList - The array of contacts to render.
+ * @param {HTMLElement} container - The container to render the contacts into.
+ */
 function renderContactList(contactList, container) {
     container.innerHTML = '';
     const filteredContactList = contactList.filter(contact => contact.phoneNumber && contact.phoneNumber.length >= 9);
 
     filteredContactList.forEach((contact, index) => {
-        const contactId = `contact-${index}`;
-
-        const label = document.createElement('label');
-        label.classList.add('contact-list-item');
-
-        // Top Row Div
-        const topRowDiv = document.createElement('div');
-        topRowDiv.classList.add('top-row');
-
-        const checkbox = document.createElement('input');
-        checkbox.classList.add('form-check-input');
-        checkbox.type = 'checkbox';
-        checkbox.id = contactId;
-        topRowDiv.appendChild(checkbox);
-
-        // Contact Name Span/Input (Initially Span)
-        let contactNameElement = document.createElement('span');
-        contactNameElement.classList.add('contact-name');
-        contactNameElement.textContent = contact.fullName;
-        topRowDiv.appendChild(contactNameElement);
-
-
-        // Function to switch to input mode
-        function switchToInputMode() {
-            // Create input element
-            const inputElement = document.createElement('input');
-            inputElement.type = 'text';
-            inputElement.classList.add('form-control', 'contact-name-input');
-            inputElement.value = contact.fullName;  // Set initial value
-
-            // Create save button
-            const saveButton = document.createElement('button');
-            saveButton.type = 'button';
-            saveButton.classList.add('btn', 'btn-sm', 'btn-success');
-            saveButton.innerHTML = '<i class="mdi mdi-check"></i>';
-
-            // Create cancel button
-            const cancelButton = document.createElement('button');
-            cancelButton.type = 'button';
-            cancelButton.classList.add('btn', 'btn-sm', 'btn-secondary');
-            cancelButton.innerHTML = '<i class="mdi mdi-close"></i>';
-
-            // Replace the span with the input
-            contactNameElement.replaceWith(inputElement);
-
-            //Add Buttons
-            topRowDiv.appendChild(saveButton);
-            topRowDiv.appendChild(cancelButton);
-
-            // Focus the input
-            inputElement.focus();
-
-            // Save action
-            saveButton.addEventListener('click', async () => {
-                const newName = inputElement.value.trim();
-                if (newName && newName !== contact.fullName) {
-                    contact.fullName = newName;
-                    contact.key = generateContactKey(contact); // Update key
-                    await updateContactsOnServer(contacts); // Update server
-                    renderContactLists(contacts, currentTab); // Re-render
-                } else {
-                    switchToSpanMode(); // Revert if no change
-                }
-            });
-
-            // Cancel action
-            cancelButton.addEventListener('click', () => {
-                switchToSpanMode(); // Revert to span
-            });
-
-            //Handle Enter to update
-            inputElement.addEventListener("keyup", function(event) {
-                if (event.key === "Enter") {
-                    saveButton.click();
-                }
-            });
-        }
-
-        // Function to switch back to span mode
-        function switchToSpanMode() {
-            const newContactNameElement = document.createElement('span');
-            newContactNameElement.classList.add('contact-name');
-            newContactNameElement.textContent = contact.fullName;
-            //Replace with Span
-            let el = topRowDiv.querySelector('.contact-name-input');
-            el.replaceWith(newContactNameElement);
-
-            //Remove buttons
-            let sb = topRowDiv.querySelector('.btn-success');
-            if (sb){
-                sb.remove();
-            }
-            let cb = topRowDiv.querySelector('.btn-secondary');
-             if (cb){
-                cb.remove();
-            }
-
-            contactNameElement = newContactNameElement; // Update the outer variable
-
-             contactNameElement.addEventListener('mouseover', () => {
-                 contactNameElement.style.cursor = 'pointer';
-             });
-             contactNameElement.addEventListener('mouseout', () => {
-                 contactNameElement.style.cursor = 'default';
-             });
-             contactNameElement.addEventListener('click', switchToInputMode);
-        }
-
-
-        // Event listener to switch to input mode on hover
-        contactNameElement.addEventListener('mouseover', () => {
-            contactNameElement.style.cursor = 'pointer';
-        });
-
-        // Event listener to remove pointer on mouseout
-        contactNameElement.addEventListener('mouseout', () => {
-            contactNameElement.style.cursor = 'default';
-        });
-
-        //Add click to span
-        contactNameElement.addEventListener('click', switchToInputMode);
-
-
-        const whatsappLink = document.createElement('a');
-        whatsappLink.classList.add('contact-number');
-        whatsappLink.href = `http://wa.me/${contact.phoneNumber}`;
-        whatsappLink.textContent = contact.phoneNumber;
-        whatsappLink.target = '_blank';
-        whatsappLink.rel = 'noopener noreferrer';
-        topRowDiv.appendChild(whatsappLink);
-
-        const statusIcon = document.createElement('i');
-        statusIcon.classList.add('mdi');
-        switch (contact.status) {
-            case 'new':
-                statusIcon.classList.add('mdi-new-box');
-                break;
-            case 'sent':
-                statusIcon.classList.add('mdi-send');
-                break;
-            case 'answered':
-                statusIcon.classList.add('mdi-check-circle');
-                break;
-            default:
-                statusIcon.classList.add('mdi-help-circle');
-        }
-        topRowDiv.appendChild(statusIcon);
-
-        const deleteButton = document.createElement('button');
-        deleteButton.type = 'button';
-        deleteButton.classList.add('btn', 'btn-sm', 'deleteContactBtn');
-        deleteButton.dataset.key = contact.key;
-        const deleteIcon = document.createElement('i');
-        deleteIcon.classList.add('mdi', 'mdi-delete');
-        deleteButton.appendChild(deleteIcon);
-        deleteButton.addEventListener('click', function () {
-            const keyToDelete = this.dataset.key;
-            deleteContact(keyToDelete);
-        });
-        topRowDiv.appendChild(deleteButton);
-
-        // Bottom Row Div
-        const bottomRowDiv = document.createElement('div');
-        bottomRowDiv.classList.add('bottom-row');
-
-        let lastMessageContent = contact.lastMessage;
-
-        const lastMessageDiv = document.createElement('div');
-        lastMessageDiv.classList.add('last-message');
-
-        const lastMessageText = document.createElement('span');
-        lastMessageText.textContent = lastMessageContent;
-        lastMessageDiv.appendChild(lastMessageText);
-
-        bottomRowDiv.appendChild(lastMessageDiv);
-
-        // Format Timestamp
-        const timestamp = new Date(contact.timestamp);
-        const today = new Date();
-
-        const isToday = (
-            timestamp.getFullYear() === today.getFullYear() &&
-            timestamp.getMonth() === today.getMonth() &&
-            timestamp.getDate() === today.getDate()
-        );
-
-        let formattedTimestamp = '';
-        if (isToday) {
-            formattedTimestamp = `${timestamp.getHours().toString().padStart(2, '0')}:${timestamp.getMinutes().toString().padStart(2, '0')}`;
-        } else {
-            const day = timestamp.getDate().toString().padStart(2, '0');
-            const month = (timestamp.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed
-            const year = timestamp.getFullYear();
-            formattedTimestamp = `${day}/${month}/${year}`;
-        }
-
-        if (contact.timestamp !== DEFAULT_TIME_STAMP) {
-            const timestampSpan = document.createElement('span');
-            timestampSpan.classList.add('timestamp');
-            timestampSpan.textContent = formattedTimestamp;
-            bottomRowDiv.appendChild(timestampSpan);
-        }
-
-        label.appendChild(topRowDiv);
-        label.appendChild(bottomRowDiv);
-
-        container.appendChild(label);
-
-        const contactKey = generateContactKey(contact);
-        const isChecked = selectedContacts.has(contactKey) ? selectedContacts.get(contactKey) : false;
-        checkbox.checked = isChecked;
-        contact.key = contactKey;
-
-        checkbox.addEventListener('change', (event) => {
-            selectedContacts.set(contactKey, event.target.checked);
-            updateSendButtonState();
-        });
+        const contactListItem = createContactListItem(contact, index);
+        container.appendChild(contactListItem);
     });
 
     updateSendButtonState();
 }
 
-// Helper function to get the correct container for a given tab
+/**
+ * Gets the appropriate container element for the contact list based on the tab ID.
+ * @param {string} tabId - The ID of the tab.
+ * @returns {HTMLElement} The container element for the contact list.
+ */
 function getContactListContainer(tabId) {
     switch (tabId) {
         case 'all':
@@ -726,11 +802,15 @@ function getContactListContainer(tabId) {
             return contactListAnsweredDiv;
         default:
             console.warn('Unknown tab ID:', tabId);
-            return contactListDiv; // Default to 'all'
+            return contactListDiv;
     }
 }
 
-// Helper function to get the correct loading element for a given tab
+/**
+ * Gets the appropriate loading element based on the tab ID.
+ * @param {string} tabId - The ID of the tab.
+ * @returns {HTMLElement} The loading element.
+ */
 function getLoadingElement(tabId) {
     switch (tabId) {
         case 'all':
@@ -743,17 +823,23 @@ function getLoadingElement(tabId) {
             return loadingAnswered;
         default:
             console.warn('Unknown tab ID:', tabId);
-            return loadingAll; // Default to 'all'
+            return loadingAll;
     }
 }
 
+/**
+ * Renders contact lists based on the specified tab and search term.
+ * @param {array} contactList - The array of contacts to render.
+ * @param {string} tabId - The ID of the active tab ('all', 'new', 'sent', 'answered').
+ */
 function renderContactLists(contactList, tabId = 'all') {
     const searchTerm = searchInput.value.toLowerCase();
     const filteredContacts = contactList.filter(contact =>
-        contact.fullName.toLowerCase().includes(searchTerm) && !contact.isDeleted||
-        contact.phoneNumber.toLowerCase().includes(searchTerm)
-        && !contact.isDeleted
+        (contact.fullName.toLowerCase().includes(searchTerm) ||
+        contact.phoneNumber.toLowerCase().includes(searchTerm)) &&
+        !contact.isDeleted
     );
+
     let contactsToRender;
     switch (tabId) {
         case 'new':
@@ -770,18 +856,22 @@ function renderContactLists(contactList, tabId = 'all') {
             contactsToRender = filteredContacts;
             break;
     }
-    // Separate answered/sent contacts and new contacts
+
     const answeredSentContacts = contactsToRender.filter(contact => contact.status === 'answered' || contact.status === 'sent');
     const newContacts = contactsToRender.filter(contact => contact.status === 'new');
-    // Sort answered/sent contacts by timestamp (most recent first)
+
     answeredSentContacts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    // Sort new contacts alphabetically
     newContacts.sort((a, b) => a.fullName.localeCompare(b.fullName));
-    // Concatenate the sorted lists: answered/sent followed by new
+
     contactsToRender = answeredSentContacts.concat(newContacts);
     renderContactList(contactsToRender, getContactListContainer(tabId));
     hideLoadingSpinner(tabId);
 }
+
+/**
+ * Deletes a contact from the contact list.
+ * @param {string} keyToDelete - The key of the contact to delete.
+ */
 async function deleteContact(keyToDelete) {
     const contactToUpdateIndex = contacts.findIndex(contact => contact.key === keyToDelete);
 
@@ -796,29 +886,22 @@ async function deleteContact(keyToDelete) {
     }
 }
 
-searchInput.addEventListener('input', () => {
-    renderContactLists(contacts,currentTab); // Renderiza a lista filtrada
-});
-
-
-selectAllButton.addEventListener('click', () => {
-    isCheckedAllContacts(true); // Marca todos os contatos
-});
-
-deselectAllButton.addEventListener('click', () => {
-    isCheckedAllContacts(false); // Desmarca todos os contatos
-});
-
-function isCheckedAllContacts(b) {
+/**
+ * Toggles the selection of all contacts based on the specified boolean value.
+ * @param {boolean} shouldCheck - True to select all contacts, false to deselect all.
+ */
+function toggleAllContacts(shouldCheck) {
     const searchTerm = searchInput.value.toLowerCase();
-    const currentTab = this.currentTab || 'all'; // Use 'this' to access currentTab if available, otherwise default to 'all'
+    const currentTab = this.currentTab || 'all';
+
     selectedContacts = new Map();
-    if (b) {
+
+    if (shouldCheck) {
         contacts.filter(contact => {
             const matchesSearch = contact.fullName.toLowerCase().includes(searchTerm) ||
                 contact.phoneNumber.toLowerCase().includes(searchTerm);
 
-            let matchesTab = true; // Default to true for 'all' tab
+            let matchesTab = true;
             if (currentTab === 'new') {
                 matchesTab = contact.status === 'new';
             } else if (currentTab === 'sent') {
@@ -829,19 +912,27 @@ function isCheckedAllContacts(b) {
 
             return matchesSearch && matchesTab;
         }).forEach((contact) => {
-            selectedContacts.set(contact.key, b);
+            selectedContacts.set(contact.key, shouldCheck);
             document.querySelectorAll(".contact-list-item .form-check-input").forEach(checkbox => {
-                checkbox.checked = b;
+                checkbox.checked = shouldCheck;
             });
-            sendMessageBtn.disabled = !b;
+            sendMessageBtn.disabled = !shouldCheck;
         });
     } else {
         document.querySelectorAll(".contact-list-item .form-check-input").forEach(checkbox => {
-            checkbox.checked = b;
+            checkbox.checked = shouldCheck;
         });
-        sendMessageBtn.disabled = !b;
+        sendMessageBtn.disabled = !shouldCheck;
     }
 }
+
+// ========================= Greetings and Message Formatting =========================
+
+/**
+ * Gets a greeting based on the current time and specified language code.
+ * @param {string} languageCode - The language code for the greeting.
+ * @returns {string} A greeting appropriate for the current time and language.
+ */
 function getGreetings(languageCode) {
     const now = new Date();
     const hour = now.getHours();
@@ -863,7 +954,6 @@ function getGreetings(languageCode) {
         de: { morning: "Guten Morgen", afternoon: "Guten Tag", evening: "Guten Abend" },
         it: { morning: "Buongiorno", afternoon: "Buon pomeriggio", evening: "Buonasera" },
         ru: { morning: "Доброе утро", afternoon: "Добрый день", evening: "Добрый вечер" },
-        zh: { morning: "早上好", afternoon: "下午好", evening: "晚上好" },
         ja: { morning: "おはようございます", afternoon: "こんにちは", evening: "こんばんは" },
         ko: { morning: "좋은 아침입니다", afternoon: "안녕하세요", evening: "안녕하세요" },
         ar: { morning: "صباح الخير", afternoon: "مساء الخير", evening: "مساء الخير" },
@@ -878,10 +968,16 @@ function getGreetings(languageCode) {
         he: { morning: "בוקר טוב", afternoon: "צהריים טובים", evening: "ערב טוב" }
     };
 
+    
     const selectedLanguage = greetings[languageCode] || greetings["en"];
     return selectedLanguage[period];
 }
 
+// ========================= UI Updates =========================
+
+/**
+ * Updates the state of the send button based on whether at least one contact is selected.
+ */
 function updateSendButtonState() {
     let atLeastOneSelected = false;
     for (const value of selectedContacts.values()) {
@@ -893,217 +989,33 @@ function updateSendButtonState() {
     sendMessageBtn.disabled = !atLeastOneSelected;
 }
 
-// Intercept the form submission
-mainForm.addEventListener('submit', function (event) {
-    event.preventDefault(); // Prevent form submission
-
-    if (sendMessageBtn.disabled) {
-        alert('Por favor, selecione ao menos um contato antes de enviar as mensagens.');
-        return;
-    }
-
-    const contactsToSend = [];
-    contacts.forEach((contact) => {
-        if (selectedContacts.get(contact.key)) {
-            contactsToSend.push(contact);
-        }
-    });
-
-    const testModeCheckbox = document.getElementById('testMode');
-    const testMode = testModeCheckbox.checked;
-
-    let messageContent = document.getElementById('message').value;
-
-    const languageCode = Intl.DateTimeFormat().resolvedOptions().locale.split('-')[0];
-
-    messageContent = messageContent.replace(/\[greeting]/gi, getGreetings(languageCode));
-
-
-    fetch('/upload', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            contacts: contactsToSend,
-            message: messageContent,
-            testMode: testMode
-        })
-    })
-        .then(response => response.json())
-        .then(data => {
-            messageText.innerHTML = ''; // Clear existing results
-
-            data.results.forEach(result => {
-                const contactName = result.contact;
-                const status = result.status;
-                const message = result.message;
-
-                const messageParts = message.split(/\[send\]/gi);
-
-                messageParts.forEach(messagePart => { 
-
-                    // Create the container for the contact bubble
-                    const bubbleContainer = document.createElement('div');
-                    bubbleContainer.classList.add('contact-bubble-container');
-
-                    // Add 'outgoing' class if the message was successfully sent
-                    if (status === 'success') {
-                        bubbleContainer.classList.add('outgoing');
-                    }
-
-                    // Create the contact bubble
-                    const contactBubble = document.createElement('div');
-                    contactBubble.classList.add('contact-bubble');
-                    contactBubble.classList.add(status === 'success' ? 'outgoing' : 'incoming');
-
-                    // Create the contact name element
-                    const contactNameElement = document.createElement('div');
-                    contactNameElement.classList.add('contact-name');
-                    contactNameElement.textContent = contactName;
-
-                    // Create the message element
-                    const messageElement = document.createElement('div');
-                    messageElement.classList.add('contact-message');
-                    // If in test mode, prepend "[TESTE]" to the message
-                    if (testMode) {
-                        messageElement.textContent = "[TESTE] " + messagePart;
-                    } else {
-                        messageElement.textContent = messagePart.replace(/^\n+/, '');
-                    }
-
-                    // Append the contact name and message to the contact bubble
-                    contactBubble.appendChild(contactNameElement);
-                    contactBubble.appendChild(messageElement);
-
-                    // Append the contact bubble to the bubble container
-                    bubbleContainer.appendChild(contactBubble);
-
-                    // Append the bubble container to the message text area
-                    messageText.appendChild(bubbleContainer);
-                });
-            });
-
-            messageModal.style.display = "block";
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
-            messageModal.style.display = "block";
-        });
-    testModeCheckbox.checked = true;
-});
-
-// Function to add contact
-function addContact(name, phone) {
-    const newContact = {
-        fullName: name,
-        phoneNumber: phone,
-        status: 'new',
-        timestamp: DEFAULT_TIME_STAMP,
-        isDeleted: false // Novo atributo
-    };
-    return addKeyToContact(newContact);
-}
-
-
-// Adicionar contato individualmente
-addContactBtn.addEventListener('click', async () => {
-    const name = newContactNameInput.value.trim();
-    let phone = newContactPhoneInput.value.trim();
-
-    // Remove espaços e caracteres não numéricos do número de telefone
-    phone = phone.replace(/\D/g, '');
-
-    if (name && phone) {
-        //Check if phonenumber is a number.
-        if (!/^\d+$/.test(phone)) {
-            alert("Por favor, insira um número de telefone válido (apenas dígitos).");
-            return;
-        }
-
-        const newContact = addContact(name, phone);
-        contacts.push(newContact);
-        await updateContactsOnServer(contacts);  // Save to server
-        renderContactLists(contacts,currentTab);
-        // Limpa os campos do formulário
-        newContactNameInput.value = '';
-        newContactPhoneInput.value = '';
-    } else {
-        alert('Por favor, preencha o nome e o número de telefone.');
-    }
-});
-
-// Add Socket.IO client-side library (you can use a CDN or install locally)
-const socket = io();
-
-// Function to save scroll positions
-function saveScrollPositions() {
-    const scrollPositions = {
-        contactList: document.getElementById('contactList').scrollTop,
-        contactListNew: document.getElementById('contactListNew').scrollTop,
-        contactListSent: document.getElementById('contactListSent').scrollTop,
-        contactListAnswered: document.getElementById('contactListAnswered').scrollTop
-    };
-    return scrollPositions;
-}
-
-// Function to restore scroll positions
-function restoreScrollPositions(scrollPositions) {
-    if (scrollPositions) {
-        document.getElementById('contactList').scrollTop = scrollPositions.contactList || 0;
-        document.getElementById('contactListNew').scrollTop = scrollPositions.contactListNew || 0;
-        document.getElementById('contactListSent').scrollTop = scrollPositions.contactListSent || 0;
-        document.getElementById('contactListAnswered').scrollTop = scrollPositions.contactListAnswered || 0;
+/**
+ * Shows the loading spinner for the specified tab.
+ * @param {string} tabId - The ID of the tab.
+ */
+function showLoadingSpinner(tabId) {
+    const loadingElement = getLoadingElement(tabId);
+    const contactListContainer = getContactListContainer(tabId);
+    if (loadingElement && contactListContainer) {
+        loadingElement.style.display = 'block';
+        contactListContainer.innerHTML = '';
     }
 }
 
-socket.on('contacts_updated', (updatedContacts) => {
-    // Save scroll positions *before* updating the DOM
-    const scrollPositions = saveScrollPositions();
-
-    console.log('Received updated contacts from server:', updatedContacts);
-    contacts = updatedContacts; // Update the local contacts array
-    contacts = contacts.map(contact => addKeyToContact(contact));
-    const searchTerm = searchInput.value.toLowerCase();
-    const filteredContacts = contacts.filter(contact =>
-        contact.fullName.toLowerCase().includes(searchTerm) ||
-        contact.phoneNumber.toLowerCase().includes(searchTerm)
-    );
-    renderContactLists(filteredContacts, currentTab); // Re-render the contact lists
-
-    // Restore scroll positions *after* updating the DOM
-    restoreScrollPositions(scrollPositions);
-});
-
-
-socket.on('synchronization_finished', () => {
-    finishLoading();
-});
-
-async function checkSynchronizationStatus() {
-  try {
-    const response = await fetch('/synchronization-status'); // Replace with your actual URL if different
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+/**
+ * Hides the loading spinner for the specified tab.
+ * @param {string} tabId - The ID of the tab.
+ */
+function hideLoadingSpinner(tabId) {
+    const loadingElement = getLoadingElement(tabId);
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
     }
-    const data = await response.json();
-    return data.synchronizationFinished;
-  } catch (error) {
-    console.error('Error checking synchronization status:', error);
-    return false; // Return false in case of an error to avoid unexpected behavior
-  }
 }
 
-function updateSynchronizationLoadingSpinner() {
-   checkSynchronizationStatus().then(status => { 
-    synchronizationFinished = status;
-    if (synchronizationFinished) {
-        finishLoading();
-    }
-  });
-}
-
+/**
+ * Finishes the loading process by removing the synchronization loading spinner, updating the label, and displaying relevant elements.
+ */
 function finishLoading() {
     const spinner = document.querySelector(".synchronization-loading-spinner");
     const label = document.querySelector(".synchronization-label");
@@ -1126,63 +1038,269 @@ function finishLoading() {
     if (messageArea) messageArea.style.display = "block";
     if (logoContainer) logoContainer.style.display = "none";
     if (sidebar) sidebar.style.pointerEvents = "auto";
+    if (sidebar) sidebar.style.display = "block";
 }
 
-
-// Function to show loading spinner
-function showLoadingSpinner(tabId) {
-    const loadingElement = getLoadingElement(tabId);
-    const contactListContainer = getContactListContainer(tabId);
-    if (loadingElement && contactListContainer) {
-        loadingElement.style.display = 'block';
-        contactListContainer.innerHTML = '';
+/**
+ * Updates the synchronization loading spinner based on the synchronization status.
+ */
+function updateSynchronizationLoadingSpinner() {
+   checkSynchronizationStatus().then(status => {
+    synchronizationFinished = status;
+    if (synchronizationFinished) {
+        finishLoading();
     }
+  });
 }
 
-// Function to hide loading spinner
-function hideLoadingSpinner(tabId) {
-    const loadingElement = getLoadingElement(tabId);
-    if (loadingElement) {
-        loadingElement.style.display = 'none';
+// ========================= Event Handlers =========================
+
+/**
+ * Handles the event when the delete selected contacts button is clicked.
+ * Marks the selected contacts as deleted and updates the contact lists on the server.
+ * @param {Event} event - The click event.
+ */
+async function handleDeleteSelectedContactsClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const selectedContactKeys = Array.from(selectedContacts.entries())
+        .filter(([key, value]) => value === true)
+        .map(([key, value]) => key);
+
+    if (selectedContactKeys.length === 0) {
+        showAlert('Nenhum contato selecionado.');
+        return;
     }
-}
 
-// Load contacts from the server on page load
-async function loadContactsFromServer() {
-    // Get the currently active tab
-    const activeTab = document.querySelector('.nav-link.active');
-    let activeTabId = 'all'; // Default value
-    if (activeTab) {
-        activeTabId = activeTab.getAttribute('data-bs-target').substring(1); // Remove the '#'
-    }
-
-    // Show loading spinner for the active tab
-    showLoadingSpinner(activeTabId);
-
-    try {
-        const response = await fetch('/update-contacts'); // Adjust the URL if needed
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        contacts = await response.json();
-        contacts = contacts.map(contact => addKeyToContact(contact));
-        // Initialize selectedContacts Map
+    if (showConfirmation('Tem certeza que deseja marcar os contatos selecionados como apagados?')) {
         contacts.forEach(contact => {
-            selectedContacts.set(contact.key, false);  // Initially, no contact is selected
+            if (selectedContactKeys.includes(contact.key)) {
+                contact.isDeleted = true;
+            }
         });
-        renderContactLists(contacts, activeTabId);
-    } catch (error) {
-        console.error('Failed to load contacts from server:', error);
-        alert('Failed to load contacts from server. Check the console for details.');
-        contacts = [];  // Ensure contacts is an empty array if loading fails
-    } finally {
-        renderContactLists(contacts, activeTabId);  // Render even if loading fails (shows an empty list)
+        await updateContactsOnServer(contacts);
+        renderContactLists(contacts,currentTab);
     }
 }
 
-// script.js
-document.addEventListener('DOMContentLoaded', () => {
+/**
+ * Handles the event when the navigation button is clicked.
+ * Sets the active tab, renders the contact lists, and loads the last used script for the new tab.
+ * @param {Event} event - The click event.
+ */
+function handleNavButtonClick(event) {
+    const targetTabPaneId = (event.target.getAttribute('data-bs-target')  || '#all').replace("#", "");
+    showLoadingSpinner(targetTabPaneId);
+    toggleAllContacts(false);
+    currentTab = targetTabPaneId;
+    renderContactLists(contacts, currentTab);
 
+    const lastScriptKey = localStorage.getItem(`lastScript-${targetTabPaneId}`);
+    if (lastScriptKey) {
+        scriptSelect.value = lastScriptKey;
+    } else{
+        scriptSelect.value = 'newScript';
+    }
+    scriptSelect.dispatchEvent(new Event('change'));
+}
+
+/**
+ * Handles the event when the send message button is clicked.
+ * Saves the script name to local storage.
+ */
+function handleSendMessageButtonClick() {
+    if (currentTab && currentScriptKey){
+        localStorage.setItem(`lastScript-${currentTab}`, currentScriptKey);
+    }
+}
+
+/**
+ * Handles the event when the load contacts button is clicked.
+ * Saves the selected column indexes to local storage and loads the contacts.
+ */
+async function handleLoadContactsButtonClick() {
+    saveColumnSelectionsToLocalStorage(nameColumnSelect.value, phoneColumnSelect.value);
+
+    await loadContacts();
+    csvColumnSelectDiv.style.display = 'none';
+}
+
+/**
+ * Handles the event when a search input is entered.
+ * Renders the contact lists based on the search term.
+ */
+function handleSearchInputChange() {
+    renderContactLists(contacts,currentTab);
+}
+
+/**
+ * Handles the event when the select all button is clicked.
+ * Selects all contacts in the current view.
+ */
+function handleSelectAllButtonClick() {
+    toggleAllContacts(true);
+}
+
+/**
+ * Handles the event when the deselect all button is clicked.
+ * Deselects all contacts in the current view.
+ */
+function handleDeselectAllButtonClick() {
+    toggleAllContacts(false);
+}
+
+/**
+ * Handles the event when the add contact button is clicked.
+ * Adds a new contact to the contact list.
+ */
+async function handleAddContactButtonClick() {
+    const name = newContactNameInput.value.trim();
+    let phone = newContactPhoneInput.value.trim();
+
+    phone = phone.replace(/\D/g, '');
+
+    if (name && phone) {
+        if (!/^\d+$/.test(phone)) {
+            showAlert("Por favor, insira um número de telefone válido (apenas dígitos).");
+            return;
+        }
+
+        const newContact = addContact(name, phone);
+        contacts.push(newContact);
+        await updateContactsOnServer(contacts);
+        renderContactLists(contacts,currentTab);
+
+        newContactNameInput.value = '';
+        newContactPhoneInput.value = '';
+    } else {
+        showAlert('Por favor, preencha o nome e o número de telefone.');
+    }
+}
+
+/**
+ * Handles the form submission event.
+ * Sends the selected contacts and message to the server.
+ * @param {Event} event - The submit event.
+ */
+function handleMainFormSubmit(event) {
+    event.preventDefault();
+
+    if (sendMessageBtn.disabled) {
+        showAlert('Por favor, selecione ao menos um contato antes de enviar as mensagens.');
+        return;
+    }
+
+    const contactsToSend = [];
+    contacts.forEach((contact) => {
+        if (selectedContacts.get(contact.key)) {
+            contactsToSend.push(contact);
+        }
+    });
+
+    const testModeCheckbox = document.getElementById('testMode');
+    const testMode = testModeCheckbox.checked;
+
+    let messageContent = document.getElementById('message').value;
+
+    const languageCode = Intl.DateTimeFormat().resolvedOptions().locale.split('-')[0];
+
+    messageContent = messageContent.replace(/\[greeting]/gi, getGreetings(languageCode));
+
+    fetch('/upload', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            contacts: contactsToSend,
+            message: messageContent,
+            testMode: testMode
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        messageText.innerHTML = '';
+
+        data.results.forEach(result => {
+            const contactName = result.contact;
+            const status = result.status;
+            const message = result.message;
+
+            const messageParts = message.split(/\[send\]/gi);
+
+            messageParts.forEach(messagePart => {
+                const bubbleContainer = document.createElement('div');
+                bubbleContainer.classList.add('contact-bubble-container');
+
+                if (status === 'success') {
+                    bubbleContainer.classList.add('outgoing');
+                }
+
+                const contactBubble = document.createElement('div');
+                contactBubble.classList.add('contact-bubble');
+                contactBubble.classList.add(status === 'success' ? 'outgoing' : 'incoming');
+
+                const contactNameElement = document.createElement('div');
+                contactNameElement.classList.add('contact-name');
+                contactNameElement.textContent = contactName;
+
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('contact-message');
+                if (testMode) {
+                    messageElement.textContent = "[TESTE] " + messagePart;
+                } else {
+                    messageElement.textContent = messagePart.replace(/^\n+/, '');
+                }
+
+                contactBubble.appendChild(contactNameElement);
+                contactBubble.appendChild(messageElement);
+
+                bubbleContainer.appendChild(contactBubble);
+                messageText.appendChild(bubbleContainer);
+            });
+        });
+        messageModal.style.display = "block";
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        messageText.textContent = 'Ocorreu um erro ao enviar as mensagens.';
+        messageModal.style.display = "block";
+    });
+    testModeCheckbox.checked = true;
+}
+
+// ========================= Socket.IO Handling =========================
+
+/**
+ * Saves scroll positions for all contact lists.
+ * @returns {object} An object containing the scroll positions for each contact list.
+ */
+function saveScrollPositions() {
+    const scrollPositions = {
+        contactList: document.getElementById('contactList').scrollTop,
+        contactListNew: document.getElementById('contactListNew').scrollTop,
+        contactListSent: document.getElementById('contactListSent').scrollTop,
+        contactListAnswered: document.getElementById('contactListAnswered').scrollTop
+    };
+    return scrollPositions;
+}
+
+/**
+ * Restores scroll positions for all contact lists.
+ * @param {object} scrollPositions - An object containing the scroll positions for each contact list.
+ */
+function restoreScrollPositions(scrollPositions) {
+    if (scrollPositions) {
+        document.getElementById('contactList').scrollTop = scrollPositions.contactList || 0;
+        document.getElementById('contactListNew').scrollTop = scrollPositions.contactListNew || 0;
+        document.getElementById('contactListSent').scrollTop = scrollPositions.contactListSent || 0;
+        document.getElementById('contactListAnswered').scrollTop = scrollPositions.contactListAnswered || 0;
+    }
+}
+
+// ========================= Initialization =========================
+function initializeQrCodeModal(socket){
     const qrCodeModal = document.getElementById('qrCodeModal');
     const qrCodeImage = document.getElementById('qrCodeImage');
     const qrCodeClose = document.getElementById('qrCodeClose');
@@ -1208,9 +1326,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Initialize Socket.IO connection
-    const socket = io(); //  No need to specify the URL if serving from the same origin
-
     // Listen for the 'qr' event from the server
     socket.on('qr', (qrCodeData) => {
         console.log('Received QR code data from server.');
@@ -1221,5 +1336,70 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Authenticated successfully!');
         closeQrCodeModal(); // Close the QR code modal
     });
-    loadContactsFromServer(); // Call the function from script.js
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Load settings from localStorage
+    loadSettingsFromLocalStorage();
+    // Initialize synchronization loading spinner
+    updateSynchronizationLoadingSpinner();
+    // Load scripts
+    loadScripts();
+    // Initialize with "New Script" selected
+    scriptSelect.value = 'newScript';
+    scriptSelect.dispatchEvent(new Event('change'));
+    const storedColumnSelections = loadColumnSelectionsFromLocalStorage();
+    loadContactsFromServer().then(contacts => {
+        renderContactLists(contacts, currentTab);
+    }).catch(error => {
+        console.error("Error on Load Contacts:", error);
+    });
+
+    const socket = io(); //  No need to specify the URL if serving from the same origin
+    initializeQrCodeModal(socket); //  No need to specify the URL if serving from the same origin
+
+    // Event listeners
+    deleteSelectionContacts.addEventListener('click', handleDeleteSelectedContactsClick);
+    navButton.addEventListener('click', handleNavButtonClick);
+    sendMessageBtn.addEventListener('click', handleSendMessageButtonClick);
+    fileInput.addEventListener('change', handleFileInputChange);
+    loadContactsBtn.addEventListener('click', handleLoadContactsButtonClick);
+    searchInput.addEventListener('input', handleSearchInputChange);
+    selectAllButton.addEventListener('click', handleSelectAllButtonClick);
+    deselectAllButton.addEventListener('click', handleDeselectAllButtonClick);
+    addContactBtn.addEventListener('click', handleAddContactButtonClick);
+    mainForm.addEventListener('submit', handleMainFormSubmit);
+
+    // Script Management
+    scriptSelect.addEventListener('change', handleScriptSelectionChange);
+    saveNewScriptBtn.addEventListener('click', saveNewScript);
+    deleteScriptBtn.addEventListener('click', deleteScript);
+    messageTextarea.addEventListener('input', () => {
+        if (currentScriptKey) {
+            saveMessageForScript(currentScriptKey, messageTextarea.value);
+        }
+    });
+
+    window.addEventListener('click', handleOutsideClick);
+    document.querySelector('.close').addEventListener('click', closeMessageModal);
+
+    socket.on('contacts_updated', (updatedContacts) => {
+        const scrollPositions = saveScrollPositions();
+
+        console.log('Received updated contacts from server:', updatedContacts);
+        contacts = updatedContacts;
+        contacts = contacts.map(contact => addKeyToContact(contact));
+        const searchTerm = searchInput.value.toLowerCase();
+        const filteredContacts = contacts.filter(contact =>
+            contact.fullName.toLowerCase().includes(searchTerm) ||
+            contact.phoneNumber.toLowerCase().includes(searchTerm)
+        );
+        renderContactLists(filteredContacts, currentTab);
+
+        restoreScrollPositions(scrollPositions);
+    });
+
+    socket.on('synchronization_finished', () => {
+        finishLoading();
+    });
 });

@@ -1,5 +1,5 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode'); // Changed require
+const qrcode = require('qrcode');
 const qrcodeTerminal = require('qrcode-terminal');
 const express = require('express');
 const fileUpload = require('express-fileupload');
@@ -8,7 +8,7 @@ const path = require('path');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const _ = require('lodash');
-require('dotenv').config(); // Carrega as variáveis de ambiente
+require('dotenv').config();
 
 const app = express();
 const port = 3000;
@@ -25,6 +25,15 @@ app.use(express.json({ limit: '1024mb' }));
 const dataDir = path.join(__dirname, 'data');
 const contactsFilePath = path.join(dataDir, 'contacts.json');
 const deletedContactsFilePath = path.join(dataDir, 'deleted_contacts.json');
+
+let client; // Declare client outside to make it accessible globally
+let whatsappReady = false;
+let contacts = [];
+let deletedContacts = [];
+let qrCodeGenerated = false; // Track if QR code has been generated
+let authenticatedTimestamp = null; // Track authentication time
+
+const AUTHENTICATION_TIMEOUT = 30000; // 30 seconds timeout
 
 async function ensureDataDirectoryExists() {
     try {
@@ -125,41 +134,130 @@ function removeDuplicateContacts(contacts) {
     return uniqueContacts;
 }
 
-const client = new Client({
-    authStrategy: new LocalAuth(),
-    puppeteer: {
-        headless: true,
-        executablePath: process.env.CHROME_EXECUTABLE_PATH, // Use a variável de ambiente
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    }
-});
 
-let whatsappReady = false;
-let contacts = [];
-let deletedContacts = [];
+async function initializeWhatsAppClient() {
+    client = new Client({
+        authStrategy: new LocalAuth(),
+        puppeteer: {
+            headless: true,
+            executablePath: process.env.CHROME_EXECUTABLE_PATH, // Use a variável de ambiente
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        }
+    });
 
-client.initialize();
+    client.on('qr', async qr => {
+        if (!qrCodeGenerated) { // Only generate and emit QR code once
+            try {
+                getQRcodeTerminal(qr);
+                const qrCodeDataURL = await qrcode.toDataURL(qr); // Generate base64 PNG
+                io.emit('qr', qrCodeDataURL); // Emit the base64 data URL to the client
+                qrCodeGenerated = true;
+            } catch (error) {
+                console.error('Error generating QR code:', error);
+            }
+        }
+    });
 
-client.on('qr', async qr => {
+    client.on('authenticated', () => {
+        console.log('Authenticated successfully!');
+        io.emit('authenticated'); // Emit authentication event to the client
+        qrCodeGenerated = false; // Reset QR code flag for next session
+        authenticatedTimestamp = Date.now(); // Record authentication time
+        //Set timeout to restart if ready event not called after authentication
+        setTimeout(() => {
+            if (!whatsappReady) {
+                console.log('Client authentication timeout. Restarting client...');
+                resetAndRestartClient();
+            }
+        }, AUTHENTICATION_TIMEOUT);
+    });
+
+    client.on('ready', async () => {
+        console.log('WhatsApp client is ready!');
+        whatsappReady = true;
+        try {
+            contacts = await loadContactsFromFile();
+            deletedContacts = await loadDeletedContactsFromFile();
+            console.log('Contacts loaded from file:', contacts.length, 'contacts.');
+            console.log('Deleted contacts loaded from file:', deletedContacts.length, 'deleted contacts.');
+
+            contacts = contacts.map(contact => ({
+                ...contact,
+                timestamp: contact.timestamp || new Date().toISOString(),
+                lastMessage: contact.lastMessage || ""
+            }));
+
+            await saveContactsToFile(contacts);
+        } catch (error) {
+            console.error('Failed to load contacts on ready:', error);
+        }
+
+        io.emit('contacts_updated', contacts);
+        await verifyAndFixContactStatuses();
+
+    });
+
+    client.on('message', async message => {
+        const senderNumber = message.from.replace('@c.us', '');
+        const messageTimestamp = new Date(message.timestamp * 1000).toISOString();
+        const lastMessageContent = await getMessageContent(message);
+
+        await updateContactStatus(senderNumber, 'answered', messageTimestamp, false, lastMessageContent);
+    });
+
+    client.on('disconnected', (reason) => {
+        console.log('Client was logged out', reason);
+        whatsappReady = false;
+        qrCodeGenerated = false; // Allow new QR code to be generated
+        authenticatedTimestamp = null; // Reset the authentication timestamp
+
+        // Attempt to restart the client after a delay
+        console.log('Attempting to restart the client...');
+        setTimeout(() => {
+            initializeWhatsAppClient().catch(err => {
+                console.error('Failed to restart client after disconnection:', err);
+            });
+        }, 5000); // Retry after 5 seconds
+    });
+
+
     try {
-        getQRcodeTerminal(qr);
-        const qrCodeDataURL = await qrcode.toDataURL(qr); // Generate base64 PNG
-        io.emit('qr', qrCodeDataURL); // Emit the base64 data URL to the client
+        await client.initialize();
     } catch (error) {
-        console.error('Error generating QR code:', error);
+        console.error('Error initializing WhatsApp client:', error);
+        // Optionally, handle the initialization error (e.g., retry after a delay)
+        setTimeout(() => {
+            initializeWhatsAppClient().catch(err => {
+                console.error('Failed to re-initialize client after initial error:', err);
+            });
+        }, 5000); // Retry after 5 seconds
     }
-});
+}
+
+async function resetAndRestartClient() {
+    console.log('Resetting and restarting the client...');
+    whatsappReady = false;
+    qrCodeGenerated = false;
+    authenticatedTimestamp = null;
+
+    try {
+        await client.destroy(); // Destroy the client instance
+    } catch (destroyError) {
+        console.error('Error destroying client:', destroyError);
+    }
+
+    setTimeout(() => {
+        initializeWhatsAppClient().catch(err => {
+            console.error('Failed to re-initialize client after reset:', err);
+        });
+    }, 5000); // Retry after 5 seconds
+}
+
 
 function getQRcodeTerminal(qr) {
     qrcodeTerminal.generate(qr, { small: true });
     console.log('Scan QR code to authenticate.');
 }
-
-
-client.on('authenticated', () => {
-    console.log('Authenticated successfully!');
-    io.emit('authenticated'); // Emit authentication event to the client
-});
 
 const MEDIA_TYPE_MAP = {
     image: "📸 Image",
@@ -296,40 +394,6 @@ async function verifyAndFixContactStatuses() {
 
     setInterval(checkSentMessagesAndSync, 2000);
 }
-
-client.on('ready', async () => {
-    console.log('WhatsApp client is ready!');
-    whatsappReady = true;
-    try {
-        contacts = await loadContactsFromFile();
-        deletedContacts = await loadDeletedContactsFromFile();
-        console.log('Contacts loaded from file:', contacts.length, 'contacts.');
-        console.log('Deleted contacts loaded from file:', deletedContacts.length, 'deleted contacts.');
-
-
-        contacts = contacts.map(contact => ({
-            ...contact,
-            timestamp: contact.timestamp || new Date().toISOString(),
-            lastMessage: contact.lastMessage || ""
-        }));
-
-        await saveContactsToFile(contacts);
-    } catch (error) {
-        console.error('Failed to load contacts on ready:', error);
-    }
-
-    io.emit('contacts_updated', contacts);
-    await verifyAndFixContactStatuses();
-
-});
-
-client.on('message', async message => {
-    const senderNumber = message.from.replace('@c.us', '');
-    const messageTimestamp = new Date(message.timestamp * 1000).toISOString();
-    const lastMessageContent = await getMessageContent(message);
-
-    await updateContactStatus(senderNumber, 'answered', messageTimestamp, false, lastMessageContent);
-});
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
@@ -557,7 +621,7 @@ async function updateContactStatus(phoneNumber, newStatus, timestamp, isDeleted,
 
             console.log(`Contact ${phoneNumber} status updated to ${newStatus}, timestamp: ${timestamp}, isDeleted: ${isDeleted}, lastMessage: ${lastMessage}`);
         }
-    } 
+    }
 }
 
 io.on('connection', (socket) => {
@@ -573,6 +637,10 @@ io.on('connection', (socket) => {
 ensureDataDirectoryExists().then(() => {
     httpServer.listen(port, () => {
         console.log(`Server running on http://localhost:${port}`);
+        // Initialize WhatsApp client after the server starts listening
+        initializeWhatsAppClient().catch(err => {
+            console.error('Failed to initialize WhatsApp client:', err);
+        });
     });
 });
 
