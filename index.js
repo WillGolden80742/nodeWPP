@@ -356,13 +356,13 @@ app.post('/upload', async (req, res) => {
                             await client.sendMessage(chatId, part.trim());
                             // Add a delay between messages (optional, adjust as needed)
                             await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+                            console.log(`Message ${testMode ? '(TEST) ' : ''}sent to ${fullName} (${cleanedNumber}): "${part.trim()}"`);
                         }
                     }
 
                     const messageTimestamp = new Date().toISOString();
-                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp, contact.deleted, personalizedMessage, true); // save entire message
+                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp, contact.deleted, messageParts[messageParts.length - 1], true); // save entire message
                 }
-                console.log(`Message ${testMode ? '(TEST) ' : ''}sent to ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);
                 results.push({ contact: fullName, status: 'success', message: personalizedMessage });
                 successCount++;
             } catch (err) {
