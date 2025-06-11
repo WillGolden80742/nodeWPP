@@ -4,8 +4,9 @@ A simple yet powerful application built with Node.js and WhatsApp Web.js, design
 
 ## Features
 
-*   **Bulk Messaging:** Send personalized WhatsApp messages to multiple contacts simultaneously.
+*   **Bulk Messaging:** Send personalized WhatsApp messages to multiple contacts sequentially.
 *   **CSV & VCF Contact Import:** Easily import contacts from CSV or VCF files.
+*   **Segmented Messages with `[send]` Tag:** Break up long messages into multiple parts using the `[send]` tag.  The application will send each part as a separate message, allowing you to bypass message length limitations or create engaging conversational flows.
 *   **Dynamic Message Personalization:** Craft personalized messages with placeholders like `[name]` for the contact's name and `[greeting]` for a time-of-day-based greeting.
 *   **Contact Management:**  Seamlessly add new contacts individually or through file import, update existing contact information (like names), and mark contacts as deleted directly from the UI.
 *   **Message Status Tracking:**  Monitor the status of each message: `new` (not yet sent), `sent`, or `answered` (if the contact replied).
@@ -94,10 +95,19 @@ A simple yet powerful application built with Node.js and WhatsApp Web.js, design
 5.  **Compose Your Message:**  Write your message in the text area. Use these placeholders for dynamic content:
     *   `[name]`:  Replaced with the contact's full name.
     *   `[greeting]`:  Replaced with a greeting appropriate for the time of day (e.g., "Good morning," "Good afternoon," "Good evening").
+    *   `[send]`:  **Crucial for segmenting long messages.**  Insert this tag at points where you want to divide your message into separate parts.  Each section separated by `[send]` will be sent as an individual message.
+
+    **Example:**
+
+    ```
+    Hi [name], [greeting]! This is the first part of my message. [send] Here is the second part of my message, providing more details. [send]  Finally, a call to action!
+    ```
+
+    This example will result in *three* separate WhatsApp messages being sent to the contact.
 
 6.  **Contact Selection:** In the contact list, check the boxes next to the contacts you want to message.  Use the "Select All" and "Deselect All" buttons to make selection easier. The smart tab system helps segment your contacts for efficient targeting.
 
-7.  **Send Messages!** Click the "Send Message" button to start sending your personalized messages.  View the results in the modal window that pops up.
+7.  **Send Messages!** Click the "Send Message" button to start sending your personalized messages.  View the results in the modal window that pops up. The modal will display *each message part* that was sent.
 
 ## CSV File Format
 
@@ -114,9 +124,19 @@ Jane Smith;5521888888888
 ## Important Considerations
 
 *   **Abide by WhatsApp's Terms:**  Use this tool responsibly and ethically. Sending unsolicited messages or spam can result in your WhatsApp account being banned.
-*   **Implement Rate Limiting:** Consider adding a delay between messages to avoid triggering anti-spam measures.
+*   **Implement Rate Limiting:** Consider adding a delay between messages to avoid triggering anti-spam measures. *The code already includes a 500ms delay between message parts, but you can adjust this.*
 *   **Robust Error Handling:** Expand the error handling to gracefully manage issues such as invalid phone numbers, network disruptions, and WhatsApp API errors.
 *   **Scalability Planning:** This application is best suited for small to medium-sized contact lists. For sending to thousands of contacts, explore official WhatsApp Business API solutions.
 *   **Secure Credentials:**  Never hardcode sensitive information directly into the source code. Use environment variables or a secure configuration management system for API keys and other sensitive data.
 
 Enjoy streamlining your WhatsApp communication!
+```
+
+Key changes and explanations:
+
+*   **`[send]` Tag Explanation:** The feature list now *explicitly mentions* the segmented messages and the `[send]` tag. The Usage section gives a clear and detailed example of *how* to use it.
+*   **More Detail in Usage:** The `Usage` section has been expanded to provide a clearer step-by-step guide, especially around composing messages.
+*   **500ms Delay Mentioned:** Added a note to the "Important Considerations" that the code *already* implements a delay, and that you can adjust it. This helps users understand the existing rate-limiting behavior.
+*   **Clarity and Flow:** The text was edited for better readability and flow.
+
+This refactored `README.md` provides a complete explanation of how to use the new segmented messaging feature and better prepares the user for successful operation of the application.
