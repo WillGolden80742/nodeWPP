@@ -413,6 +413,30 @@ app.post('/update-contacts', async (req, res) => {
     updatedContacts = removeDuplicateContacts(updatedContacts);
 
     try {
+
+        // Load the current deleted contacts.
+        const currentDeletedContacts = await loadDeletedContactsFromFile();
+
+        // Filter out contacts from deletedContacts.json that are present in the updatedContacts array and are NOT marked as deleted.
+        const deletedContactsToRemove = updatedContacts.filter(updatedContact => {
+            return !updatedContact.deleted && currentDeletedContacts.some(deletedContact => deletedContact.phoneNumber === updatedContact.phoneNumber);
+        });
+
+
+        if (deletedContactsToRemove.length > 0) {
+
+            //Remove from currentDeletedContacts
+            deletedContacts = currentDeletedContacts.filter(deletedContact => !deletedContactsToRemove.find(contactToRemove => contactToRemove.phoneNumber === deletedContact.phoneNumber));
+
+            // Save the updated deleted contacts array.
+            const jsonData = JSON.stringify(_.uniqBy(deletedContacts, 'phoneNumber'), null, 2);
+            await fs.writeFile(deletedContactsFilePath, jsonData);
+
+            console.log(`Removed ${deletedContactsToRemove.length} contacts from deleted_contacts.json.`);
+
+        }
+
+
         await saveContactsToFile(updatedContacts);
         contacts = updatedContacts;
 
