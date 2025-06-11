@@ -543,9 +543,7 @@ async function updateContactStatus(phoneNumber, newStatus, timestamp, deleted, l
 
             console.log(`Contact ${phoneNumber} status updated to ${newStatus}, timestamp: ${timestamp}, deleted: ${deleted}, lastMessage: ${lastMessage}`);
         }
-    } else {
-        console.warn(`Contact with phone number ${phoneNumber} not found.`);
-    }
+    } 
 }
 
 io.on('connection', (socket) => {
