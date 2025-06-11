@@ -1180,6 +1180,46 @@ async function loadContactsFromServer() {
     }
 }
 
+// script.js
 document.addEventListener('DOMContentLoaded', () => {
+
+    const qrCodeModal = document.getElementById('qrCodeModal');
+    const qrCodeImage = document.getElementById('qrCodeImage');
+    const qrCodeClose = document.getElementById('qrCodeClose');
+
+    // Function to open the QR code modal
+    function openQrCodeModal(qrCodeData) {
+        qrCodeImage.src = qrCodeData;  // Set the image source
+        qrCodeModal.style.display = 'block';
+    }
+
+    // Function to close the QR code modal
+    function closeQrCodeModal() {
+        qrCodeModal.style.display = 'none';
+    }
+
+    // Event listener to close the modal
+    qrCodeClose.addEventListener('click', closeQrCodeModal);
+
+    // Close the modal if the user clicks outside of it
+    window.addEventListener('click', (event) => {
+        if (event.target === qrCodeModal) {
+            closeQrCodeModal();
+        }
+    });
+
+    // Initialize Socket.IO connection
+    const socket = io(); //  No need to specify the URL if serving from the same origin
+
+    // Listen for the 'qr' event from the server
+    socket.on('qr', (qrCodeData) => {
+        console.log('Received QR code data from server.');
+        openQrCodeModal(qrCodeData); // Display the QR code in the modal
+    });
+
+    socket.on('authenticated', () => {
+        console.log('Authenticated successfully!');
+        closeQrCodeModal(); // Close the QR code modal
+    });
     loadContactsFromServer(); // Call the function from script.js
 });

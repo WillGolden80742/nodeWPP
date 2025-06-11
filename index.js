@@ -1,5 +1,6 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
+const qrcode = require('qrcode'); // Changed require
+const qrcodeTerminal = require('qrcode-terminal');
 const express = require('express');
 const fileUpload = require('express-fileupload');
 const fs = require('fs').promises;
@@ -137,16 +138,27 @@ let whatsappReady = false;
 let contacts = [];
 let deletedContacts = [];
 
-
 client.initialize();
 
-client.on('qr', qr => {
-    qrcode.generate(qr, { small: true });
-    console.log('Scan QR code to authenticate.');
+client.on('qr', async qr => {
+    try {
+        getQRcodeTerminal(qr);
+        const qrCodeDataURL = await qrcode.toDataURL(qr); // Generate base64 PNG
+        io.emit('qr', qrCodeDataURL); // Emit the base64 data URL to the client
+    } catch (error) {
+        console.error('Error generating QR code:', error);
+    }
 });
+
+function getQRcodeTerminal(qr) {
+    qrcodeTerminal.generate(qr, { small: true });
+    console.log('Scan QR code to authenticate.');
+}
+
 
 client.on('authenticated', () => {
     console.log('Authenticated successfully!');
+    io.emit('authenticated'); // Emit authentication event to the client
 });
 
 const MEDIA_TYPE_MAP = {

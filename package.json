@@ -17,6 +17,7 @@
     "lodash": "^4.17.21",
     "multer": "^2.0.0",
     "puppeteer": "^22.8.2",
+    "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
     "socket.io": "^4.8.1",
     "vcard-json": "^0.5.2",
