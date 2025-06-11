@@ -409,6 +409,22 @@ const normalizePhoneNumber = (phoneNumber, defaultCountryCode, defaultDdd) => {
     return cleanedNumber;
 };
 
+function formatContactName(name) {
+  if (!name) return '';
+
+  const cleanedName = name.replace(/[^a-zA-Z\u00C0-\u017F\s]/g, ''); // Remove non-alphabetic characters EXCEPT accented letters
+  if (!cleanedName) return '';
+
+  const nameParts = cleanedName.split(' ').filter(part => part !== ''); // Split into parts and remove empty strings
+  if (nameParts.length === 0) return '';
+
+  const firstName = nameParts[0]; // Take the first part as the first name
+  if (!firstName) return '';
+
+  const lowerCaseName = firstName.toLowerCase();
+  return lowerCaseName.charAt(0).toUpperCase() + lowerCaseName.slice(1); // Capitalize the first letter
+}
+
 app.post('/update-contacts', async (req, res) => {
     console.log("Update contacts endpoint called");
     console.log("Request body:", req.body);
@@ -423,8 +439,12 @@ app.post('/update-contacts', async (req, res) => {
 
     updatedContacts = updatedContacts.map(contact => {
         const normalizedNumber = normalizePhoneNumber(contact.phoneNumber, defaultCountryCode, defaultDdd);
+
+        const formattedName = formatContactName(contact.fullName);
+
         return {
             ...contact,
+            fullName: formattedName,
             phoneNumber: normalizedNumber,
             timestamp: contact.timestamp || new Date().toISOString(),
             lastMessage: contact.lastMessage || ""
