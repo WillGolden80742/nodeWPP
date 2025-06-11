@@ -6,7 +6,9 @@ const fs = require('fs').promises;
 const path = require('path');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
-const _ = require('lodash'); // Require lodash library
+const _ = require('lodash');
+require('dotenv').config(); // Carrega as variáveis de ambiente
+
 const app = express();
 const port = 3000;
 let synchronizationFinished = false;
@@ -126,7 +128,7 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        executablePath: process.env.CHROME_EXECUTABLE_PATH, // Use a variável de ambiente
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     }
 });
