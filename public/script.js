@@ -939,44 +939,49 @@ mainForm.addEventListener('submit', function (event) {
                 const status = result.status;
                 const message = result.message;
 
-                // Create the container for the contact bubble
-                const bubbleContainer = document.createElement('div');
-                bubbleContainer.classList.add('contact-bubble-container');
+                const messageParts = message.split(/\[send\]/gi);
 
-                // Add 'outgoing' class if the message was successfully sent
-                if (status === 'success') {
-                    bubbleContainer.classList.add('outgoing');
-                }
+                messageParts.forEach(messagePart => { 
 
-                // Create the contact bubble
-                const contactBubble = document.createElement('div');
-                contactBubble.classList.add('contact-bubble');
-                contactBubble.classList.add(status === 'success' ? 'outgoing' : 'incoming');
+                    // Create the container for the contact bubble
+                    const bubbleContainer = document.createElement('div');
+                    bubbleContainer.classList.add('contact-bubble-container');
 
-                // Create the contact name element
-                const contactNameElement = document.createElement('div');
-                contactNameElement.classList.add('contact-name');
-                contactNameElement.textContent = contactName;
+                    // Add 'outgoing' class if the message was successfully sent
+                    if (status === 'success') {
+                        bubbleContainer.classList.add('outgoing');
+                    }
 
-                // Create the message element
-                const messageElement = document.createElement('div');
-                messageElement.classList.add('contact-message');
-                messageElement.textContent = message;
+                    // Create the contact bubble
+                    const contactBubble = document.createElement('div');
+                    contactBubble.classList.add('contact-bubble');
+                    contactBubble.classList.add(status === 'success' ? 'outgoing' : 'incoming');
 
-                // If in test mode, prepend "[TESTE]" to the message
-                if (testMode) {
-                    messageElement.textContent = "[TESTE] " + message;
-                }
+                    // Create the contact name element
+                    const contactNameElement = document.createElement('div');
+                    contactNameElement.classList.add('contact-name');
+                    contactNameElement.textContent = contactName;
 
-                // Append the contact name and message to the contact bubble
-                contactBubble.appendChild(contactNameElement);
-                contactBubble.appendChild(messageElement);
+                    // Create the message element
+                    const messageElement = document.createElement('div');
+                    messageElement.classList.add('contact-message');
+                    // If in test mode, prepend "[TESTE]" to the message
+                    if (testMode) {
+                        messageElement.textContent = "[TESTE] " + messagePart;
+                    } else {
+                        messageElement.textContent = messagePart.replace(/^\n+/, '');
+                    }
 
-                // Append the contact bubble to the bubble container
-                bubbleContainer.appendChild(contactBubble);
+                    // Append the contact name and message to the contact bubble
+                    contactBubble.appendChild(contactNameElement);
+                    contactBubble.appendChild(messageElement);
 
-                // Append the bubble container to the message text area
-                messageText.appendChild(bubbleContainer);
+                    // Append the contact bubble to the bubble container
+                    bubbleContainer.appendChild(contactBubble);
+
+                    // Append the bubble container to the message text area
+                    messageText.appendChild(bubbleContainer);
+                });
             });
 
             messageModal.style.display = "block";

@@ -269,7 +269,7 @@ async function verifyAndFixContactStatuses() {
                 console.log(`No messages found for ${contact.phoneNumber}.`);
             }
         } catch (error) {
-            console.error(`Error processing chat for ${contact.phoneNumber}:`, error.message);
+            console.error(`Error processing chat for ${phoneNumber}:`, error.message);
         }
     }
 
@@ -345,11 +345,22 @@ app.post('/upload', async (req, res) => {
             const chatId = `${cleanedNumber}@c.us`;
             const personalizedMessage = messageTemplate.replace(/\[name\]/gi, fullName);
 
+            // Split the personalized message by the "[send]" tag
+            const messageParts = personalizedMessage.split(/\[send\]/gi);
+
             try {
                 if (!testMode) {
-                    await client.sendMessage(chatId, personalizedMessage);
+                    // Send each part of the message sequentially
+                    for (const part of messageParts) {
+                        if (part.trim() !== "") { // Avoid sending empty strings
+                            await client.sendMessage(chatId, part.trim());
+                            // Add a delay between messages (optional, adjust as needed)
+                            await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+                        }
+                    }
+
                     const messageTimestamp = new Date().toISOString();
-                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp, contact.deleted, personalizedMessage);
+                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp, contact.deleted, personalizedMessage, true); // save entire message
                 }
                 console.log(`Message ${testMode ? '(TEST) ' : ''}sent to ${fullName} (${cleanedNumber}): "${personalizedMessage}"`);
                 results.push({ contact: fullName, status: 'success', message: personalizedMessage });
