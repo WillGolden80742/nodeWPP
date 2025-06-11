@@ -57,7 +57,19 @@ async function loadDeletedContactsFromFile() {
         if (error.code === 'ENOENT') {
             console.warn('Deleted contacts file not found, returning empty list.');
             return [];
-        } else {
+        } else if (error instanceof SyntaxError) {
+            console.error('Error parsing deleted contacts file (invalid JSON):', error);
+            // If the file contains invalid JSON, overwrite it with an empty array
+            try {
+                await fs.writeFile(deletedContactsFilePath, '[]');
+                console.log('Deleted contacts file reset due to invalid JSON.');
+                return [];
+            } catch (writeError) {
+                console.error('Error resetting deleted contacts file:', writeError);
+                return [];
+            }
+        }
+        else {
             console.error('Error reading deleted contacts file:', error);
             return [];
         }
@@ -81,15 +93,13 @@ async function saveDeletedContactsToFile(contacts) {
         const currentDeletedContacts = await loadDeletedContactsFromFile();
         const deletedContacts = contacts.filter(contact => contact.deleted);
         currentDeletedContacts.push(...deletedContacts);
-        const jsonData = JSON.stringify(_.uniqBy(currentDeletedContacts, 'phoneNumber'),null, 2);
+        const jsonData = JSON.stringify(_.uniqBy(currentDeletedContacts, 'phoneNumber'), null, 2);
         await fs.writeFile(deletedContactsFilePath, jsonData);
         console.log('Contacts saved to file.');
     } catch (error) {
         console.error('Error writing contacts file:', error);
     }
 }
-
-        
 
 // Function to remove duplicate contacts based on phone number
 function removeDuplicateContacts(contacts) {
@@ -210,7 +220,7 @@ async function fetchContactNameAndMaybeUpdate(phoneNumber, chatId) {
                 // Persist contacts to file. This must be done or else the new contact will be lost on restart.
                 await saveContactsToFile(contacts);
                 // Update the contactStatus with default values.
-                await updateContactStatus(phoneNumber, contact.status, contact.timestamp,contact.deleted, contact.lastMessage, false);
+                await updateContactStatus(phoneNumber, contact.status, contact.timestamp, contact.deleted, contact.lastMessage, false);
             } catch (serverUpdateError) {
                 console.error("Error updating contacts on the server:", serverUpdateError.message);
             }
@@ -478,7 +488,7 @@ async function checkSentMessagesAndSync() {
             const chatId = chat.id._serialized; // Use _serialized for the full ID
 
             let contact = await fetchContactNameAndMaybeUpdate(phoneNumber, chatId);
-            if(!contact){
+            if (!contact) {
                 continue;
             }
 
