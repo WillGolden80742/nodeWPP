@@ -1,35 +1,36 @@
-# nodeWPP - WhatsApp Message Sender
+# nodeWPP - WhatsApp Bulk Message Sender
 
-A simple application built with Node.js and WhatsApp Web.js to send bulk messages to a list of contacts. You can import contacts from CSV or VCF files, personalize messages using templates, and track the status of sent messages.
+A simple yet powerful application built with Node.js and WhatsApp Web.js, designed to streamline your communication by sending bulk messages to a list of contacts.  Import contacts from CSV or VCF files, personalize messages using templates, and track the delivery status.
 
 ## Features
 
-*   **Bulk Message Sending:** Send personalized messages to a list of contacts.
-*   **Contact Import:** Import contacts from CSV or VCF files.
-*   **Message Personalization:** Use templates to personalize messages with contact names and greetings.
-*   **Contact Management:** Add, update, and delete contacts directly within the application.
-*   **Contact Status Tracking:** Track the status of sent messages (new, sent, answered).
-*   **Script Management:** Save and reuse message templates as scripts.
-*   **Test Mode:** Test message sending without actually sending the messages.
-*   **Settings:** Configure default country code and area code (DDD).
-*   **Duplicate Contact Handling:** Automatically removes duplicate contacts, prioritizing those not marked as deleted.
-*   **Contact Name Verification:**  Fetches and updates contact names from the WhatsApp API if the name is generic or missing.
+*   **Bulk Messaging:** Send personalized WhatsApp messages to multiple contacts simultaneously.
+*   **CSV & VCF Contact Import:** Easily import contacts from CSV or VCF files.
+*   **Dynamic Message Personalization:** Craft personalized messages with placeholders like `[name]` for the contact's name and `[greeting]` for a time-of-day-based greeting.
+*   **Contact Management:**  Seamlessly add new contacts individually or through file import, update existing contact information (like names), and mark contacts as deleted directly from the UI.
+*   **Message Status Tracking:**  Monitor the status of each message: `new` (not yet sent), `sent`, or `answered` (if the contact replied).
+*   **Script Saving and Reusing:** Save your most frequently used messages as "scripts" for quick access and reuse.  Manage and delete scripts within the application.
+*   **Test Mode (Sandbox):** Safely test your message sending setup without sending actual WhatsApp messages.
+*   **Configurable Settings:** Tailor the application to your region by setting the default country code and area code (DDD).
+*   **Duplicate Prevention:**  Automatically handles duplicate contacts based on phone number, prioritizing the contact *not* marked as deleted.
+*   **Automatic Contact Name Enrichment:**  When the application encounters contacts with generic names ("Contact") or missing names, it automatically attempts to fetch the name from the WhatsApp API to improve contact recognition.
+*   **Smart Tab System:** Efficiently organizes contacts by status (all, new, sent, answered), making it easy to manage your contacts and target your messaging.  Remembers the last used script for each tab.
 
 ## Technologies Used
 
-*   Node.js
-*   Express.js
-*   WhatsApp Web.js
-*   Socket.IO
-*   Express-Fileupload
-*   qrcode-terminal
-*   Lodash
+*   **Node.js:**  The runtime environment for executing JavaScript server-side.
+*   **Express.js:**  A minimalist web application framework for Node.js.
+*   **WhatsApp Web.js:**  A library for interacting with the WhatsApp Web client.
+*   **Socket.IO:**  Enables real-time, bidirectional communication between web clients and servers.
+*   **Express-Fileupload:**  Middleware for handling file uploads in Express.
+*   **qrcode-terminal:**  Generates QR codes in the terminal for WhatsApp Web authentication.
+*   **Lodash:**  A utility library providing functions for common programming tasks.
 
 ## Prerequisites
 
-*   Node.js (v16 or higher recommended)
-*   npm (Node Package Manager)
-*   Google Chrome (installed in the default location for executablePath)
+*   **Node.js:**  (v16 or higher recommended) - Download from [https://nodejs.org/](https://nodejs.org/)
+*   **npm (Node Package Manager):**  Installed automatically with Node.js.
+*   **Google Chrome:**  Required for WhatsApp Web.js to function. Must be installed in a standard location for the default `executablePath`.
 
 ## Installation
 
@@ -48,15 +49,27 @@ A simple application built with Node.js and WhatsApp Web.js to send bulk message
 
 ## Configuration
 
-*   **Executable Path:** Ensure the `executablePath` in `index.js` points to your Chrome installation.  The default is:
+1.  **Locate Chrome Executable:** Find the correct path to your Chrome executable.  This is *critical* for the application to work.
+
+2.  **Update `index.js`:** Edit the `index.js` file and update the `executablePath` within the `puppeteer` options of the `Client` constructor:
 
     ```javascript
-    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+    const client = new Client({
+        authStrategy: new LocalAuth(),
+        puppeteer: {
+            headless: true,
+            executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',  // <-- ADJUST THIS PATH
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        }
+    });
     ```
 
-    You may need to adjust this path based on your operating system and Chrome installation location.  If you are deploying on a system where Chrome isn't directly installed (e.g., a server), you may need to explore alternative browser configurations using Puppeteer.
+    **Important:**
+    *   **Windows:**  The default path is often correct.
+    *   **macOS:**  The path might be `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`
+    *   **Linux:**  The path depends on how you installed Chrome (e.g., `/usr/bin/google-chrome`).  If Chrome is *not* directly installed on a server, consider using a headless Chrome solution like [Puppeteer's Chromium](https://pptr.dev/).
 
-*   **Country Code and DDD:** Configure the default country code and DDD in the application settings (accessed via the cog icon in the UI).  These settings are used to normalize phone numbers.
+3.  **Regional Settings:** Configure your default country code and area code (DDD) within the application settings. This will improve phone number handling. Click on the cog icon in the UI to access the settings.
 
 ## Usage
 
@@ -66,28 +79,29 @@ A simple application built with Node.js and WhatsApp Web.js to send bulk message
     npm start
     ```
 
-2.  **Open the application in your browser:**
+2.  **Access the application:** Open your web browser and go to:
 
     ```
     http://localhost:3000
     ```
 
-3.  **Authenticate with WhatsApp:** A QR code will be displayed in the console. Scan the QR code using your WhatsApp mobile app to authenticate.
+3.  **Authenticate with WhatsApp Web:** The application will display a QR code in the terminal. Open WhatsApp on your phone, go to "Linked Devices," and scan the QR code to authenticate.
 
-4.  **Import Contacts:** Import your contacts from a CSV or VCF file.  For CSV files, you'll need to select the columns containing the name and phone number.
+4.  **Import Contacts:**
+    *   **CSV:** Select a CSV file, then choose the correct columns for "Name" and "Phone Number."
+    *   **VCF:** Select a VCF file. Contacts will be loaded automatically.
 
-5.  **Compose Message:** Write your message in the text area.  You can use the following placeholders:
-
+5.  **Compose Your Message:**  Write your message in the text area. Use these placeholders for dynamic content:
     *   `[name]`:  Replaced with the contact's full name.
-    *   `[greeting]`: Replaced with a personalized greeting based on the time of day.
+    *   `[greeting]`:  Replaced with a greeting appropriate for the time of day (e.g., "Good morning," "Good afternoon," "Good evening").
 
-6.  **Select Contacts:** Choose the contacts you want to send the message to.
+6.  **Contact Selection:** In the contact list, check the boxes next to the contacts you want to message.  Use the "Select All" and "Deselect All" buttons to make selection easier. The smart tab system helps segment your contacts for efficient targeting.
 
-7.  **Send Message:** Click the "Send Message" button to send the message to the selected contacts.
+7.  **Send Messages!** Click the "Send Message" button to start sending your personalized messages.  View the results in the modal window that pops up.
 
 ## CSV File Format
 
-The CSV file should be a semicolon-separated file. The first line should contain headers for the columns.
+CSV files must be semicolon-separated. The first row must be a header row.
 
 Example:
 
@@ -95,13 +109,13 @@ Example:
 nome;telefone
 John Doe;5511999999999
 Jane Smith;5521888888888
-```
 
 ## Important Considerations
 
-*   **WhatsApp Usage Policy:** Be aware of WhatsApp's usage policies regarding automated messaging. Sending unsolicited messages or spam can lead to your account being banned.
-*   **Rate Limiting:**  Consider implementing rate limiting to avoid overwhelming the WhatsApp API and potentially triggering anti-spam measures.
-*   **Error Handling:**  The current implementation includes basic error handling, but you should enhance it to handle potential issues like invalid phone numbers, network errors, and WhatsApp API errors.
-*   **Scalability:** This application is designed for small to medium-scale message sending.  For larger volumes, you might need to explore more robust solutions using official WhatsApp Business API.
-*   **Security:**  Storing sensitive information like API keys or credentials directly in the code is not recommended.  Use environment variables or a secure configuration management solution instead.
+*   **Abide by WhatsApp's Terms:**  Use this tool responsibly and ethically. Sending unsolicited messages or spam can result in your WhatsApp account being banned.
+*   **Implement Rate Limiting:** Consider adding a delay between messages to avoid triggering anti-spam measures.
+*   **Robust Error Handling:** Expand the error handling to gracefully manage issues such as invalid phone numbers, network disruptions, and WhatsApp API errors.
+*   **Scalability Planning:** This application is best suited for small to medium-sized contact lists. For sending to thousands of contacts, explore official WhatsApp Business API solutions.
+*   **Secure Credentials:**  Never hardcode sensitive information directly into the source code. Use environment variables or a secure configuration management system for API keys and other sensitive data.
 
+Enjoy streamlining your WhatsApp communication!
