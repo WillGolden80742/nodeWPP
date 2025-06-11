@@ -892,8 +892,9 @@ async function deleteContact(keyToDelete) {
  */
 function toggleAllContacts(shouldCheck) {
     const searchTerm = searchInput.value.toLowerCase();
-    const currentTab = this.currentTab || 'all';
-
+    const activeTab = document.querySelector('.nav-link.active');
+    const currentTab = activeTab ? activeTab.getAttribute('data-bs-target').substring(1) : 'all';
+    
     selectedContacts = new Map();
 
     if (shouldCheck) {
