@@ -65,7 +65,7 @@ deleteSelectionContacts.addEventListener('click', async (event) => {
         // Marca os contatos selecionados como apagados
         contacts.forEach(contact => {
             if (selectedContactKeys.includes(contact.key)) {
-                contact.deleted = true;
+                contact.isDeleted = true;
             }
         });
         await updateContactsOnServer(contacts);
@@ -328,7 +328,7 @@ async function loadContacts() {
     newContacts.forEach(newContact => {
         newContact.status = "new";  // Set initial status
         newContact.timestamp = DEFAULT_TIME_STAMP;  // Initialize timestamp
-        newContact.deleted = false;  // Initialize deleted flag
+        newContact.isDeleted = false;  // Initialize deleted flag
         contacts.push(newContact);
     });
 
@@ -750,9 +750,9 @@ function getLoadingElement(tabId) {
 function renderContactLists(contactList, tabId = 'all') {
     const searchTerm = searchInput.value.toLowerCase();
     const filteredContacts = contactList.filter(contact =>
-        contact.fullName.toLowerCase().includes(searchTerm) && !contact.deleted||
+        contact.fullName.toLowerCase().includes(searchTerm) && !contact.isDeleted||
         contact.phoneNumber.toLowerCase().includes(searchTerm)
-        && !contact.deleted
+        && !contact.isDeleted
     );
     let contactsToRender;
     switch (tabId) {
@@ -788,7 +788,7 @@ async function deleteContact(keyToDelete) {
     if (contactToUpdateIndex !== -1) {
         contacts[contactToUpdateIndex] = {
             ...contacts[contactToUpdateIndex],
-            deleted: true
+            isDeleted: true
         };
 
         await updateContactsOnServer(contacts);
@@ -1001,7 +1001,7 @@ function addContact(name, phone) {
         phoneNumber: phone,
         status: 'new',
         timestamp: DEFAULT_TIME_STAMP,
-        deleted: false // Novo atributo
+        isDeleted: false // Novo atributo
     };
     return addKeyToContact(newContact);
 }
