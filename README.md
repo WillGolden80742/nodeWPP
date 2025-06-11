@@ -130,13 +130,3 @@ Jane Smith;5521888888888
 *   **Secure Credentials:**  Never hardcode sensitive information directly into the source code. Use environment variables or a secure configuration management system for API keys and other sensitive data.
 
 Enjoy streamlining your WhatsApp communication!
-```
-
-Key changes and explanations:
-
-*   **`[send]` Tag Explanation:** The feature list now *explicitly mentions* the segmented messages and the `[send]` tag. The Usage section gives a clear and detailed example of *how* to use it.
-*   **More Detail in Usage:** The `Usage` section has been expanded to provide a clearer step-by-step guide, especially around composing messages.
-*   **500ms Delay Mentioned:** Added a note to the "Important Considerations" that the code *already* implements a delay, and that you can adjust it. This helps users understand the existing rate-limiting behavior.
-*   **Clarity and Flow:** The text was edited for better readability and flow.
-
-This refactored `README.md` provides a complete explanation of how to use the new segmented messaging feature and better prepares the user for successful operation of the application.
