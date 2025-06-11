@@ -109,6 +109,7 @@ Example:
 nome;telefone
 John Doe;5511999999999
 Jane Smith;5521888888888
+```
 
 ## Important Considerations
 
