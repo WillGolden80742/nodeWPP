@@ -254,7 +254,18 @@ async function verifyAndFixContactStatuses() {
 
     console.log("Verifying and fixing contact statuses...");
 
+    const totalContacts = contacts.length; // Get total count of contacts
+    let processedContacts = 0;             // Initialize processed contacts counter
+
     for (const contact of contacts) {
+        processedContacts++; // Increment processed contacts counter
+
+        // Emit progress update to client
+        io.emit('synchronization_progress', {
+            current: processedContacts,
+            total: totalContacts
+        });
+
         if (!/^\d{12,15}$/.test(contact.phoneNumber)) {
             console.warn(`Invalid number ignored: ${contact.phoneNumber}`);
             continue;

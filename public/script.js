@@ -1300,6 +1300,7 @@ function restoreScrollPositions(scrollPositions) {
 }
 
 // ========================= Initialization =========================
+//Altere o inicializeQrCodeModal para receber socket.
 function initializeQrCodeModal(socket){
     const qrCodeModal = document.getElementById('qrCodeModal');
     const qrCodeImage = document.getElementById('qrCodeImage');
@@ -1335,6 +1336,12 @@ function initializeQrCodeModal(socket){
     socket.on('authenticated', () => {
         console.log('Authenticated successfully!');
         closeQrCodeModal(); // Close the QR code modal
+    });
+
+    // Add this section to update the synchronization label
+    socket.on('synchronization_progress', (data) => {
+        const progressLabel = document.querySelector('.synchronization-status .synchronization-label');
+        progressLabel.textContent = `Sincronizando ${data.current}/${data.total}`;
     });
 }
 
