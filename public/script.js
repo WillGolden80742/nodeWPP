@@ -1178,6 +1178,18 @@ async function handleAddContactButtonClick() {
     }
 }
 
+function addContact(name, phone) {
+    const newContact = {
+        fullName: name,
+        phoneNumber: phone,
+        status: 'new',
+        timestamp: DEFAULT_TIME_STAMP,
+        isDeleted: false // Novo atributo
+    };
+    return addKeyToContact(newContact);
+}
+
+
 /**
  * Handles the form submission event.
  * Sends the selected contacts and message to the server.

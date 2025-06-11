@@ -1,5 +1,5 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode'); // Changed require
+const qrcode = require('qrcode');
 const qrcodeTerminal = require('qrcode-terminal');
 const express = require('express');
 const fileUpload = require('express-fileupload');
@@ -8,7 +8,7 @@ const path = require('path');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const _ = require('lodash');
-require('dotenv').config(); // Carrega as variáveis de ambiente
+require('dotenv').config();
 
 const app = express();
 const port = 3000;
@@ -62,7 +62,6 @@ async function loadDeletedContactsFromFile() {
             return [];
         } else if (error instanceof SyntaxError) {
             console.error('Error parsing deleted contacts file (invalid JSON):', error);
-            // If the file contains invalid JSON, overwrite it with an empty array
             try {
                 await fs.writeFile(deletedContactsFilePath, '[]');
                 console.log('Deleted contacts file reset due to invalid JSON.');
@@ -82,7 +81,7 @@ async function loadDeletedContactsFromFile() {
 async function saveContactsToFile(contacts) {
     try {
         saveDeletedContactsToFile(contacts);
-        contacts = contacts.filter(contact => !contact.isDeleted); // Remove deleted contacts
+        contacts = contacts.filter(contact => !contact.isDeleted);
         const jsonData = JSON.stringify(contacts, null, 2);
         await fs.writeFile(contactsFilePath, jsonData);
         console.log('Contacts saved to file.');
@@ -104,17 +103,14 @@ async function saveDeletedContactsToFile(contacts) {
     }
 }
 
-// Function to remove duplicate contacts based on phone number
 function removeDuplicateContacts(contacts) {
     const groupedContacts = _.groupBy(contacts, 'phoneNumber');
     const uniqueContacts = Object.values(groupedContacts).map(group => {
         if (group.length > 1) {
-            // If duplicates exist, prioritize the one with 'isDeleted: false'
             const notDeletedContact = group.find(contact => !contact.isDeleted);
             if (notDeletedContact) {
                 return notDeletedContact;
             } else {
-                // If all are 'isDeleted: true', return the first one (arbitrary choice)
                 return group[0];
             }
         } else {
@@ -129,7 +125,7 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        executablePath: process.env.CHROME_EXECUTABLE_PATH, // Use a variável de ambiente
+        executablePath: process.env.CHROME_EXECUTABLE_PATH,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     }
 });
@@ -143,8 +139,8 @@ client.initialize();
 client.on('qr', async qr => {
     try {
         getQRcodeTerminal(qr);
-        const qrCodeDataURL = await qrcode.toDataURL(qr); // Generate base64 PNG
-        io.emit('qr', qrCodeDataURL); // Emit the base64 data URL to the client
+        const qrCodeDataURL = await qrcode.toDataURL(qr);
+        io.emit('qr', qrCodeDataURL);
     } catch (error) {
         console.error('Error generating QR code:', error);
     }
@@ -155,10 +151,9 @@ function getQRcodeTerminal(qr) {
     console.log('Scan QR code to authenticate.');
 }
 
-
 client.on('authenticated', () => {
     console.log('Authenticated successfully!');
-    io.emit('authenticated'); // Emit authentication event to the client
+    io.emit('authenticated');
 });
 
 const MEDIA_TYPE_MAP = {
@@ -179,68 +174,62 @@ async function getMessageContent(lastMessage) {
 }
 
 async function fetchContactNameAndMaybeUpdate(phoneNumber, chatId) {
-    // Primeiro, verifica se o contato está na lista de contatos deletados.
     let deletedContact = deletedContacts.find(c => c.phoneNumber === phoneNumber);
     if (deletedContact) {
-        return null; // Não retorna nada se o contato estiver na lista de deletados.
+        return null;
     }
 
     let contact = contacts.find(c => c.phoneNumber === phoneNumber);
 
     if (deletedContact) {
         if (deletedContact.isDeleted) {
-            return null; // Não retorna nada se o contato estiver como deletado.
+            return null;
         }
     }
 
     if (!contact || contact.fullName.toLowerCase() === "contact") {
         console.warn(`Contact ${phoneNumber} not found in local contacts or has generic name. Attempting to fetch contact name from API.`);
         try {
-            const remoteContact = await client.getContactById(chatId);  // Use _serialized for the full ID
-            let contactName = remoteContact.name || remoteContact.pushname || phoneNumber; // Get name from API
+            const remoteContact = await client.getContactById(chatId);
+            let contactName = remoteContact.name || remoteContact.pushname || phoneNumber;
             console.log(`Saving contact with name: ${contactName}`);
 
-            // If contact exists, update its name; otherwise, create a new contact
             if (contact) {
-                // Remove the old contact
                 contacts = contacts.filter(c => !(c.fullName === contact.fullName && c.phoneNumber === contact.phoneNumber));
 
-                // Create and add the new contact
                 const newContact = {
                     fullName: contactName,
                     phoneNumber: phoneNumber,
-                    status: contact.status, // Preserve status
-                    timestamp: contact.timestamp, // Preserve timestamp
+                    status: contact.status,
+                    timestamp: contact.timestamp,
                     key: `${contactName}-${phoneNumber}`,
                     isDeleted: contact.isDeleted,
-                    lastMessage: contact.lastMessage //Preserve lastMessage
+                    lastMessage: contact.lastMessage
                 };
                 contacts.push(newContact);
                 console.log(`Replacing contact with name from API: ${contactName}`);
-                contact = newContact; // Update the 'contact' variable for the rest of the loop
+                contact = newContact;
             } else {
                 contact = {
                     fullName: contactName,
                     phoneNumber: phoneNumber,
-                    status: 'new', // Default status for new contact
+                    status: 'new',
                     timestamp: DEFAULT_TIME_STAMP,
-                    key: `${contactName}-${phoneNumber}`, // Generate contact key
+                    key: `${contactName}-${phoneNumber}`,
                     isDeleted: false,
-                    lastMessage: "" // Initialize lastMessage
+                    lastMessage: ""
                 };
-                contacts.push(contact); // Add to the local contacts array
+                contacts.push(contact);
             }
             try {
-                // Persist contacts to file. This must be done or else the new contact will be lost on restart.
                 await saveContactsToFile(contacts);
-                // Update the contactStatus with default values.
                 await updateContactStatus(phoneNumber, contact.status, contact.timestamp, contact.isDeleted, contact.lastMessage, false);
             } catch (serverUpdateError) {
                 console.error("Error updating contacts on the server:", serverUpdateError.message);
             }
         } catch (fetchError) {
             console.error(`Failed to fetch contact details for ${phoneNumber}:`, fetchError.message);
-            return null; // Indicate failure to fetch and update contact name
+            return null;
         }
     }
     return contact;
@@ -254,13 +243,12 @@ async function verifyAndFixContactStatuses() {
 
     console.log("Verifying and fixing contact statuses...");
 
-    const totalContacts = contacts.length; // Get total count of contacts
-    let processedContacts = 0;             // Initialize processed contacts counter
+    const totalContacts = contacts.length;
+    let processedContacts = 0;
 
     for (const contact of contacts) {
-        processedContacts++; // Increment processed contacts counter
+        processedContacts++;
 
-        // Emit progress update to client
         io.emit('synchronization_progress', {
             current: processedContacts,
             total: totalContacts
@@ -370,23 +358,20 @@ app.post('/upload', async (req, res) => {
             const chatId = `${cleanedNumber}@c.us`;
             const personalizedMessage = messageTemplate.replace(/\[name\]/gi, fullName);
 
-            // Split the personalized message by the "[send]" tag
             const messageParts = personalizedMessage.split(/\[send\]/gi);
 
             try {
                 if (!testMode) {
-                    // Send each part of the message sequentially
                     for (const part of messageParts) {
-                        if (part.trim() !== "") { // Avoid sending empty strings
+                        if (part.trim() !== "") {
                             await client.sendMessage(chatId, part.trim());
-                            // Add a delay between messages (optional, adjust as needed)
-                            await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
+                            await new Promise(resolve => setTimeout(resolve, 500));
                             console.log(`Message ${testMode ? '(TEST) ' : ''}sent to ${fullName} (${cleanedNumber}): "${part.trim()}"`);
                         }
                     }
 
                     const messageTimestamp = new Date().toISOString();
-                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp, contact.isDeleted, messageParts[messageParts.length - 1], true); // save entire message
+                    await updateContactStatus(cleanedNumber, "sent", messageTimestamp, contact.isDeleted, messageParts[messageParts.length - 1], true);
                 }
                 results.push({ contact: fullName, status: 'success', message: personalizedMessage });
                 successCount++;
@@ -459,28 +444,33 @@ app.post('/update-contacts', async (req, res) => {
     updatedContacts = removeDuplicateContacts(updatedContacts);
 
     try {
-
         // Load the current deleted contacts.
         const currentDeletedContacts = await loadDeletedContactsFromFile();
 
-        // Filter out contacts from deletedContacts.json that are present in the updatedContacts array and are NOT marked as deleted.
-        const deletedContactsToRemove = updatedContacts.filter(updatedContact => {
-            return !updatedContact.isDeleted && currentDeletedContacts.some(deletedContact => deletedContact.phoneNumber === updatedContact.phoneNumber);
-        });
+        // Process each updated contact
+        for (const updatedContact of updatedContacts) {
+            const deletedContactIndex = currentDeletedContacts.findIndex(deletedContact => deletedContact.phoneNumber === updatedContact.phoneNumber);
 
+            if (deletedContactIndex !== -1) {
+                // Contact exists in deleted_contacts.json
+                const deletedContact = currentDeletedContacts[deletedContactIndex];
 
-        if (deletedContactsToRemove.length > 0) {
-
-            //Remove from currentDeletedContacts
-            deletedContacts = currentDeletedContacts.filter(deletedContact => !deletedContactsToRemove.find(contactToRemove => contactToRemove.phoneNumber === deletedContact.phoneNumber));
-
-            // Save the updated deleted contacts array.
-            const jsonData = JSON.stringify(_.uniqBy(deletedContacts, 'phoneNumber'), null, 2);
-            await fs.writeFile(deletedContactsFilePath, jsonData);
-
-            console.log(`Removed ${deletedContactsToRemove.length} contacts from deleted_contacts.json.`);
-
+                if (!updatedContact.isDeleted || updatedContact.status === "new") {
+                    // Contact is being 'un-deleted'. Retrieve information and remove from deleted_contacts.json
+                    updatedContact.status = deletedContact.status;
+                    updatedContact.timestamp = deletedContact.timestamp;
+                    updatedContact.lastMessage = deletedContact.lastMessage;
+                    
+                    currentDeletedContacts.splice(deletedContactIndex, 1);
+                    console.log(`Removed contact ${updatedContact.fullName} from deleted_contacts.json and restored its data.`);
+                }
+            }
         }
+
+
+        // Save the updated deleted contacts array.
+        const jsonDataDeleted = JSON.stringify(_.uniqBy(currentDeletedContacts, 'phoneNumber'), null, 2);
+        await fs.writeFile(deletedContactsFilePath, jsonDataDeleted);
 
 
         await saveContactsToFile(updatedContacts);
@@ -513,15 +503,13 @@ async function checkSentMessagesAndSync() {
 
     try {
         const chats = await client.getChats();
-        // Sort chats by last activity (most recent first)
         chats.sort((a, b) => b.timestamp - a.timestamp);
-        // Get the 10 most recent non-group chat contacts
         const recentChats = chats
             .filter(chat => !chat.isGroup)
             .slice(0, 10);
         for (const chat of recentChats) {
             const phoneNumber = chat.id.user;
-            const chatId = chat.id._serialized; // Use _serialized for the full ID
+            const chatId = chat.id._serialized;
 
             let contact = await fetchContactNameAndMaybeUpdate(phoneNumber, chatId);
             if (!contact) {
@@ -529,11 +517,10 @@ async function checkSentMessagesAndSync() {
             }
 
             try {
-                const lastMessage = await chat.lastMessage; // Get the last message
+                const lastMessage = await chat.lastMessage;
                 if (lastMessage) {
                     const messageTimestamp = new Date(lastMessage.timestamp * 1000).toISOString();
                     const lastMessageContent = await getMessageContent(lastMessage);
-                    // Check if the timestamp of the last message is different from the registered timestamp
                     if (contact.timestamp < messageTimestamp || contact.timestamp === DEFAULT_TIME_STAMP) {
                         const newStatus = lastMessage.fromMe ? 'sent' : 'answered';
                         await updateContactStatus(phoneNumber, newStatus, messageTimestamp, contact.isDeleted, lastMessageContent, true);
@@ -551,7 +538,6 @@ async function checkSentMessagesAndSync() {
 async function updateContactStatus(phoneNumber, newStatus, timestamp, isDeleted, lastMessage, sendSocket = true) {
     const contactToUpdate = contacts.find(contact => contact.phoneNumber === phoneNumber);
 
-    // Check if contactToUpdate exists before accessing its properties
     if (contactToUpdate) {
         if (!contactToUpdate.isDeleted) {
 
@@ -568,7 +554,7 @@ async function updateContactStatus(phoneNumber, newStatus, timestamp, isDeleted,
 
             console.log(`Contact ${phoneNumber} status updated to ${newStatus}, timestamp: ${timestamp}, isDeleted: ${isDeleted}, lastMessage: ${lastMessage}`);
         }
-    } 
+    }
 }
 
 io.on('connection', (socket) => {
