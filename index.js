@@ -356,7 +356,7 @@ app.post('/upload', async (req, res) => {
         for (const contact of contactsToSend) {
             const { fullName, phoneNumber: cleanedNumber } = contact;
             const chatId = `${cleanedNumber}@c.us`;
-            const personalizedMessage = messageTemplate.replace(/\[name\]/gi, fullName);
+            const personalizedMessage = messageTemplate.replace(/\[name\]/gi, formatContactName(fullName));
 
             const messageParts = personalizedMessage.split(/\[send\]/gi);
 
@@ -443,12 +443,9 @@ app.post('/update-contacts', async (req, res) => {
 
     updatedContacts = updatedContacts.map(contact => {
         const normalizedNumber = normalizePhoneNumber(contact.phoneNumber, defaultCountryCode, defaultDdd);
-
-        const formattedName = formatContactName(contact.fullName);
-
         return {
             ...contact,
-            fullName: formattedName,
+            fullName: contact.fullName,
             phoneNumber: normalizedNumber,
             timestamp: contact.timestamp || new Date().toISOString(),
             lastMessage: contact.lastMessage || ""

@@ -1030,6 +1030,7 @@ function finishLoading() {
 
     if (spinner) spinner.remove();
     if (label) label.textContent = "Todos";
+    if (label) label.style.color = "#333";
 
     if (newTab) newTab.style.display = "block";
     if (sentTab) sentTab.style.display = "block";
