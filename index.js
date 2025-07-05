@@ -365,10 +365,7 @@ app.post('/upload', async (req, res) => {
                     for (const part of messageParts) {
                         if (part.trim() !== "") {
                             // Await the message being sent and confirmed
-                            const messageSent = await client.sendMessage(chatId, part.trim());
-
-                            // Wait for the message to be acknowledged as sent by WhatsApp (optional, but recommended)
-                            await messageSent.ack;  // Wait for acknowledgment
+                            await client.sendMessage(chatId, part.trim());
 
                             console.log(`Message ${testMode ? '(TEST) ' : ''}sent to ${fullName} (${cleanedNumber}): "${part.trim()}"`);
                         }
