@@ -125,7 +125,7 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        executablePath: process.env.CHROME_EXECUTABLE_PATH,
+        executablePath: process.env.EXECUTABLE_PATH,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     }
 });
@@ -548,11 +548,11 @@ async function checkSentMessagesAndSync() {
                     }
                 }
             } catch (error) {
-                console.error(`Error processing chat for ${phoneNumber}:`, error.message);
+               // console.error(`Error processing chat for ${phoneNumber}:`, error.message);
             }
         }
     } catch (error) {
-        console.error("Error getting or processing chats:", error.message);
+        // console.error("Error getting or processing chats:", error.message);
     }
 }
 
